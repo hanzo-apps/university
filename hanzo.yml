@@ -1,0 +1,16 @@
+# Canonical CI/CD config for hanzo.university
+test:
+  - name: build
+    run: |
+      set -e
+      pnpm install --frozen-lockfile
+      pnpm typecheck
+      pnpm build
+
+# The export is bytes: out/ published to s3://hanzo-sites/hanzo/university, which
+# the hanzo.university router serves with no pod.
+site:
+  slug: university
+  dir: out
+  build: pnpm install --frozen-lockfile && pnpm build
+  on: [main]

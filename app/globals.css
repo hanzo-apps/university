@@ -1,0 +1,10 @@
+body {
+  margin: 0;
+  background-color: #000000;
+  color: #ffffff;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+[data-scrollbar='none']::-webkit-scrollbar {
+  display: none;
+}
