@@ -106,10 +106,16 @@ export default function StudentPortalPage() {
         if (savedCapstones) {
           setCapstonePassed(JSON.parse(savedCapstones))
         }
+        const savedName = localStorage.getItem('hanzo_portal_student_name')
+        if (savedName) {
+          setStudentName(savedName)
+        }
         const savedHandle = localStorage.getItem('hanzo_portal_student_handle')
         if (savedHandle) {
           setStudentHandle(savedHandle)
-          setStudentName(savedHandle.charAt(0).toUpperCase() + savedHandle.slice(1))
+          if (!savedName) {
+            setStudentName(savedHandle.charAt(0).toUpperCase() + savedHandle.slice(1))
+          }
         }
         const savedWatched = localStorage.getItem('hanzo_portal_watched_lectures')
         if (savedWatched) {
@@ -126,6 +132,7 @@ export default function StudentPortalPage() {
       const params = new URLSearchParams(window.location.search)
       const enrolled = params.get('enrolled')
       const student = params.get('student')
+      const name = params.get('name')
       const welcome = params.get('welcome')
 
       if (enrolled && UNIVERSITY_COURSES.some((c) => c.slug === enrolled)) {
@@ -136,10 +143,17 @@ export default function StudentPortalPage() {
       }
       if (student) {
         setStudentHandle(student)
-        setStudentName(student.charAt(0).toUpperCase() + student.slice(1))
         try {
           localStorage.setItem('hanzo_portal_student_handle', student)
         } catch (_) {}
+      }
+      if (name) {
+        setStudentName(name)
+        try {
+          localStorage.setItem('hanzo_portal_student_name', name)
+        } catch (_) {}
+      } else if (student) {
+        setStudentName(student.charAt(0).toUpperCase() + student.slice(1))
       }
       if (welcome === '1') {
         setWelcomeBanner(true)

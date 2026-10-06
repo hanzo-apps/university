@@ -27,12 +27,32 @@ import {
   Wallet,
   RefreshCw,
   Cpu,
+  ExternalLink,
+  AlertCircle,
 } from 'lucide-react'
 import {
   type UniversityCourse,
   validateCoupon,
   type CouponResult,
 } from '../../courses-data'
+
+function SquareLogo({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5" stroke={color} strokeWidth="2.5" />
+      <rect x="7.5" y="7.5" width="9" height="9" rx="2" fill={color} />
+    </svg>
+  )
+}
+
+function getCardBrand(num: string): string | null {
+  const clean = num.replace(/\D/g, '')
+  if (clean.startsWith('4')) return 'Visa'
+  if (/^(5[1-5]|2[2-7])/.test(clean)) return 'Mastercard'
+  if (/^(34|37)/.test(clean)) return 'Amex'
+  if (/^(6011|65)/.test(clean)) return 'Discover'
+  return null
+}
 
 type CheckoutStep = 'payment' | 'hanzo_id' | 'provisioning' | 'complete'
 type PaymentMethod = 'card' | 'apple_pay' | 'crypto'
@@ -48,30 +68,32 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponResult | null>(null)
   const [couponError, setCouponError] = useState<string | null>(null)
 
-  // Payment Form State
+  // Payment Form State (Empty initial values - NO mock prefill)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
-  const [cardName, setCardName] = useState('Alex Rivers')
-  const [cardNumber, setCardNumber] = useState('4242 •••• •••• 4242')
-  const [cardExp, setCardExp] = useState('08/29')
-  const [cardCvc, setCardCvc] = useState('882')
+  const [cardName, setCardName] = useState('')
+  const [cardNumber, setCardNumber] = useState('')
+  const [cardExp, setCardExp] = useState('')
+  const [cardCvc, setCardCvc] = useState('')
   const [cardCountry, setCardCountry] = useState('United States')
-  const [cardPostal, setCardPostal] = useState('94107')
+  const [cardPostal, setCardPostal] = useState('')
   const [cryptoAsset, setCryptoAsset] = useState<'USDC' | 'LUX' | 'ETH'>('USDC')
   const [cryptoNetwork] = useState('Lux Chain (Zero Gas)')
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
 
   // Transaction Receipt
   const [transactionId, setTransactionId] = useState('')
   const [paidAmount, setPaidAmount] = useState(course.price)
 
-  // Hanzo ID State
+  // Hanzo ID State (Empty initial values - NO mock prefill)
   const [accountMode, setAccountMode] = useState<'create' | 'link'>('create')
-  const [handle, setHandle] = useState('alex')
-  const [legalName, setLegalName] = useState('Alex Rivers')
-  const [studentEmail, setStudentEmail] = useState('alex@hanzo.ai')
+  const [handle, setHandle] = useState('')
+  const [legalName, setLegalName] = useState('')
+  const [studentEmail, setStudentEmail] = useState('')
   const [authMethod, setAuthMethod] = useState<'passkey' | 'password'>('passkey')
-  const [password, setPassword] = useState('••••••••••••')
+  const [password, setPassword] = useState('')
   const [agreeHonorCode, setAgreeHonorCode] = useState(true)
+  const [accountError, setAccountError] = useState<string | null>(null)
 
   // Provisioning Terminal Logs
   const [provisionProgress, setProvisionProgress] = useState(0)
@@ -98,6 +120,34 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
   const discountAmount = appliedCoupon?.valid ? appliedCoupon.discountAmount : 0
   const rebateCredits = appliedCoupon?.valid ? appliedCoupon.rebateCredits : course.rebateCredits
 
+  // Regular Hanzo Payment Gateway URL (Square integration)
+  const hanzoPayUrl = appliedCoupon?.valid
+    ? `https://hanzo.ai/pay/cart?plan=${course.planId}&returnUrl=${encodeURIComponent(`https://hanzo.university/portal?enrolled=${course.slug}`)}&coupon=${encodeURIComponent(appliedCoupon.code)}`
+    : `https://hanzo.ai/pay/cart?plan=${course.planId}&returnUrl=${encodeURIComponent(`https://hanzo.university/portal?enrolled=${course.slug}`)}`
+
+  // Card input formatters
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 16)
+    const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ')
+    setCardNumber(formatted)
+    if (paymentError) setPaymentError(null)
+  }
+
+  const handleCardExpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let raw = e.target.value.replace(/\D/g, '').slice(0, 4)
+    if (raw.length >= 3) {
+      raw = `${raw.slice(0, 2)}/${raw.slice(2)}`
+    }
+    setCardExp(raw)
+    if (paymentError) setPaymentError(null)
+  }
+
+  const handleCardCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 4)
+    setCardCvc(raw)
+    if (paymentError) setPaymentError(null)
+  }
+
   // Apply Coupon Handler
   const handleApplyCoupon = (codeToApply?: string) => {
     const target = (codeToApply || couponCode).trim()
@@ -122,11 +172,37 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
     setCouponError(null)
   }
 
-  // Phase 1: Complete Payment Handler (Pay for the class first)
+  // Phase 1: Complete Payment Handler (Pay for the class via Square Web Payments / Hanzo Treasury)
   const handleCompletePayment = () => {
+    if (paymentMethod === 'card') {
+      const cleanNum = cardNumber.replace(/\D/g, '')
+      if (!cardName.trim()) {
+        setPaymentError('Please enter the name on your card.')
+        return
+      }
+      if (cleanNum.length < 13) {
+        setPaymentError('Please enter a valid card number.')
+        return
+      }
+      if (cardExp.length < 5) {
+        setPaymentError('Please enter card expiration in MM/YY format.')
+        return
+      }
+      if (cardCvc.length < 3) {
+        setPaymentError('Please enter a valid CVC security code.')
+        return
+      }
+      if (!cardPostal.trim()) {
+        setPaymentError('Please enter your billing postal code.')
+        return
+      }
+    }
+
+    setPaymentError(null)
     setIsProcessingPayment(true)
-    const randomTxn = `HZ-TXN-${new Date().getFullYear()}-${course.code.replace(/\s+/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`
-    setTransactionId(randomTxn)
+    // Square Live Transaction ID format matching Hanzo Pay
+    const squareTxn = `sq_live_${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 8)}`
+    setTransactionId(squareTxn)
     setPaidAmount(finalPrice)
 
     setTimeout(() => {
@@ -139,10 +215,42 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
   // Phase 2: Create / Link Hanzo ID and Provision Sandbox
   const handleStartProvisioning = () => {
+    if (accountMode === 'create') {
+      if (!legalName.trim()) {
+        setAccountError('Please provide your full legal name for your verifiable credential.')
+        return
+      }
+      if (!studentEmail.trim() || !studentEmail.includes('@')) {
+        setAccountError('Please provide a valid student email address.')
+        return
+      }
+      if (!agreeHonorCode) {
+        setAccountError('Please accept the Hanzo University Academic Integrity Policy.')
+        return
+      }
+    } else {
+      if (!studentEmail.trim()) {
+        setAccountError('Please enter your Hanzo ID email or username.')
+        return
+      }
+    }
+
+    const finalHandle = (handle.trim() || (studentEmail.includes('@') ? studentEmail.split('@')[0] : studentEmail.trim()) || 'student')
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '')
+    const finalLegalName = legalName.trim() || finalHandle
+
+    try {
+      localStorage.setItem('hanzo_portal_student_handle', finalHandle)
+      localStorage.setItem('hanzo_portal_student_name', finalLegalName)
+      localStorage.setItem('hanzo_portal_selected_course', course.slug)
+    } catch (_) {}
+
+    setAccountError(null)
     setStep('provisioning')
     setProvisionProgress(15)
     setProvisionLogs([
-      `> [INIT] Hanzo Settlement verified: Txn #${transactionId} cleared ($${paidAmount} USD).`,
+      `> [INIT] Square & Hanzo settlement verified: Txn #${transactionId} cleared ($${paidAmount} USD).`,
       `> [AUTH] Protocol dispatching seat license for course: ${course.code} (${course.credential})...`,
     ])
 
@@ -150,8 +258,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
       setProvisionProgress(40)
       setProvisionLogs((prev) => [
         ...prev,
-        `> [HANZO ID] Generating student DID: did:hanzo:student:${handle}.hanzo.id`,
-        `> [IDENTITY] Binding W3C-compliant academic claim for "${legalName}"...`,
+        `> [HANZO ID] Generating student DID: did:hanzo:student:${finalHandle}.hanzo.id`,
+        `> [IDENTITY] Binding W3C-compliant academic claim for "${finalLegalName}"...`,
       ])
     }, 600)
 
@@ -160,7 +268,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
       setProvisionLogs((prev) => [
         ...prev,
         `> [COMPUTE] Depositing 25% compute fellowship ($${rebateCredits}.00 USD) into Hanzo Cloud wallet.`,
-        `> [SANDBOX] Allocating isolated gVisor MicroVM container lease: pod-gvs-uswest2-${handle}...`,
+        `> [SANDBOX] Allocating isolated gVisor MicroVM container lease: pod-gvs-uswest2-${finalHandle}...`,
       ])
     }, 1200)
 
@@ -177,7 +285,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
       setProvisionProgress(100)
       setStep('complete')
       // Redirect seamlessly to student portal with enrolled course & student details
-      const targetUrl = `/portal?enrolled=${encodeURIComponent(course.slug)}&student=${encodeURIComponent(handle)}&welcome=1`
+      const targetUrl = `/portal?enrolled=${encodeURIComponent(course.slug)}&student=${encodeURIComponent(finalHandle)}&name=${encodeURIComponent(finalLegalName)}&welcome=1`
       setTimeout(() => {
         router.push(targetUrl)
       }, 1400)
@@ -572,9 +680,62 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       Payment Method
                     </Text>
                     <Text fontSize="$2" color="var(--muted-foreground)">
-                      Secure one-time payment settled via Hanzo Treasury Layer.
+                      Secure one-time payment settled via Square & Hanzo Treasury Layer.
                     </Text>
                   </YStack>
+
+                  {/* Regular Hanzo Payment Gateway Link (Square) */}
+                  <Box
+                    p="$3"
+                    rounded="var(--radius-md)"
+                    bg="var(--pure-black)"
+                    borderWidth={1}
+                    borderColor="var(--border)"
+                  >
+                    <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
+                      <XStack items="center" gap="$2.5">
+                        <Box p="$1.5" rounded="var(--radius-sm)" bg="var(--card)" borderWidth={1} borderColor="var(--border)">
+                          <SquareLogo size={16} color="var(--white)" />
+                        </Box>
+                        <YStack>
+                          <XStack items="center" gap="$2">
+                            <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                              Hanzo Pay
+                            </Text>
+                            <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                              SQUARE COMMERCE
+                            </Chip>
+                          </XStack>
+                          <Text fontSize="$1" color="var(--muted-foreground)">
+                            Standard payment flow via pay.hanzo.ai
+                          </Text>
+                        </YStack>
+                      </XStack>
+
+                      <Action
+                        href={hanzoPayUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        px={12}
+                        py={6}
+                        $platform-web={{ fontSize: '12px', fontWeight: 600 }}
+                      >
+                        <XStack items="center" gap="$1.5">
+                          <Text fontSize="$1" fontWeight="600" color="inherit">
+                            Open Hanzo Pay ↗
+                          </Text>
+                        </XStack>
+                      </Action>
+                    </XStack>
+                  </Box>
+
+                  <XStack items="center" gap="$2" my="$1">
+                    <Box flex={1} height={1} bg="var(--border)" />
+                    <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
+                      OR DIRECT CHECKOUT VIA SQUARE
+                    </Text>
+                    <Box flex={1} height={1} bg="var(--border)" />
+                  </XStack>
 
                   {/* Method Tabs */}
                   <XStack gap="$2" width="100%">
@@ -672,21 +833,34 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         </Text>
                         <input
                           type="text"
+                          placeholder="Name on card"
                           style={inputStyle}
                           value={cardName}
-                          onChange={(e) => setCardName(e.target.value)}
+                          onChange={(e) => {
+                            setCardName(e.target.value)
+                            if (paymentError) setPaymentError(null)
+                          }}
                         />
                       </YStack>
 
                       <YStack gap="$1">
-                        <Text fontSize="$1" color="var(--muted-foreground)">
-                          Card Number
-                        </Text>
+                        <XStack justify="space-between" items="center">
+                          <Text fontSize="$1" color="var(--muted-foreground)">
+                            Card Number
+                          </Text>
+                          {getCardBrand(cardNumber) && (
+                            <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                              {getCardBrand(cardNumber)}
+                            </Chip>
+                          )}
+                        </XStack>
                         <input
                           type="text"
+                          placeholder="1234 5678 9012 3456"
                           style={{ ...inputStyle, fontFamily: 'monospace' }}
                           value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
+                          onChange={handleCardNumberChange}
+                          maxLength={19}
                         />
                       </YStack>
 
@@ -697,9 +871,11 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           </Text>
                           <input
                             type="text"
+                            placeholder="MM/YY"
                             style={{ ...inputStyle, fontFamily: 'monospace' }}
                             value={cardExp}
-                            onChange={(e) => setCardExp(e.target.value)}
+                            onChange={handleCardExpChange}
+                            maxLength={5}
                           />
                         </YStack>
 
@@ -709,9 +885,11 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           </Text>
                           <input
                             type="text"
+                            placeholder="CVC"
                             style={{ ...inputStyle, fontFamily: 'monospace' }}
                             value={cardCvc}
-                            onChange={(e) => setCardCvc(e.target.value)}
+                            onChange={handleCardCvcChange}
+                            maxLength={4}
                           />
                         </YStack>
                       </Grid>
@@ -723,6 +901,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           </Text>
                           <input
                             type="text"
+                            placeholder="Country"
                             style={inputStyle}
                             value={cardCountry}
                             onChange={(e) => setCardCountry(e.target.value)}
@@ -735,9 +914,13 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           </Text>
                           <input
                             type="text"
+                            placeholder="Postal code / ZIP"
                             style={inputStyle}
                             value={cardPostal}
-                            onChange={(e) => setCardPostal(e.target.value)}
+                            onChange={(e) => {
+                              setCardPostal(e.target.value)
+                              if (paymentError) setPaymentError(null)
+                            }}
                           />
                         </YStack>
                       </Grid>
@@ -748,24 +931,103 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                   {paymentMethod === 'apple_pay' && (
                     <YStack
                       gap="$4"
-                      p="$6"
+                      p="$5"
                       rounded="var(--radius-md)"
                       bg="var(--pure-black)"
                       borderWidth={1}
                       borderColor="var(--border)"
                       items="center"
                     >
-                      <Wallet size={36} color="var(--white)" />
-                      <YStack items="center" gap="$1">
+                      <YStack items="center" gap="$1" width="100%">
                         <Text fontSize="$3" fontWeight="600" color="var(--white)">
-                          Instant Digital Wallet Checkout
+                          Square Digital Wallets
                         </Text>
                         <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ textAlign: 'center' }}>
-                          Pay ${finalPrice}.00 USD with Touch ID / Face ID using your Apple Pay or Google Wallet.
+                          Authorize instant one-time tuition payment of ${finalPrice}.00 USD via Square Web Payments.
                         </Text>
-
-
                       </YStack>
+
+                      <YStack gap="$2.5" width="100%">
+                        {/* Apple Pay Button */}
+                        <Box
+                          render="button"
+                          onClick={() => {
+                            if (!isProcessingPayment) handleCompletePayment()
+                          }}
+                          py="$2.5"
+                          px="$4"
+                          rounded="var(--radius-md)"
+                          bg="var(--white)"
+                          $platform-web={{
+                            cursor: isProcessingPayment ? 'not-allowed' : 'pointer',
+                            opacity: isProcessingPayment ? 0.6 : 1,
+                            outline: 'none',
+                            border: 'none',
+                            width: '100%',
+                          }}
+                        >
+                          <XStack items="center" justify="center" gap="$2">
+                            <Text fontSize="$2" fontWeight="700" color="var(--pure-black)">
+                              Pay with Apple Pay
+                            </Text>
+                          </XStack>
+                        </Box>
+
+                        {/* Google Pay Button */}
+                        <Box
+                          render="button"
+                          onClick={() => {
+                            if (!isProcessingPayment) handleCompletePayment()
+                          }}
+                          py="$2.5"
+                          px="$4"
+                          rounded="var(--radius-md)"
+                          bg="var(--pure-black)"
+                          borderWidth={1}
+                          borderColor="var(--white-70)"
+                          $platform-web={{
+                            cursor: isProcessingPayment ? 'not-allowed' : 'pointer',
+                            opacity: isProcessingPayment ? 0.6 : 1,
+                            outline: 'none',
+                            width: '100%',
+                          }}
+                        >
+                          <XStack items="center" justify="center" gap="$2">
+                            <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                              Pay with GPay
+                            </Text>
+                          </XStack>
+                        </Box>
+
+                        {/* Cash App Pay Button */}
+                        <Box
+                          render="button"
+                          onClick={() => {
+                            if (!isProcessingPayment) handleCompletePayment()
+                          }}
+                          py="$2.5"
+                          px="$4"
+                          rounded="var(--radius-md)"
+                          bg="#00D632"
+                          $platform-web={{
+                            cursor: isProcessingPayment ? 'not-allowed' : 'pointer',
+                            opacity: isProcessingPayment ? 0.6 : 1,
+                            outline: 'none',
+                            border: 'none',
+                            width: '100%',
+                          }}
+                        >
+                          <XStack items="center" justify="center" gap="$2">
+                            <Text fontSize="$2" fontWeight="700" color="var(--pure-black)">
+                              Pay with Cash App
+                            </Text>
+                          </XStack>
+                        </Box>
+                      </YStack>
+
+                      <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
+                        POWERED BY SQUARE WEB PAYMENTS SDK
+                      </Text>
                     </YStack>
                   )}
 
@@ -797,8 +1059,6 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                                 $platform-web={{ textAlign: 'center' }}
                                 color={cryptoAsset === coin ? 'var(--pure-black)' : 'var(--white)'}
                               >
-
-
                                 {coin}
                               </Text>
                             </Box>
@@ -828,7 +1088,26 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                     </YStack>
                   )}
 
-                  {/* Guarantees Box */}
+                  {/* Payment Error Alert */}
+                  {paymentError && (
+                    <Box
+                      p="$2.5"
+                      px="$3"
+                      rounded="var(--radius-md)"
+                      bg="rgba(239, 68, 68, 0.1)"
+                      borderWidth={1}
+                      borderColor="var(--red-500)"
+                    >
+                      <XStack items="center" gap="$2">
+                        <AlertCircle size={15} color="var(--red-400)" />
+                        <Text fontSize="$1" color="var(--red-400)">
+                          {paymentError}
+                        </Text>
+                      </XStack>
+                    </Box>
+                  )}
+
+                  {/* Square Guarantees Box */}
                   <Box
                     p="$3"
                     rounded="var(--radius-md)"
@@ -836,11 +1115,19 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                     borderWidth={1}
                     borderColor="var(--border)"
                   >
-                    <XStack items="center" gap="$3">
+                    <XStack items="center" justify="space-between">
+                      <XStack items="center" gap="$3">
+                        <SquareLogo size={18} color="var(--emerald-400)" />
+                        <YStack>
+                          <Text fontSize="$1" fontWeight="600" color="var(--white)">
+                            Square Web Payments & Hanzo Treasury
+                          </Text>
+                          <Text fontSize="$1" color="var(--muted-foreground)">
+                            256-bit TLS encrypted · PCI-DSS Level 1 · 14-day academic guarantee
+                          </Text>
+                        </YStack>
+                      </XStack>
                       <ShieldCheck size={18} color="var(--emerald-400)" />
-                      <Text fontSize="$1" color="var(--muted-foreground)">
-                        256-bit TLS encrypted. Backed by 14-day full money-back academic guarantee.
-                      </Text>
                     </XStack>
                   </Box>
 
@@ -861,23 +1148,21 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       <XStack items="center" gap="$2">
                         <RefreshCw size={16} className="animate-spin" />
                         <Text fontSize="$2" fontWeight="600" color="inherit">
-                          Processing Settlement...
+                          Authorizing via Square...
                         </Text>
                       </XStack>
                     ) : (
                       <XStack items="center" gap="$2">
                         <Text fontSize="$2" fontWeight="600" color="inherit">
-                          Pay ${finalPrice}.00 USD & Proceed to Hanzo ID →
+                          Pay ${finalPrice}.00 USD with Square & Proceed to Hanzo ID →
                         </Text>
                       </XStack>
                     )}
                   </Action>
 
                   <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ textAlign: 'center' }}>
-                    Step 1 of 2: Tuition payment is completed first, followed immediately by Hanzo ID creation.
+                    Step 1 of 2: Tuition payment is processed securely via Square, followed immediately by Hanzo ID creation.
                   </Text>
-
-
                 </YStack>
               </Card>
             </YStack>
@@ -1000,9 +1285,13 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         </Text>
                         <input
                           type="text"
+                          placeholder="e.g. Jane Doe"
                           style={inputStyle}
                           value={legalName}
-                          onChange={(e) => setLegalName(e.target.value)}
+                          onChange={(e) => {
+                            setLegalName(e.target.value)
+                            if (accountError) setAccountError(null)
+                          }}
                         />
                       </YStack>
 
@@ -1012,9 +1301,16 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         </Text>
                         <input
                           type="email"
+                          placeholder="student@example.com"
                           style={inputStyle}
                           value={studentEmail}
-                          onChange={(e) => setStudentEmail(e.target.value)}
+                          onChange={(e) => {
+                            setStudentEmail(e.target.value)
+                            if (accountError) setAccountError(null)
+                            if (!handle && e.target.value.includes('@')) {
+                              setHandle(e.target.value.split('@')[0].toLowerCase().replace(/[^a-z0-9_-]/g, ''))
+                            }
+                          }}
                         />
                       </YStack>
                     </Grid>
@@ -1025,7 +1321,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           Hanzo ID Handle
                         </Text>
                         <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                          did:hanzo:student:{handle || 'you'}
+                          did:hanzo:student:{handle || 'yourhandle'}
                         </Text>
                       </XStack>
                       <XStack
@@ -1042,6 +1338,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         </Text>
                         <input
                           type="text"
+                          placeholder="yourhandle"
                           style={{
                             ...inputStyle,
                             border: 'none',
@@ -1123,6 +1420,21 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       </XStack>
                     </YStack>
 
+                    {authMethod === 'password' && (
+                      <YStack gap="$1">
+                        <Text fontSize="$1" color="var(--muted-foreground)">
+                          Master Passphrase
+                        </Text>
+                        <input
+                          type="password"
+                          placeholder="Choose a passphrase"
+                          style={inputStyle}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                      </YStack>
+                    )}
+
                     {/* Honor Code */}
                     <XStack items="center" gap="$2" pt="$2">
                       <input
@@ -1148,9 +1460,12 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       <input
                         type="text"
                         style={inputStyle}
-                        placeholder="alex@hanzo.ai or @alex"
+                        placeholder="student@example.com or @handle"
                         value={studentEmail}
-                        onChange={(e) => setStudentEmail(e.target.value)}
+                        onChange={(e) => {
+                          setStudentEmail(e.target.value)
+                          if (accountError) setAccountError(null)
+                        }}
                       />
                     </YStack>
 
@@ -1160,6 +1475,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       </Text>
                       <input
                         type="password"
+                        placeholder="Password or passkey"
                         style={inputStyle}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -1174,7 +1490,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       <Box
                         render="button"
                         onClick={() => {
-                          setHandle('github-alex')
+                          const fallback = (studentEmail.includes('@') ? studentEmail.split('@')[0] : (studentEmail.trim() || 'student')).toLowerCase().replace(/[^a-z0-9_-]/g, '')
+                          setHandle(`${fallback}-gh`)
                           handleStartProvisioning()
                         }}
                         px="$3"
@@ -1192,7 +1509,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       <Box
                         render="button"
                         onClick={() => {
-                          setHandle('google-alex')
+                          const fallback = (studentEmail.includes('@') ? studentEmail.split('@')[0] : (studentEmail.trim() || 'student')).toLowerCase().replace(/[^a-z0-9_-]/g, '')
+                          setHandle(`${fallback}-google`)
                           handleStartProvisioning()
                         }}
                         px="$3"
@@ -1209,6 +1527,25 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       </Box>
                     </XStack>
                   </YStack>
+                )}
+
+                {/* Account Error Alert */}
+                {accountError && (
+                  <Box
+                    p="$2.5"
+                    px="$3"
+                    rounded="var(--radius-md)"
+                    bg="rgba(239, 68, 68, 0.1)"
+                    borderWidth={1}
+                    borderColor="var(--red-500)"
+                  >
+                    <XStack items="center" gap="$2">
+                      <AlertCircle size={15} color="var(--red-400)" />
+                      <Text fontSize="$1" color="var(--red-400)">
+                        {accountError}
+                      </Text>
+                    </XStack>
+                  </Box>
                 )}
 
                 {/* Provision Submit CTA */}

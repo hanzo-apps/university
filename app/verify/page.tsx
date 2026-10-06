@@ -26,12 +26,13 @@ import { UNIVERSITY_COURSES } from '../courses-data'
 function VerifyContent() {
   const searchParams = useSearchParams()
   const rawId = searchParams.get('id') || 'HACE-2026-9821'
-  const rawStudent = searchParams.get('student') || 'alex'
+  const rawStudent = searchParams.get('student') || 'student'
+  const rawName = searchParams.get('name')
 
   const [certId, setCertId] = useState(rawId)
   const [searchInput, setSearchInput] = useState(rawId)
   const [studentHandle, setStudentHandle] = useState(rawStudent)
-  const [studentName, setStudentName] = useState('Alex Rivers')
+  const [studentName, setStudentName] = useState(rawName || (rawStudent !== 'student' ? rawStudent.charAt(0).toUpperCase() + rawStudent.slice(1) : 'Student'))
   const [copied, setCopied] = useState<string | null>(null)
 
   useEffect(() => {
@@ -41,9 +42,14 @@ function VerifyContent() {
     }
     if (rawStudent) {
       setStudentHandle(rawStudent)
-      setStudentName(rawStudent.charAt(0).toUpperCase() + rawStudent.slice(1))
+      if (!rawName) {
+        setStudentName(rawStudent.charAt(0).toUpperCase() + rawStudent.slice(1))
+      }
     }
-  }, [rawId, rawStudent])
+    if (rawName) {
+      setStudentName(rawName)
+    }
+  }, [rawId, rawStudent, rawName])
 
   // Determine which course matches the certificate prefix (e.g. HACE -> agentic-coding, HARLE -> rl, HCAISE -> systems)
   const matchedCourse =
