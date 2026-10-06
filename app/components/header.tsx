@@ -106,7 +106,7 @@ export function Header() {
               >
                 <XStack items="center" justify="space-between" px={8} pb={6} borderBottomWidth={1} borderColor="var(--border)">
                   <Text fontSize="$1" fontWeight="700" color="var(--white-70)" fontFamily="$mono">
-                    6 CERTIFICATION TRACKS
+                    3 CERTIFICATION TRACKS
                   </Text>
                   <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">
                     +25% COMPUTE REBATE

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { Hero, Band, Card, Head } from '@/components/band'
 import { Box, Text, XStack, YStack, View } from '@/components/ui'
@@ -31,7 +31,6 @@ import {
 } from 'lucide-react'
 import { UNIVERSITY_COURSES, type UniversityCourse } from './courses-data'
 import { courseCheckoutUrl } from '@/lib/pay'
-
 
 const COMPARISON_ROWS = [
   {
@@ -79,7 +78,7 @@ const COMPARISON_ROWS = [
   {
     dimension: 'Tuition Economics',
     legacy: '100% sunk cost; students pay extra for cloud labs',
-    hanzo: '25% usage credit rebate deposited on day one ($25–$125)',
+    hanzo: '25% usage credit rebate deposited on day one ($38–$63)',
     advantage: 'Tuition directly subsidizes your cloud compute',
   },
   {
@@ -91,16 +90,9 @@ const COMPARISON_ROWS = [
 ]
 
 export default function UniversityHomePage() {
-  const [activeTrack, setActiveTrack] = useState<string>('all')
-
-  const filteredCourses =
-    activeTrack === 'all'
-      ? UNIVERSITY_COURSES
-      : UNIVERSITY_COURSES.filter((c) => c.track === activeTrack)
-
   return (
     <Box minH="100vh" bg="$background" $platform-web={{ color: 'var(--foreground)' }}>
-      {/* ── Hero ── */}
+      {/* ── 1. Hero ── */}
       <Hero
         badge="hanzo.university · Open Enrollment · 25% Usage Credit Rebate"
         title="Stop prompting. Start engineering."
@@ -108,24 +100,24 @@ export default function UniversityHomePage() {
           <>
             Toy AI tutorials won&rsquo;t survive production. Hanzo University trains software
             engineers to architect, evaluate, and budget autonomous multi-agent systems with
-            zero-copy protocols, gVisor sandboxing, and reinforcement learning. Every course
-            includes 25% compute credits ($25–$125) deposited into your account on day one.
+            zero-copy protocols, gVisor sandboxing, and native reinforcement learning. Every course
+            includes 25% compute credits deposited into your account on day one.
           </>
         }
       >
         <Action href="#curriculum" fill>
-          Explore Courses & Enroll
+          Explore 3 Core Tracks ↓
         </Action>
         <Action href="/portal">
-          Preview Enrolled Student Portal →
+          Preview Student Portal →
         </Action>
         <Action href="/agentic-coding">
           ENG 100 Syllabus →
         </Action>
       </Hero>
 
-      {/* ── Architecture Terminal Card (Replaces Photo Hero) ── */}
-      <Band pad={40} measure={1152} rule={false}>
+      {/* ── 2. Interactive Terminal Sandbox Workstation ── */}
+      <Band pad={56} measure={1152} rule={false}>
         <Box
           rounded="var(--radius-2xl)"
           borderWidth={1}
@@ -137,7 +129,7 @@ export default function UniversityHomePage() {
           <XStack
             items="center"
             justify="space-between"
-            px="$4"
+            px="$5"
             py="$3"
             borderBottomWidth={1}
             borderColor="var(--border)"
@@ -201,7 +193,7 @@ export default function UniversityHomePage() {
             justify="space-between"
             flexWrap="wrap"
             gap="$3"
-            px="$4"
+            px="$5"
             py="$3"
             borderTopWidth={1}
             borderColor="var(--border)"
@@ -228,10 +220,149 @@ export default function UniversityHomePage() {
         </Box>
       </Band>
 
-      {/* ── The 25% Compute Rebate Value Proposition ── */}
-      <Band id="fellowships" pad={40} measure={1080}>
+      {/* ── 3. The 3 Core Engineering Programs (Curriculum) ── */}
+      <Band id="curriculum" pad={72} measure={1280} ground="var(--pure-black)">
+        <Head
+          eyebrow="Curriculum Catalog"
+          title="3 Core Engineering Programs"
+          lede="Focused, production-tested curricula in agentic software engineering, native reinforcement learning, and distributed AI systems. All courses include W3C credentials and 25% compute credit rebates."
+        />
+
+        {/* 3-Course Layout */}
+        <Grid columns={{ min: 340, max: 3 }} gap={28} mt="$6">
+          {UNIVERSITY_COURSES.map((course, idx) => {
+            const isFeatured = course.slug === 'reinforcement-learning'
+            return (
+              <Card
+                key={course.code}
+                p={28}
+                display="flex"
+                flexDirection="column"
+                justify="space-between"
+                borderWidth={1}
+                borderColor={isFeatured ? 'rgba(255, 255, 255, 0.35)' : 'var(--border)'}
+                bg="$panel"
+                position="relative"
+                $platform-web={{
+                  boxShadow: isFeatured ? '0 0 32px rgba(255, 255, 255, 0.05)' : 'none',
+                }}
+              >
+                {/* Featured Badge */}
+                {isFeatured && (
+                  <Box
+                    position="absolute"
+                    t={-12}
+                    l="50%"
+                    $platform-web={{ transform: 'translateX(-50%)' }}
+                    px={12}
+                    py={3}
+                    rounded={999}
+                    bg="var(--pure-black)"
+                    borderWidth={1}
+                    borderColor="var(--white)"
+                  >
+                    <Text fontSize="$1" fontFamily="$mono" fontWeight="700" color="var(--white)">
+                      FEATURED TRACK
+                    </Text>
+                  </Box>
+                )}
+
+                <YStack gap="$4">
+                  {/* Code & Credential Header */}
+                  <XStack items="center" justify="space-between" pt={isFeatured ? '$1' : 0}>
+                    <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
+                      {course.code} · {course.level}
+                    </Text>
+                    <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" fontWeight="700">
+                      {course.credential}
+                    </Chip>
+                  </XStack>
+
+                  {/* Title & Duration */}
+                  <YStack gap="$2">
+                    <Text fontSize="$4" fontWeight="700" color="var(--white)" lineHeight="$4">
+                      {course.title}
+                    </Text>
+                    <Text fontFamily="$mono" fontSize="$1" color="var(--emerald-400)">
+                      {course.duration} · {course.units}.0 Academic Units
+                    </Text>
+                    <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
+                      {course.summary}
+                    </Text>
+                  </YStack>
+
+                  {/* Capstone Deliverable Callout */}
+                  <Box
+                    p="$3"
+                    rounded="var(--radius-md)"
+                    bg="var(--pure-black)"
+                    borderWidth={1}
+                    borderColor="var(--border)"
+                  >
+                    <Text fontFamily="$mono" fontSize="$1" color="var(--white-70)" fontWeight="600" mb="$1">
+                      Verified Capstone:
+                    </Text>
+                    <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$1">
+                      {course.capstone}
+                    </Text>
+                  </Box>
+
+                  {/* Core Competencies Checklist */}
+                  <YStack gap="$2" my="$1">
+                    <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)">
+                      Technical Competencies:
+                    </Text>
+                    {course.competencies.map((comp, i) => (
+                      <XStack key={i} items="flex-start" gap="$2">
+                        <Check size={14} color="var(--white)" style={{ marginTop: 3, flexShrink: 0 }} />
+                        <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$1">
+                          {comp}
+                        </Text>
+                      </XStack>
+                    ))}
+                  </YStack>
+                </YStack>
+
+                {/* Pricing & Enrollment Footer */}
+                <YStack gap="$3" mt="$6" pt="$4" borderTopWidth={1} borderColor="var(--border)">
+                  <XStack items="baseline" justify="space-between">
+                    <XStack items="baseline" gap="$1">
+                      <Text fontSize="$5" fontWeight="700" color="var(--white)">
+                        ${course.price}
+                      </Text>
+                      <Text fontSize="$1" color="var(--muted-foreground)">
+                        USD
+                      </Text>
+                    </XStack>
+                    <Chip px={8} py={3} fontSize="$1" fontFamily="$mono" color="var(--white)">
+                      +${course.rebateCredits} Credits (25%)
+                    </Chip>
+                  </XStack>
+
+                  <XStack gap="$2" width="100%">
+                    <Action href={`/${course.slug}`} flex={1} $platform-web={{ textAlign: 'center' }}>
+                      Syllabus →
+                    </Action>
+                    <Action
+                      href={courseCheckoutUrl(course.slug)}
+                      fill
+                      flex={1}
+                      $platform-web={{ textAlign: 'center' }}
+                    >
+                      Enroll — ${course.price}
+                    </Action>
+                  </XStack>
+                </YStack>
+              </Card>
+            )
+          })}
+        </Grid>
+      </Band>
+
+      {/* ── 4. The 25% Compute Rebate Value Proposition ── */}
+      <Band id="fellowships" pad={72} measure={1152}>
         <Card
-          p={24}
+          p={32}
           borderWidth={1}
           borderColor="var(--border)"
           bg="$panel"
@@ -258,45 +389,67 @@ export default function UniversityHomePage() {
 
           <Text fontSize="$1" color="var(--white-80)" lineHeight="$2">
             Every enrollment immediately deposits 25% of tuition (rounded up to the nearest dollar)
-            directly into your Hanzo Cloud account. Use your credits across Zen 6, Enso reasoning models,
-            Kai finite-state decision loops, and gVisor sandbox container leases.
+            directly into your Hanzo Cloud account. Use your credits across Zen 6 local &amp; cloud inference,
+            Enso reasoning models, Kai finite-state decision loops, and gVisor sandbox container leases.
           </Text>
 
-          {/* Rebate Tiers */}
-          <Grid columns={{ min: 180, max: 5 }} gap={12}>
+          {/* Rebate Tiers for the 3 Programs */}
+          <Grid columns={{ min: 260, max: 3 }} gap={16} mt="$2">
             {[
-              { price: '$99', credit: '+$25', name: 'PRA 104' },
-              { price: '$149', credit: '+$38', name: 'SYS 103 / MKT 102' },
-              { price: '$199', credit: '+$50', name: 'ENG 100 Coding' },
-              { price: '$249', credit: '+$63', name: 'RL 101 Gym RL' },
-              { price: '$499', credit: '+$125', name: 'ARC 105 Architect' },
+              {
+                code: 'ENG 100',
+                title: 'Agentic Coding Systems',
+                tuition: '$199 USD',
+                rebate: '+$50 USD',
+                desc: 'gVisor Sandboxes & SWE-bench Evals',
+              },
+              {
+                code: 'RL 101',
+                title: 'Native Reinforcement Learning',
+                tuition: '$249 USD',
+                rebate: '+$63 USD',
+                desc: 'Gymnasium & Zoo Gym GPU Clusters',
+                highlight: true,
+              },
+              {
+                code: 'SYS 103',
+                title: 'Systems Engineering',
+                tuition: '$149 USD',
+                rebate: '+$38 USD',
+                desc: 'Zen 6 Serving & 4-Surface APIs',
+              },
             ].map((tier, idx) => (
-              <Box
+              <YStack
                 key={idx}
-                p="$3"
+                gap="$2"
+                items="center"
+                p="$5"
                 rounded="var(--radius-lg)"
                 borderWidth={1}
-                borderColor="var(--border)"
+                borderColor={tier.highlight ? 'rgba(255, 255, 255, 0.35)' : 'var(--border)'}
                 bg="var(--pure-black)"
                 $platform-web={{ textAlign: 'center' }}
               >
                 <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
-                  {tier.name}
+                  {tier.code} · {tier.title}
                 </Text>
-                <Text fontSize="$3" fontWeight="700" color="var(--white)" my="$1">
-                  {tier.price} Tuition
+                <Text fontSize="$5" fontWeight="700" color="var(--white)" my="$1">
+                  {tier.tuition}
                 </Text>
-                <Text fontFamily="$mono" fontSize="$1" color="var(--white)" fontWeight="600">
-                  {tier.credit} USD Credits
+                <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                  {tier.rebate} Rebate
+                </Chip>
+                <Text fontSize="$1" color="var(--muted-foreground)" mt="$1">
+                  {tier.desc}
                 </Text>
-              </Box>
+              </YStack>
             ))}
           </Grid>
         </Card>
       </Band>
 
-      {/* ── THE COMPARISON CHART: How This Certification Helps You ── */}
-      <Band id="comparison" pad={48} measure={1200} ground="var(--pure-black)">
+      {/* ── 5. Market Comparison & Career Value ── */}
+      <Band id="comparison" pad={72} measure={1200} ground="var(--pure-black)">
         <Head
           eyebrow="Market Comparison & Career Value"
           title="How Hanzo certification separates you from the market"
@@ -360,7 +513,7 @@ export default function UniversityHomePage() {
                     letterSpacing={0.5}
                     $platform-web={{ display: 'table-cell', textAlign: 'left' }}
                   >
-                    Hanzo Certified Systems Engineer (HACE / HARLE)
+                    Hanzo Certified Systems Engineer (HACE / HARLE / HCAISE)
                   </Text>
                 </Text>
               </View>
@@ -474,78 +627,78 @@ export default function UniversityHomePage() {
         </Grid>
       </Band>
 
-      {/* ── Six Pillars of Production Rigor ── */}
-      <Band id="credentials" pad={44} measure={1200}>
+      {/* ── 6. Six Pillars of Production Rigor ── */}
+      <Band id="credentials" pad={72} measure={1200}>
         <Head
           eyebrow="Pedagogical Architecture"
           title="Engineered for software engineers. Not prompt hobbyists."
           lede="Every concept is grounded in systems engineering: zero-copy RPC, bounded memory state machines, reinforcement learning environments, and cryptographic credentials."
         />
 
-        <Grid columns={{ min: 320, max: 3 }} gap={20}>
-          <Card p={24}>
+        <Grid columns={{ min: 320, max: 3 }} gap={24} mt="$4">
+          <Card p={28}>
             <YStack gap="$2">
               <Scale size={22} color="var(--white)" />
               <Text fontSize="$3" fontWeight="700" color="var(--white)" mt="$2">
                 Automated CI Grading
               </Text>
               <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                Zero human subjectivity. Submissions are graded by isolated CI runners that clone your repository, inject breaking changes, and evaluate repair velocity and test pass rates.
+                Every lab submits to isolated cleanroom containers running real-world SWE-bench issues. No multiple choice quizzes; your code either passes or fails.
               </Text>
             </YStack>
           </Card>
 
-          <Card p={24}>
+          <Card p={28}>
+            <YStack gap="$2">
+              <Terminal size={22} color="var(--white)" />
+              <Text fontSize="$3" fontWeight="700" color="var(--white)" mt="$2">
+                User-Space Sandboxes
+              </Text>
+              <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
+                Execute agent toolchains inside ephemeral Google gVisor user-space virtualization kernels with sub-millisecond setup and zero privileged access.
+              </Text>
+            </YStack>
+          </Card>
+
+          <Card p={28}>
             <YStack gap="$2">
               <Coins size={22} color="var(--white)" />
               <Text fontSize="$3" fontWeight="700" color="var(--white)" mt="$2">
-                Integer Micro-USD Ceilings
+                Strict Budget Controls
               </Text>
               <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                Prevent runaway cloud bills. Learn to configure pre-call price quoting, in-band budget refusals, and sub-cent financial caps directly in your agent loop.
+                Govern token spend with micro-USD precision. Implement strict pre-call cost envelopes, in-band budget refusals, and hard stop triggers.
               </Text>
             </YStack>
           </Card>
 
-          <Card p={24}>
-            <YStack gap="$2">
-              <Cpu size={22} color="var(--white)" />
-              <Text fontSize="$3" fontWeight="700" color="var(--white)" mt="$2">
-                Zero-Token Decision Loops
-              </Text>
-              <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                Generate text only when generation is strictly required. Master finite-state control with Kai, evaluating tool calls and routing without paying for generation tokens.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24}>
+          <Card p={28}>
             <YStack gap="$2">
               <Zap size={22} color="var(--white)" />
               <Text fontSize="$3" fontWeight="700" color="var(--white)" mt="$2">
-                Zero-Copy ZAP Protocols
+                Zero-Copy ZAP RPC
               </Text>
               <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                Replace 200ms JSON-RPC hops with Cap&rsquo;n Proto zero-copy serialization. Connect multi-agent swarms with microsecond inter-process latency and post-quantum encryption.
+                Eliminate serialization bottlenecks. Multi-agent swarms communicate using binary Cap’n Proto protocols achieving sub-2ms inter-agent latency.
               </Text>
             </YStack>
           </Card>
 
-          <Card p={24}>
+          <Card p={28}>
             <YStack gap="$2">
-              <Boxes size={22} color="var(--white)" />
+              <Cpu size={22} color="var(--white)" />
               <Text fontSize="$3" fontWeight="700" color="var(--white)" mt="$2">
-                Native Gymnasium Environments
+                Finite-State Decision Models
               </Text>
               <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                Model agent interactions as formal Markov Decision Processes (MDP). Train custom policy routers, write multi-objective reward functions, and run Zoo Gym fine-tuning.
+                Replace hallucination-prone prompt retry loops with Kai finite-state decision checkpoints evaluated directly against logit probability distributions.
               </Text>
             </YStack>
           </Card>
 
-          <Card p={24}>
+          <Card p={28}>
             <YStack gap="$2">
-              <ShieldCheck size={22} color="var(--white)" />
+              <Award size={22} color="var(--white)" />
               <Text fontSize="$3" fontWeight="700" color="var(--white)" mt="$2">
                 W3C Cryptographic Proof
               </Text>
@@ -557,158 +710,16 @@ export default function UniversityHomePage() {
         </Grid>
       </Band>
 
-      {/* ── Courses & Certifications Catalog ── */}
-      <Band id="curriculum" pad={48} measure={1280} ground="var(--pure-black)">
-        <Head
-          eyebrow="Curriculum Catalog"
-          title="Courses & Professional Certifications"
-          lede="Select an engineering track to inspect syllabi, lab architectures, and enrollment packages."
-        />
-
-        {/* Track Filter Tabs */}
-        <XStack justify="center" gap="$2" mb="$8" flexWrap="wrap">
-          {[
-            { id: 'all', label: 'All 6 Courses' },
-            { id: 'coding', label: 'Agentic Coding' },
-            { id: 'rl', label: 'Reinforcement Learning' },
-            { id: 'marketing', label: 'Agentic Marketing' },
-            { id: 'systems', label: 'Systems Foundation' },
-            { id: 'architect', label: 'Enterprise Architect' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTrack(tab.id)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '9999px',
-                border: `1px solid ${activeTrack === tab.id ? 'var(--white)' : 'var(--neutral-800)'}`,
-                background: activeTrack === tab.id ? 'var(--white-10)' : 'transparent',
-                color: activeTrack === tab.id ? 'var(--white)' : 'var(--muted-foreground)',
-                cursor: 'pointer',
-                fontFamily: 'monospace',
-                fontSize: '0.8125rem',
-                fontWeight: activeTrack === tab.id ? 700 : 400,
-                outline: 'none',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </XStack>
-
-        <Grid columns={{ min: 360, max: 3 }} gap={24}>
-          {filteredCourses.map((course) => (
-            <Card
-              key={course.code}
-              p={24}
-              display="flex"
-              flexDirection="column"
-              justify="space-between"
-              borderWidth={1}
-              borderColor="var(--border)"
-              bg="$panel"
-              position="relative"
-            >
-              <YStack gap="$4">
-                {/* Code & Acronym Header */}
-                <XStack items="center" justify="space-between">
-                  <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
-                    {course.code} · {course.level}
-                  </Text>
-                  <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" fontWeight="700">
-                    {course.credential}
-                  </Chip>
-                </XStack>
-
-                {/* Title & Description */}
-                <YStack gap="$2">
-                  <Text fontSize="$4" fontWeight="700" color="var(--white)" lineHeight="$4">
-                    {course.title}
-                  </Text>
-                  <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                    {course.summary}
-                  </Text>
-                </YStack>
-
-                {/* Capstone Deliverable Callout */}
-                <Box
-                  p="$3"
-                  rounded="var(--radius-md)"
-                  bg="var(--pure-black)"
-                  borderWidth={1}
-                  borderColor="var(--border)"
-                >
-                  <Text fontFamily="$mono" fontSize="$1" color="var(--white-70)" fontWeight="600" mb="$1">
-                    Verified Capstone:
-                  </Text>
-                  <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$1">
-                    {course.capstone}
-                  </Text>
-                </Box>
-
-                {/* Core Competencies Checklist */}
-                <YStack gap="$2" my="$1">
-                  <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)">
-                    Technical Competencies:
-                  </Text>
-                  {course.competencies.map((comp, i) => (
-                    <XStack key={i} items="flex-start" gap="$2">
-                      <Check size={14} color="var(--white)" style={{ marginTop: 3, flexShrink: 0 }} />
-                      <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$1">
-                        {comp}
-                      </Text>
-                    </XStack>
-                  ))}
-                </YStack>
-              </YStack>
-
-              {/* Pricing & Enrollment Footer */}
-              <YStack gap="$3" mt="$6" pt="$4" borderTopWidth={1} borderColor="var(--border)">
-                <XStack items="baseline" justify="space-between">
-                  <XStack items="baseline" gap="$1">
-                    <Text fontSize="$5" fontWeight="700" color="var(--white)">
-                      ${course.price}
-                    </Text>
-                    <Text fontSize="$1" color="var(--muted-foreground)">
-                      USD
-                    </Text>
-                  </XStack>
-                  <Chip px={8} py={3} fontSize="$1" fontFamily="$mono" color="var(--white)">
-                    +${course.rebateCredits} Credits (25%)
-                  </Chip>
-                </XStack>
-
-                <XStack gap="$2" width="100%">
-                  <Action href={`/${course.slug}`} flex={1} $platform-web={{ textAlign: 'center' }}>
-                    Syllabus →
-                  </Action>
-                  <Action
-                    href={courseCheckoutUrl(course.slug)}
-                    fill
-                    flex={1}
-                    $platform-web={{ textAlign: 'center' }}
-                  >
-                    Enroll — ${course.price}
-                  </Action>
-
-                </XStack>
-              </YStack>
-            </Card>
-          ))}
-        </Grid>
-      </Band>
-
-      {/* ── EXPANDED FREQUENTLY ASKED QUESTIONS (FAQS) ── */}
-      <Band pad={48} measure={1080}>
+      {/* ── 7. Frequently Asked Questions (FAQ) ── */}
+      <Band pad={72} measure={1080}>
         <Head
           eyebrow="Frequently Asked Questions"
           title="Everything you need to know about Hanzo University"
           lede="Clear answers regarding our 25% compute rebate, automated cleanroom grading, hardware specifications, and credential verification."
         />
 
-        <Grid columns={{ min: 380, max: 2 }} gap={20}>
-          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
+        <Grid columns={{ min: 380, max: 2 }} gap={24} mt="$4">
+          <Card p={28} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 How does the 25% usage credit rebate work?
@@ -719,7 +730,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
+          <Card p={28} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 How are capstone projects graded and evaluated?
@@ -730,7 +741,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
+          <Card p={28} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 Why do hiring managers value Hanzo credentials over AWS/Azure/Coursera?
@@ -741,7 +752,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
+          <Card p={28} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 What format are credentials issued in?
@@ -752,7 +763,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
+          <Card p={28} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 Can I expense this course through my employer?
@@ -763,7 +774,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
+          <Card p={28} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 Do I need a high-end local GPU?
@@ -774,18 +785,18 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
+          <Card p={28} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 Are courses self-paced, and what happens if my agent fails a test?
               </Text>
               <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                All 6 courses are completely self-paced with continuous automated grading. You have unlimited attempts to submit your repository to the grader pods with zero penalty. You iterate on your agent architecture until it achieves 100% test pass rates and satisfies the evaluation rubric.
+                All 3 courses are completely self-paced with continuous automated grading. You have unlimited attempts to submit your repository to the grader pods with zero penalty. You iterate on your agent architecture until it achieves 100% test pass rates and satisfies the evaluation rubric.
               </Text>
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
+          <Card p={28} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 What are the technical prerequisites?
@@ -798,19 +809,19 @@ export default function UniversityHomePage() {
         </Grid>
       </Band>
 
-      {/* ── Final Call to Action ── */}
-      <Band pad={48} measure={800} ground="var(--pure-black)">
+      {/* ── 8. Final Call to Action ── */}
+      <Band pad={72} measure={800} ground="var(--pure-black)">
         <YStack items="center" $platform-web={{ textAlign: 'center' }} gap="$4">
           <Eyebrow>Open Enrollment</Eyebrow>
           <Title quiet={false}>
             Ready to build systems that scale?
           </Title>
           <Lede>
-            Enroll today to claim your 25% usage credit rebate and gain instant access to browser-based Hanzo Dev sandboxes.
+            Enroll today in one of our 3 core tracks to claim your 25% usage credit rebate and gain instant access to browser-based Hanzo Dev sandboxes.
           </Lede>
           <XStack justify="center" gap="$3" mt="$3" flexWrap="wrap">
             <Action href="#curriculum" fill>
-              Enroll in a Course
+              Enroll in a Track
             </Action>
             <Action href="/portal">
               Preview Student Portal →

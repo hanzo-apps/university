@@ -1,16 +1,12 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { UNIVERSITY_COURSES } from '../../courses-data'
+import { ALL_COURSES, findCourse } from '../../courses-data'
 import { CheckoutFlow } from './CheckoutFlow'
 
 export function generateStaticParams() {
-  return UNIVERSITY_COURSES.map((c) => ({
+  return ALL_COURSES.map((c) => ({
     slug: c.slug,
   }))
-}
-
-function findCourse(slug: string) {
-  return UNIVERSITY_COURSES.find((c) => c.slug === slug)
 }
 
 export async function generateMetadata({

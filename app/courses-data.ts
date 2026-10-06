@@ -307,75 +307,6 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
     ],
   },
   {
-    slug: 'agentic-marketing',
-    code: 'MKT 102',
-    title: 'Agentic Marketing & Autonomous Campaigns',
-    credential: 'HAME',
-    credentialFull: 'Hanzo Certified Agentic Marketing Engineer',
-    track: 'marketing',
-    units: 3.0,
-    price: 149,
-    rebateCredits: 38,
-    duration: '3 Weeks · Self-Paced',
-    level: 'Intermediate',
-    prerequisites: 'Familiarity with digital marketing concepts, APIs, and basic scripting',
-    summary:
-      'Engineer programmatic growth machines. Generate multi-channel copy, studio images, voiceovers, and videos with locked brand voice, direct CMS hooks, and closed-loop CRO reinforcement.',
-    capstone: 'Deploy an automated multi-channel campaign engine with real-time conversion reinforcement.',
-    competencies: [
-      'POST /v1/content/generate CMS pipelines',
-      'Multi-modal asset generation (Zen 3, Wan 2.2)',
-      'Event-driven campaign automation with /v1/auto',
-      'Closed-loop A/B testing & LinUCB CRO optimization',
-    ],
-    planId: 'course-mkt-102',
-    instructor: {
-      name: 'Elena Rostova',
-      role: 'Growth Systems Lead, Hanzo Commercial Labs',
-    },
-    syllabus: [
-      {
-        week: 'Week 1',
-        code: 'MKT 102.1',
-        title: 'Brand Consistency & Deterministic Multimodal Pipelines',
-        summary: 'Lock brand voice, tone guidelines, and visual assets into deterministic programmatic generation pipelines.',
-        lectures: [
-          'Brand voice vector embeddings and system prompt constraint engineering',
-          'Image and visual asset generation with consistent seeds, palettes, and typography',
-          'Voiceover synthesis and audio mastering via /v1/audio/speech',
-        ],
-        readings: ['Hanzo Documentation: Multimodal Content Synthesis and Brand Voice Guardrails'],
-        lab: 'Lab 1: Generate 10 verified multi-channel marketing variants that pass automated brand voice checks.',
-      },
-      {
-        week: 'Week 2',
-        code: 'MKT 102.2',
-        title: 'Event-Driven Workflow Orchestration with /v1/auto',
-        summary: 'Connect customer behavior events, webhook triggers, and autonomous agent workers.',
-        lectures: [
-          'Webhook payload ingestion and schema mapping',
-          'Stateful customer journey graphs with conditional branching',
-          'Rate limiting, email deliverability, and compliance auditing',
-        ],
-        readings: ['Enterprise Automation: Event-Driven Lifecycle Messaging at Scale'],
-        lab: 'Lab 2: Wire an event-driven automation flow that responds to user onboarding milestones.',
-      },
-      {
-        week: 'Week 3',
-        code: 'MKT 102.3',
-        title: 'Closed-Loop Conversion Rate Optimization (CRO)',
-        summary: 'Build bandit-driven landing page optimization loops that iterate copy and layouts dynamically.',
-        lectures: [
-          'Multi-armed bandit testing vs traditional static A/B tests',
-          'Real-time conversion feedback ingestion via /v1/analytics',
-          'Capstone evaluation and HAME certification issuance',
-        ],
-        readings: ['Scott: Multi-Armed Bandits for Digital Experimentation'],
-        lab: 'Capstone Project: Deploy an autonomous landing page optimizer that increases conversion by > 15%.',
-      },
-    ],
-  },
-  {
     slug: 'systems-engineering',
     code: 'SYS 103',
     title: 'Hanzo AI Systems Engineering Foundation',
@@ -441,6 +372,78 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
         ],
         readings: ['Google SRE: Site Reliability Engineering: Managing Cascading Failures'],
         lab: 'Capstone Project: Deliver a sub-50ms AI microservice that handles 500 RPS without budget overruns.',
+      },
+    ],
+  },
+]
+
+export const ADDITIONAL_COURSES: UniversityCourse[] = [
+  {
+    slug: 'agentic-marketing',
+    code: 'MKT 102',
+    title: 'Agentic Marketing & Autonomous Campaigns',
+    credential: 'HAME',
+    credentialFull: 'Hanzo Certified Agentic Marketing Engineer',
+    track: 'marketing',
+    units: 3.0,
+    price: 149,
+    rebateCredits: 38,
+    duration: '3 Weeks · Self-Paced',
+    level: 'Intermediate',
+    prerequisites: 'Familiarity with digital marketing concepts, APIs, and basic scripting',
+    summary:
+      'Engineer programmatic growth machines. Generate multi-channel copy, studio images, voiceovers, and videos with locked brand voice, direct CMS hooks, and closed-loop CRO reinforcement.',
+    capstone: 'Deploy an automated multi-channel campaign engine with real-time conversion reinforcement.',
+    competencies: [
+      'POST /v1/content/generate CMS pipelines',
+      'Multi-modal asset generation (Zen 3, Wan 2.2)',
+      'Event-driven campaign automation with /v1/auto',
+      'Closed-loop A/B testing & LinUCB CRO optimization',
+    ],
+    planId: 'course-mkt-102',
+    instructor: {
+      name: 'Elena Rostova',
+      role: 'Growth Systems Lead, Hanzo Commercial Labs',
+    },
+    syllabus: [
+      {
+        week: 'Week 1',
+        code: 'MKT 102.1',
+        title: 'Brand Consistency & Deterministic Multimodal Pipelines',
+        summary: 'Lock brand voice, tone guidelines, and visual assets into deterministic programmatic generation pipelines.',
+        lectures: [
+          'Brand voice vector embeddings and system prompt constraint engineering',
+          'Image and visual asset generation with consistent seeds, palettes, and typography',
+          'Voiceover synthesis and audio mastering via /v1/audio/speech',
+        ],
+        readings: ['Hanzo Documentation: Multimodal Content Synthesis and Brand Voice Guardrails'],
+        lab: 'Lab 1: Generate 10 verified multi-channel marketing variants that pass automated brand voice checks.',
+      },
+      {
+        week: 'Week 2',
+        code: 'MKT 102.2',
+        title: 'Event-Driven Workflow Orchestration with /v1/auto',
+        summary: 'Connect customer behavior events, webhook triggers, and autonomous agent workers.',
+        lectures: [
+          'Webhook payload ingestion and schema mapping',
+          'Stateful customer journey graphs with conditional branching',
+          'Rate limiting, email deliverability, and compliance auditing',
+        ],
+        readings: ['Enterprise Automation: Event-Driven Lifecycle Messaging at Scale'],
+        lab: 'Lab 2: Wire an event-driven automation flow that responds to user onboarding milestones.',
+      },
+      {
+        week: 'Week 3',
+        code: 'MKT 102.3',
+        title: 'Closed-Loop Conversion Rate Optimization (CRO)',
+        summary: 'Build bandit-driven landing page optimization loops that iterate copy and layouts dynamically.',
+        lectures: [
+          'Multi-armed bandit testing vs traditional static A/B tests',
+          'Real-time conversion feedback ingestion via /v1/analytics',
+          'Capstone evaluation and HAME certification issuance',
+        ],
+        readings: ['Scott: Multi-Armed Bandits for Digital Experimentation'],
+        lab: 'Capstone Project: Deploy an autonomous landing page optimizer that increases conversion by > 15%.',
       },
     ],
   },
@@ -609,3 +612,12 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
     ],
   },
 ]
+
+export const ALL_COURSES: UniversityCourse[] = [
+  ...UNIVERSITY_COURSES,
+  ...ADDITIONAL_COURSES,
+]
+
+export function findCourse(slug: string): UniversityCourse | undefined {
+  return ALL_COURSES.find((c) => c.slug === slug)
+}
