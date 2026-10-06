@@ -30,7 +30,8 @@ import {
   XCircle,
 } from 'lucide-react'
 import { UNIVERSITY_COURSES, type UniversityCourse } from './courses-data'
-import { checkoutUrl } from '@/lib/pay'
+import { courseCheckoutUrl } from '@/lib/pay'
+
 
 const COMPARISON_ROWS = [
   {
@@ -681,13 +682,14 @@ export default function UniversityHomePage() {
                     Syllabus & Coupon →
                   </Action>
                   <Action
-                    href={checkoutUrl(course.planId, `https://hanzo.university/${course.slug}`)}
+                    href={courseCheckoutUrl(course.slug)}
                     fill
                     flex={1}
                     $platform-web={{ textAlign: 'center' }}
                   >
                     Enroll — ${course.price}
                   </Action>
+
                 </XStack>
               </YStack>
             </Card>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Box, Text, XStack, YStack } from '@/components/ui'
 import { Band, Card } from '@/components/band'
@@ -34,6 +34,28 @@ export default function StudentPortalPage() {
   const [selectedCourseSlug, setSelectedCourseSlug] = useState<string>('agentic-coding')
   const [activeTab, setActiveTab] = useState<'terminal' | 'ast' | 'grader' | 'metering'>('terminal')
   const [activeWeekIndex, setActiveWeekIndex] = useState<number>(2) // Week 3 in progress
+  const [studentHandle, setStudentHandle] = useState<string>('hz-stu-9821a')
+  const [welcomeBanner, setWelcomeBanner] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const enrolled = params.get('enrolled')
+      const student = params.get('student')
+      const welcome = params.get('welcome')
+
+      if (enrolled && UNIVERSITY_COURSES.some((c) => c.slug === enrolled)) {
+        setSelectedCourseSlug(enrolled)
+      }
+      if (student) {
+        setStudentHandle(student)
+      }
+      if (welcome === '1') {
+        setWelcomeBanner(true)
+      }
+    }
+  }, [])
+
   const [terminalHistory, setTerminalHistory] = useState<string[]>([
     'alex@hanzo-sandbox:~/swe-bench-agent$ hanzo dev status',
     '[OK] gVisor runsc sandbox lease active (id: pod-gvs-uswest2-01)',
@@ -162,9 +184,10 @@ export default function StudentPortalPage() {
                 Student ID:
               </Text>
               <Text fontSize="$1" fontWeight="600" color="var(--white)" fontFamily="$mono">
-                hz-stu-9821a
+                {studentHandle.startsWith('hz-stu-') ? studentHandle : `@${studentHandle}`}
               </Text>
             </XStack>
+
 
             <Action
               render="button"
@@ -222,7 +245,48 @@ export default function StudentPortalPage() {
 
       {/* ── Main Workspace Dashboard ── */}
       <Band pad={40} measure={1280}>
+        {/* Newly Enrolled Welcome Banner */}
+        {welcomeBanner && (
+          <Box
+            p="$4"
+            mb="$6"
+            rounded="var(--radius-lg)"
+            bg="var(--pure-black)"
+            borderWidth={1}
+            borderColor="var(--emerald-500)"
+            $platform-web={{
+              boxShadow: '0 0 24px rgba(16, 185, 129, 0.25)',
+            }}
+          >
+            <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
+              <XStack items="center" gap="$3">
+                <Box p="$2" rounded="var(--radius-md)" bg="var(--emerald-950)">
+                  <Sparkles size={22} color="var(--emerald-400)" />
+                </Box>
+                <YStack gap={2}>
+                  <Text fontSize="$3" fontWeight="700" color="var(--white)">
+                    🎉 Welcome to Hanzo University, @{studentHandle}!
+                  </Text>
+                  <Text fontSize="$1" color="var(--white-70)">
+                    Tuition payment cleared. Your Hanzo ID (`did:hanzo:student:{studentHandle}`) is verified, ${activeCourse.rebateCredits}.00 USD Day 1 compute tokens are loaded, and your gVisor sandbox container is provisioned.
+                  </Text>
+                </YStack>
+              </XStack>
+              <Action
+                render="button"
+                onClick={() => setWelcomeBanner(false)}
+                px={12}
+                py={6}
+                $platform-web={{ fontSize: '12px' }}
+              >
+                Dismiss
+              </Action>
+            </XStack>
+          </Box>
+        )}
+
         {/* Welcome Notification Banner */}
+
         <Box
           p="$4"
           mb="$6"

@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Box, Text, XStack, YStack } from '@/components/ui'
 import { Action, Chip } from '@hanzo/ui/marketing'
 import { Tag, Check, X, ArrowRight } from 'lucide-react'
-import { checkoutUrl } from '@/lib/pay'
+import { courseCheckoutUrl } from '@/lib/pay'
 import { validateCoupon, type CouponResult } from './courses-data'
 
 interface CouponInputProps {
@@ -32,13 +32,11 @@ export function CouponInput({
 
   const activePrice = applied?.valid ? applied.finalPrice : originalPrice
   const activeRebate = applied?.valid ? applied.rebateCredits : rebateCredits
-  const backUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}${returnPath || `/${courseSlug}`}`
-    : `https://hanzo.university${returnPath || `/${courseSlug}`}`
 
   const checkoutHref = applied?.valid
-    ? `${checkoutUrl(planId, backUrl)}&coupon=${encodeURIComponent(applied.code)}&amount=${activePrice}`
-    : checkoutUrl(planId, backUrl)
+    ? courseCheckoutUrl(courseSlug, applied.code)
+    : courseCheckoutUrl(courseSlug)
+
 
   const handleApply = (e?: React.FormEvent) => {
     if (e) e.preventDefault()

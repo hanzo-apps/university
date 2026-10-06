@@ -16,10 +16,11 @@ import {
 } from 'lucide-react'
 import { UNIVERSITY_COURSES, type UniversityCourse } from '../courses-data'
 import { CouponInput } from '../CouponInput'
-import { checkoutUrl } from '@/lib/pay'
+import { courseCheckoutUrl } from '@/lib/pay'
 
 export function CourseView({ course }: { course: UniversityCourse }) {
-  const defaultEnrollUrl = checkoutUrl(course.planId, `https://hanzo.university/${course.slug}`)
+  const defaultEnrollUrl = courseCheckoutUrl(course.slug)
+
 
   return (
     <Box minH="100vh" bg="$background" $platform-web={{ color: 'var(--foreground)' }}>
