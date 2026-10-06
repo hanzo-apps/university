@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Clock,
   Play,
+  Pause,
   Award,
   Cpu,
   ShieldCheck,
@@ -29,9 +30,24 @@ import {
   BookOpen,
   ArrowRight,
   CheckCircle,
+  Volume2,
+  Maximize2,
+  FileText,
+  RotateCcw,
+  Zap,
 } from 'lucide-react'
 import { UNIVERSITY_COURSES, type UniversityCourse } from '../courses-data'
 import { COURSE_PORTAL_DATA } from './portal-data'
+
+interface ActiveLectureItem {
+  title: string
+  weekCode: string
+  weekTitle: string
+  type: 'lecture' | 'reading'
+  summary: string
+  duration?: string
+  instructor?: string
+}
 
 export default function StudentPortalPage() {
   const [selectedCourseSlug, setSelectedCourseSlug] = useState<string>('agentic-coding')
@@ -45,21 +61,23 @@ export default function StudentPortalPage() {
   const [completedModules, setCompletedModules] = useState<Record<string, number[]>>({
     'agentic-coding': [0, 1, 2],
     'reinforcement-learning': [0, 1, 2],
-    'agentic-marketing': [0, 1],
     'systems-engineering': [0, 1],
-    'ai-practitioner': [0],
-    'ai-architect': [0, 1, 2, 3],
   })
 
   // Capstone defense passed per course
   const [capstonePassed, setCapstonePassed] = useState<Record<string, boolean>>({
     'agentic-coding': false,
     'reinforcement-learning': false,
-    'agentic-marketing': false,
     'systems-engineering': false,
-    'ai-practitioner': false,
-    'ai-architect': false,
   })
+
+  // Watched lectures / read papers
+  const [watchedLectures, setWatchedLectures] = useState<Record<string, string[]>>({})
+
+  // Active lecture / paper modal state
+  const [activeLectureModal, setActiveLectureModal] = useState<ActiveLectureItem | null>(null)
+  const [isPlayingMedia, setIsPlayingMedia] = useState<boolean>(false)
+  const [playbackRate, setPlaybackRate] = useState<number>(1)
 
   const [isRunningCommand, setIsRunningCommand] = useState(false)
   const [isDefending, setIsDefending] = useState(false)
@@ -76,9 +94,35 @@ export default function StudentPortalPage() {
   // Terminal history state
   const [terminalHistory, setTerminalHistory] = useState<string[]>(workspaceData.initialHistory)
 
-  // Handle URL query parameters for enrollment and student name
+  // Hydrate from localStorage and handle URL query parameters
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      try {
+        const savedModules = localStorage.getItem('hanzo_portal_completed_modules')
+        if (savedModules) {
+          setCompletedModules(JSON.parse(savedModules))
+        }
+        const savedCapstones = localStorage.getItem('hanzo_portal_capstone_passed')
+        if (savedCapstones) {
+          setCapstonePassed(JSON.parse(savedCapstones))
+        }
+        const savedHandle = localStorage.getItem('hanzo_portal_student_handle')
+        if (savedHandle) {
+          setStudentHandle(savedHandle)
+          setStudentName(savedHandle.charAt(0).toUpperCase() + savedHandle.slice(1))
+        }
+        const savedWatched = localStorage.getItem('hanzo_portal_watched_lectures')
+        if (savedWatched) {
+          setWatchedLectures(JSON.parse(savedWatched))
+        }
+        const savedCourse = localStorage.getItem('hanzo_portal_selected_course')
+        if (savedCourse && UNIVERSITY_COURSES.some((c) => c.slug === savedCourse)) {
+          setSelectedCourseSlug(savedCourse)
+        }
+      } catch (e) {
+        console.error('Failed to parse portal storage', e)
+      }
+
       const params = new URLSearchParams(window.location.search)
       const enrolled = params.get('enrolled')
       const student = params.get('student')
@@ -86,10 +130,16 @@ export default function StudentPortalPage() {
 
       if (enrolled && UNIVERSITY_COURSES.some((c) => c.slug === enrolled)) {
         setSelectedCourseSlug(enrolled)
+        try {
+          localStorage.setItem('hanzo_portal_selected_course', enrolled)
+        } catch (_) {}
       }
       if (student) {
         setStudentHandle(student)
         setStudentName(student.charAt(0).toUpperCase() + student.slice(1))
+        try {
+          localStorage.setItem('hanzo_portal_student_handle', student)
+        } catch (_) {}
       }
       if (welcome === '1') {
         setWelcomeBanner(true)
@@ -102,6 +152,11 @@ export default function StudentPortalPage() {
     const data = COURSE_PORTAL_DATA[selectedCourseSlug] || COURSE_PORTAL_DATA['agentic-coding']
     setTerminalHistory(data.initialHistory)
     setActiveWeekIndex(0)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('hanzo_portal_selected_course', selectedCourseSlug)
+      } catch (_) {}
+    }
   }, [selectedCourseSlug])
 
   // Execute terminal command
@@ -144,18 +199,87 @@ export default function StudentPortalPage() {
     setTimeout(() => {
       setCompletedModules((prev) => {
         const current = prev[selectedCourseSlug] || []
-        if (!current.includes(weekIdx)) {
-          return {
-            ...prev,
-            [selectedCourseSlug]: [...current, weekIdx].sort((a, b) => a - b),
-          }
+        const updated = !current.includes(weekIdx)
+          ? { ...prev, [selectedCourseSlug]: [...current, weekIdx].sort((a, b) => a - b) }
+          : prev
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('hanzo_portal_completed_modules', JSON.stringify(updated))
+          } catch (_) {}
         }
-        return prev
+        return updated
       })
       setIsRunningCommand(false)
       setFeedbackToast(`Module ${week.code} passed! Coursework progress updated.`)
       setTimeout(() => setFeedbackToast(null), 3500)
     }, 800)
+  }
+
+  // Fast-track all labs for testing & evaluation
+  const handleFastTrackAllLabs = () => {
+    const totalCount = activeCourse.syllabus.length
+    const allIndices = Array.from({ length: totalCount }, (_, i) => i)
+    const prompt = workspaceData.terminalPrompt
+
+    setTerminalHistory((prev) => [
+      ...prev,
+      `${prompt} hanzo autograder --fast-track-all ${activeCourse.code}`,
+      `[AUTOGRADER] Fast-tracking all ${totalCount} laboratory evaluations for ${activeCourse.code}...`,
+      `  [✓] Module 1: Baseline sandbox initialization & unit tests verified.`,
+      `  [✓] Module 2: Intermediate optimization & memory constraints passed.`,
+      `  [✓] Module 3: Advanced architecture verification & zero regressions confirmed.`,
+      `  [✓] Module 4: Pre-capstone integration & telemetry telemetry exit code 0.`,
+      `[SUCCESS] All laboratory modules satisfied! 100% pass mark recorded.`,
+      `[STATUS] Qualifications MET for official Capstone Defense.`,
+      `${prompt} _`,
+    ])
+
+    setCompletedModules((prev) => {
+      const updated = { ...prev, [selectedCourseSlug]: allIndices }
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('hanzo_portal_completed_modules', JSON.stringify(updated))
+        } catch (_) {}
+      }
+      return updated
+    })
+
+    setFeedbackToast(`All ${totalCount} laboratory modules passed! Capstone defense unlocked.`)
+    setTimeout(() => setFeedbackToast(null), 3500)
+  }
+
+  // Reset progress for active course
+  const handleResetCourseProgress = () => {
+    setCompletedModules((prev) => {
+      const updated = { ...prev, [selectedCourseSlug]: [0] }
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('hanzo_portal_completed_modules', JSON.stringify(updated))
+        } catch (_) {}
+      }
+      return updated
+    })
+
+    setCapstonePassed((prev) => {
+      const updated = { ...prev, [selectedCourseSlug]: false }
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('hanzo_portal_capstone_passed', JSON.stringify(updated))
+        } catch (_) {}
+      }
+      return updated
+    })
+
+    setActiveWeekIndex(0)
+    const prompt = workspaceData.terminalPrompt
+    setTerminalHistory((prev) => [
+      ...prev,
+      `${prompt} hanzo dev reset-progress --course ${activeCourse.code}`,
+      `[RESET] Progress reset for ${activeCourse.code}. Workspace restored to baseline.`,
+      `${prompt} _`,
+    ])
+    setFeedbackToast(`Coursework reset for ${activeCourse.code}. Ready to start fresh.`)
+    setTimeout(() => setFeedbackToast(null), 3000)
   }
 
   // Defend Capstone and officially graduate
@@ -177,9 +301,80 @@ export default function StudentPortalPage() {
 
     setTimeout(() => {
       setIsDefending(false)
-      setCapstonePassed((prev) => ({ ...prev, [selectedCourseSlug]: true }))
+      setCapstonePassed((prev) => {
+        const updated = { ...prev, [selectedCourseSlug]: true }
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('hanzo_portal_capstone_passed', JSON.stringify(updated))
+          } catch (_) {}
+        }
+        return updated
+      })
       setShowCredentialModal(true)
     }, 1200)
+  }
+
+  // Open Lecture or Reading Modal
+  const openLectureModal = (
+    week: (typeof activeCourse.syllabus)[0],
+    itemTitle: string,
+    type: 'lecture' | 'reading',
+  ) => {
+    setActiveLectureModal({
+      title: itemTitle,
+      weekCode: week.code,
+      weekTitle: week.title,
+      type,
+      summary: week.summary,
+      duration: type === 'lecture' ? '38 mins' : '15 min read',
+      instructor: activeCourse.instructor.name,
+    })
+    setIsPlayingMedia(false)
+  }
+
+  // Mark lecture / reading watched
+  const handleMarkLectureWatched = () => {
+    if (!activeLectureModal) return
+    const current = watchedLectures[selectedCourseSlug] || []
+    if (!current.includes(activeLectureModal.title)) {
+      const updated = {
+        ...watchedLectures,
+        [selectedCourseSlug]: [...current, activeLectureModal.title],
+      }
+      setWatchedLectures(updated)
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('hanzo_portal_watched_lectures', JSON.stringify(updated))
+        } catch (_) {}
+      }
+    }
+    setFeedbackToast(`Marked "${activeLectureModal.title}" as completed!`)
+    setTimeout(() => setFeedbackToast(null), 3000)
+    setActiveLectureModal(null)
+  }
+
+  // Download SVG badge
+  const handleDownloadSvg = () => {
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="380" height="64" viewBox="0 0 380 64" fill="none">
+  <rect width="380" height="64" rx="12" fill="#0A0A0A" stroke="#262626"/>
+  <rect x="1" y="1" width="378" height="62" rx="11" stroke="#34D399" stroke-opacity="0.3"/>
+  <circle cx="28" cy="32" r="14" fill="#047857" fill-opacity="0.3"/>
+  <path d="M22 32L26 36L34 28" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" x="52" y="27">${activeCourse.credential}: ${activeCourse.title}</text>
+  <text fill="#A3A3A3" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" x="52" y="44">VERIFIED: ${studentName} · 100% DISTINCTION</text>
+  <rect x="290" y="20" width="76" height="24" rx="6" fill="#171717" stroke="#404040"/>
+  <text fill="#34D399" font-family="ui-monospace, monospace" font-size="9" font-weight="700" x="302" y="36">PASS 100%</text>
+</svg>`
+
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Hanzo-${activeCourse.credential}-Badge.svg`
+    a.click()
+    URL.revokeObjectURL(url)
+    setFeedbackToast('SVG Badge downloaded successfully!')
+    setTimeout(() => setFeedbackToast(null), 3000)
   }
 
   // Calculate course progress
@@ -884,33 +1079,81 @@ export default function StudentPortalPage() {
                             {week.summary}
                           </Text>
 
-                          <YStack gap="$1">
+                          <YStack gap="$2">
                             <Text fontSize="$1" fontWeight="600" color="var(--white)">
-                              Lectures & Core Topics:
+                              Interactive Lectures & Seminars:
                             </Text>
-                            {week.lectures.map((lec, lIdx) => (
-                              <XStack key={lIdx} items="center" gap="$2">
-                                <Play size={10} color="var(--emerald-400)" />
-                                <Text fontSize="$1" color="var(--muted-foreground)">
-                                  {lec}
-                                </Text>
-                              </XStack>
-                            ))}
+                            {week.lectures.map((lec, lIdx) => {
+                              const isWatched = (watchedLectures[selectedCourseSlug] || []).includes(lec)
+                              return (
+                                <XStack
+                                  key={lIdx}
+                                  items="center"
+                                  justify="space-between"
+                                  p="$2"
+                                  px="$3"
+                                  rounded="var(--radius-sm)"
+                                  bg={isWatched ? 'rgba(16, 185, 129, 0.08)' : 'var(--card)'}
+                                  borderWidth={1}
+                                  borderColor={isWatched ? 'var(--emerald-850)' : 'var(--border)'}
+                                  hoverStyle={{ borderColor: 'var(--emerald-500)' }}
+                                  $platform-web={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
+                                  onClick={() => openLectureModal(week, lec, 'lecture')}
+                                >
+                                  <XStack items="center" gap="$2" flex={1}>
+                                    <Play size={12} color="var(--emerald-400)" />
+                                    <Text
+                                      fontSize="$1"
+                                      color={isWatched ? 'var(--emerald-300)' : 'var(--white-80)'}
+                                    >
+                                      {lec}
+                                    </Text>
+                                  </XStack>
+                                  <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                                    {isWatched ? '✓ Attended' : 'Play Lecture →'}
+                                  </Text>
+                                </XStack>
+                              )
+                            })}
                           </YStack>
 
                           {week.readings.length > 0 && (
-                            <YStack gap="$1">
+                            <YStack gap="$2">
                               <Text fontSize="$1" fontWeight="600" color="var(--white)">
-                                Required Academic Readings:
+                                Required Academic Readings & Benchmarks:
                               </Text>
-                              {week.readings.map((read, rIdx) => (
-                                <XStack key={rIdx} items="center" gap="$2">
-                                  <BookOpen size={10} color="var(--white-70)" />
-                                  <Text fontSize="$1" color="var(--muted-foreground)">
-                                    {read}
-                                  </Text>
-                                </XStack>
-                              ))}
+                              {week.readings.map((read, rIdx) => {
+                                const isRead = (watchedLectures[selectedCourseSlug] || []).includes(read)
+                                return (
+                                  <XStack
+                                    key={rIdx}
+                                    items="center"
+                                    justify="space-between"
+                                    p="$2"
+                                    px="$3"
+                                    rounded="var(--radius-sm)"
+                                    bg={isRead ? 'rgba(16, 185, 129, 0.08)' : 'var(--card)'}
+                                    borderWidth={1}
+                                    borderColor={isRead ? 'var(--emerald-850)' : 'var(--border)'}
+                                    hoverStyle={{ borderColor: 'var(--emerald-500)' }}
+                                    $platform-web={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
+                                    onClick={() => openLectureModal(week, read, 'reading')}
+                                  >
+                                    <XStack items="center" gap="$2" flex={1}>
+                                      <BookOpen size={12} color="var(--white-70)" />
+                                      <Text
+                                        fontSize="$1"
+                                        color={isRead ? 'var(--emerald-300)' : 'var(--white-80)'}
+                                      >
+                                        {read}
+                                      </Text>
+                                    </XStack>
+                                    <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)">
+                                      {isRead ? '✓ Read' : 'View Paper →'}
+                                    </Text>
+                                  </XStack>
+                                )
+                              })}
                             </YStack>
                           )}
 
@@ -1011,6 +1254,60 @@ export default function StudentPortalPage() {
                     </Action>
                   </YStack>
                 )}
+
+                {/* Dev & Fast-Track Controls */}
+                <XStack
+                  items="center"
+                  justify="space-between"
+                  pt="$3"
+                  mt="$2"
+                  borderTopWidth={1}
+                  borderColor="var(--border)"
+                  flexWrap="wrap"
+                  gap="$2"
+                >
+                  <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
+                    TEST ACCELERATOR:
+                  </Text>
+                  <XStack items="center" gap="$2">
+                    <Box
+                      render="button"
+                      onClick={handleFastTrackAllLabs}
+                      px="$2"
+                      py="$1"
+                      rounded="var(--radius-sm)"
+                      bg="var(--card)"
+                      borderWidth={1}
+                      borderColor="var(--emerald-800)"
+                      $platform-web={{
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        color: 'var(--emerald-300)',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      ⚡ Fast-Track All Labs
+                    </Box>
+                    <Box
+                      render="button"
+                      onClick={handleResetCourseProgress}
+                      px="$2"
+                      py="$1"
+                      rounded="var(--radius-sm)"
+                      bg="var(--card)"
+                      borderWidth={1}
+                      borderColor="var(--border)"
+                      $platform-web={{
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        color: 'var(--muted-foreground)',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      ↺ Reset Progress
+                    </Box>
+                  </XStack>
+                </XStack>
               </YStack>
             </Card>
           </YStack>
@@ -1270,8 +1567,84 @@ export default function StudentPortalPage() {
                   }}
                 >
                   <Download size={13} />
-                  Download Certificate
+                  Download (.txt)
                 </Box>
+
+                <Box
+                  render="button"
+                  onClick={handleDownloadSvg}
+                  px="$3"
+                  py="$2"
+                  rounded="var(--radius-md)"
+                  bg="var(--card)"
+                  borderWidth={1}
+                  borderColor="var(--border)"
+                  $platform-web={{
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    color: 'var(--white)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Download size={13} />
+                  SVG Badge (.svg)
+                </Box>
+
+                <Box
+                  render="button"
+                  onClick={() => {
+                    const verifyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://hanzo.university'}/verify?id=${activeCourse.credential}-2026-9821&student=${studentHandle}`
+                    navigator.clipboard.writeText(verifyUrl)
+                    setFeedbackToast('Verification URL copied to clipboard!')
+                    setTimeout(() => setFeedbackToast(null), 3000)
+                  }}
+                  px="$3"
+                  py="$2"
+                  rounded="var(--radius-md)"
+                  bg="var(--card)"
+                  borderWidth={1}
+                  borderColor="var(--border)"
+                  $platform-web={{
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    color: 'var(--white)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Copy size={13} />
+                  Copy Link
+                </Box>
+
+                <Link
+                  href={`/verify?id=${activeCourse.credential}-2026-9821&student=${studentHandle}`}
+                  target="_blank"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Box
+                    px="$3"
+                    py="$2"
+                    rounded="var(--radius-md)"
+                    bg="var(--emerald-950)"
+                    borderWidth={1}
+                    borderColor="var(--emerald-600)"
+                    $platform-web={{
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: 'var(--emerald-300)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <ExternalLink size={13} />
+                    Verify on Public Registry ↗
+                  </Box>
+                </Link>
               </XStack>
 
               <Action
@@ -1283,6 +1656,263 @@ export default function StudentPortalPage() {
               >
                 Close & Return to Workspace
               </Action>
+            </XStack>
+          </Box>
+        </Box>
+      )}
+
+      {/* ── Interactive Lecture & Reading Viewer Modal ── */}
+      {activeLectureModal && (
+        <Box
+          position="fixed"
+          t={0}
+          l={0}
+          width="100vw"
+          height="100vh"
+          bg="rgba(0, 0, 0, 0.85)"
+          items="center"
+          justify="center"
+          p="$4"
+          $platform-web={{ backdropFilter: 'blur(12px)', zIndex: 110 }}
+        >
+          <Box
+            width="100%"
+            maxW={780}
+            bg="var(--pure-black)"
+            rounded="var(--radius-2xl)"
+            borderWidth={1}
+            borderColor="var(--neutral-700)"
+            p="$6"
+            position="relative"
+            maxH="92vh"
+            overflow="scroll"
+          >
+            {/* Modal Header */}
+            <XStack items="center" justify="space-between" mb="$4">
+              <XStack items="center" gap="$2">
+                {activeLectureModal.type === 'lecture' ? (
+                  <Play size={18} color="var(--emerald-400)" />
+                ) : (
+                  <BookOpen size={18} color="var(--emerald-400)" />
+                )}
+                <YStack>
+                  <XStack items="center" gap="$2">
+                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                      {activeLectureModal.title}
+                    </Text>
+                    <Chip px={6} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                      {activeLectureModal.type === 'lecture' ? 'STREAM · 4K 60FPS' : 'ARXIV / SPEC PAPER'}
+                    </Chip>
+                  </XStack>
+                  <Text fontSize="$1" color="var(--muted-foreground)">
+                    {activeCourse.code} · {activeLectureModal.weekCode}: {activeLectureModal.weekTitle} · Instructor: {activeLectureModal.instructor}
+                  </Text>
+                </YStack>
+              </XStack>
+
+              <Box
+                render="button"
+                onClick={() => {
+                  setActiveLectureModal(null)
+                  setIsPlayingMedia(false)
+                }}
+                p="$1"
+                rounded="var(--radius-sm)"
+                $platform-web={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--muted-foreground)',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                }}
+              >
+                ✕
+              </Box>
+            </XStack>
+
+            {/* Video or Document Viewer Panel */}
+            {activeLectureModal.type === 'lecture' ? (
+              <YStack gap="$4">
+                {/* Simulated Video Player Screen */}
+                <Box
+                  width="100%"
+                  height={260}
+                  rounded="var(--radius-lg)"
+                  bg="var(--neutral-950)"
+                  borderWidth={1}
+                  borderColor="var(--border)"
+                  position="relative"
+                  overflow="hidden"
+                  justify="center"
+                  items="center"
+                >
+                  <Box
+                    position="absolute"
+                    inset={0}
+                    $platform-web={{
+                      background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.15) 0%, rgba(0, 0, 0, 0.95) 75%)',
+                    }}
+                  />
+                  <YStack items="center" gap="$3" $platform-web={{ zIndex: 2 }}>
+                    <Box
+                      render="button"
+                      onClick={() => setIsPlayingMedia(!isPlayingMedia)}
+                      width={64}
+                      height={64}
+                      rounded={9999}
+                      bg={isPlayingMedia ? 'var(--white)' : 'var(--emerald-500)'}
+                      items="center"
+                      justify="center"
+                      $platform-web={{
+                        cursor: 'pointer',
+                        border: 'none',
+                        boxShadow: '0 0 30px rgba(16, 185, 129, 0.4)',
+                        transition: 'transform 0.15s ease',
+                      }}
+                      hoverStyle={{ transform: 'scale(1.05)' }}
+                    >
+                      {isPlayingMedia ? (
+                        <Pause size={28} color="var(--pure-black)" />
+                      ) : (
+                        <Play size={28} color="var(--pure-black)" style={{ marginLeft: 3 }} />
+                      )}
+                    </Box>
+                    <Text fontSize="$1" fontFamily="$mono" color="var(--white-80)">
+                      {isPlayingMedia ? 'STREAMING ACTIVE (1080p WebRTC)' : 'CLICK TO COMMENCE LECTURE'}
+                    </Text>
+                  </YStack>
+
+                  {/* Player Controls Bar */}
+                  <Box
+                    position="absolute"
+                    b={0}
+                    l={0}
+                    r={0}
+                    p="$3"
+                    bg="rgba(0, 0, 0, 0.75)"
+                    borderTopWidth={1}
+                    borderColor="rgba(255, 255, 255, 0.1)"
+                  >
+                    <XStack items="center" justify="space-between">
+                      <XStack items="center" gap="$3">
+                        <Box
+                          render="button"
+                          onClick={() => setIsPlayingMedia(!isPlayingMedia)}
+                          $platform-web={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--white)' }}
+                        >
+                          {isPlayingMedia ? <Pause size={16} /> : <Play size={16} />}
+                        </Box>
+                        <Volume2 size={16} color="var(--muted-foreground)" />
+                        <Text fontSize="$1" color="var(--white-70)" fontFamily="$mono">
+                          {isPlayingMedia ? '14:28' : '00:00'} / 38:00
+                        </Text>
+                      </XStack>
+
+                      <XStack items="center" gap="$2">
+                        {[1, 1.25, 1.5, 2].map((rate) => (
+                          <Box
+                            key={rate}
+                            render="button"
+                            onClick={() => setPlaybackRate(rate)}
+                            px="$2"
+                            py="$1"
+                            rounded="var(--radius-sm)"
+                            bg={playbackRate === rate ? 'var(--white)' : 'transparent'}
+                            $platform-web={{
+                              cursor: 'pointer',
+                              border: 'none',
+                              color: playbackRate === rate ? 'var(--pure-black)' : 'var(--muted-foreground)',
+                              fontSize: '11px',
+                              fontFamily: 'monospace',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {rate}x
+                          </Box>
+                        ))}
+                      </XStack>
+                    </XStack>
+                  </Box>
+                </Box>
+
+                {/* Lecture Syllabus Notes & Code Excerpt */}
+                <Box p="$4" rounded="var(--radius-md)" bg="var(--card)" borderWidth={1} borderColor="var(--border)">
+                  <Text fontSize="$1" fontWeight="700" color="var(--white)" mb="$2">
+                    Key Architectural Takeaways & Proofs
+                  </Text>
+                  <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2" mb="$3">
+                    {activeLectureModal.summary}
+                  </Text>
+                  <Box
+                    p="$3"
+                    rounded="var(--radius-sm)"
+                    bg="var(--pure-black)"
+                    borderWidth={1}
+                    borderColor="var(--border)"
+                    $platform-web={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--emerald-300)' }}
+                  >
+                    {activeCourse.slug === 'agentic-coding'
+                      ? `# Invariant: Zero syntax regressions across all AST tree mutations\nassert parser.validate(ast_tree, strict=True) == True\nsandbox.execute_safely(diff, budget_ceiling_usd=0.05)`
+                      : activeCourse.slug === 'reinforcement-learning'
+                      ? `# Invariant: Group Relative Policy Optimization (GRPO) advantage\nadv = (rewards - rewards.mean()) / (rewards.std() + 1e-8)\nloss = -min(ratio * adv, clip(ratio, 1-eps, 1+eps) * adv).mean()`
+                      : `# Invariant: Zero-copy Cap'n Proto buffer alignment over Unix domain socket\nlet header = zap::protocol::FrameHeader::validate(&slice[..32])?;\nkv_cache.allocate_paged_blocks(seq_id, prompt_tokens)?;`}
+                  </Box>
+                </Box>
+              </YStack>
+            ) : (
+              <YStack gap="$4">
+                <Box p="$4" rounded="var(--radius-md)" bg="var(--card)" borderWidth={1} borderColor="var(--border)">
+                  <XStack items="center" justify="space-between" mb="$2">
+                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                      Academic Preprint & Architecture Specification
+                    </Text>
+                    <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                      DOI: 10.48550/arXiv.2610.09821
+                    </Chip>
+                  </XStack>
+                  <Text fontSize="$1" color="var(--white-80)" lineHeight="$2" mb="$3">
+                    Abstract: This curriculum monograph establishes the formal methodology used throughout Hanzo University's cleanroom testing suite. We demonstrate how autonomous verification harnesses evaluate model rollouts in gVisor runsc microVMs, proving mathematically bounded runtime execution.
+                  </Text>
+                  <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
+                    Required reading for the {activeLectureModal.weekCode} laboratory. Students must implement the algorithms discussed in Section 3 and defend the performance metrics during capstone defense.
+                  </Text>
+                </Box>
+              </YStack>
+            )}
+
+            {/* Modal Actions */}
+            <XStack items="center" justify="space-between" mt="$4" pt="$3" borderTopWidth={1} borderColor="var(--border)">
+              <Text fontSize="$1" color="var(--muted-foreground)">
+                Module Progress: Recorded to your student DID account
+              </Text>
+              <XStack items="center" gap="$2">
+                <Box
+                  render="button"
+                  onClick={() => {
+                    setActiveLectureModal(null)
+                    setIsPlayingMedia(false)
+                  }}
+                  px="$3"
+                  py="$2"
+                  rounded="var(--radius-md)"
+                  bg="var(--card)"
+                  borderWidth={1}
+                  borderColor="var(--border)"
+                  $platform-web={{ cursor: 'pointer', fontSize: '12px', color: 'var(--white)' }}
+                >
+                  Dismiss
+                </Box>
+                <Action
+                  render="button"
+                  onClick={handleMarkLectureWatched}
+                  px={14}
+                  py={8}
+                  fill
+                  $platform-web={{ fontSize: '12px' }}
+                >
+                  Mark as Attended & Completed ✓
+                </Action>
+              </XStack>
             </XStack>
           </Box>
         </Box>
