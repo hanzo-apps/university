@@ -229,7 +229,7 @@ export default function UniversityHomePage() {
       </Band>
 
       {/* ── The 25% Compute Rebate Value Proposition ── */}
-      <Band pad={40} measure={1080}>
+      <Band id="fellowships" pad={40} measure={1080}>
         <Card
           p={24}
           borderWidth={1}
@@ -475,7 +475,7 @@ export default function UniversityHomePage() {
       </Band>
 
       {/* ── Six Pillars of Production Rigor ── */}
-      <Band pad={44} measure={1200}>
+      <Band id="credentials" pad={44} measure={1200}>
         <Head
           eyebrow="Pedagogical Architecture"
           title="Engineered for software engineers. Not prompt hobbyists."

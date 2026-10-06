@@ -9,11 +9,11 @@ import { Footer } from './components/footer'
 export const metadata: Metadata = {
   metadataBase: new URL('https://hanzo.university'),
   title: {
-    default: 'Hanzo University — Frontier AI Systems & Engineering Accreditation',
+    default: 'Hanzo University — Frontier AI Systems & Engineering Certifications',
     template: '%s | Hanzo University',
   },
   description:
-    'The premier academic accreditation institute for autonomous AI engineering. Certifications in Agentic Coding (HACE), Reinforcement Learning (HARLE), and AI Systems Engineering with 25% compute credit rebates and W3C Verifiable Credentials.',
+    'The premier institute for autonomous AI engineering. Certifications in Agentic Coding (HACE), Reinforcement Learning (HARLE), and AI Systems Engineering with 25% compute credit rebates and W3C Verifiable Credentials.',
   keywords: [
     'Hanzo University',
     'AI engineering certification',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://hanzo.university',
-    title: 'Hanzo University — Frontier AI Systems & Engineering Accreditation',
+    title: 'Hanzo University — Frontier AI Systems & Engineering Certifications',
     description:
       'Rigorous degree programs and credentials in frontier AI engineering. Includes 25% compute credit rebates, gVisor container sandboxes, and cryptographic W3C credentials.',
     siteName: 'Hanzo University',
@@ -48,8 +48,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Hanzo University — Frontier AI Systems Accreditation',
-    description: 'Accredited degrees and credentials in agentic software engineering and native RL.',
+    title: 'Hanzo University — Frontier AI Systems & Engineering',
+    description: 'Degree programs and credentials in agentic software engineering and native RL.',
     images: ['/twitter-image.png'],
     creator: '@hanzoai',
   },

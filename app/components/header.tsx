@@ -6,7 +6,6 @@ import { Box, Text, View, XStack, YStack } from '@hanzo/ui'
 import { HanzoWordmark } from '@hanzogui/shell'
 
 import {
-  GraduationCap,
   ChevronDown,
   Menu as MenuIcon,
   X,
@@ -51,21 +50,6 @@ export function Header() {
         <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
           <XStack items="center" gap={10}>
             <HanzoWordmark label="Hanzo University" size={22} />
-            <XStack
-              items="center"
-              gap={4}
-              px={8}
-              py={2}
-              rounded={999}
-              bg="var(--pure-black)"
-              borderWidth={1}
-              borderColor="var(--border)"
-            >
-              <GraduationCap size={13} color="var(--emerald-400)" />
-              <Text fontSize="$1" fontWeight="600" color="var(--emerald-400)" fontFamily="$mono">
-                ACCREDITED
-              </Text>
-            </XStack>
           </XStack>
         </Link>
 
@@ -122,7 +106,7 @@ export function Header() {
               >
                 <XStack items="center" justify="space-between" px={8} pb={6} borderBottomWidth={1} borderColor="var(--border)">
                   <Text fontSize="$1" fontWeight="700" color="var(--white-70)" fontFamily="$mono">
-                    6 ACCREDITED CERTIFICATION TRACKS
+                    6 CERTIFICATION TRACKS
                   </Text>
                   <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">
                     +25% COMPUTE REBATE
@@ -216,7 +200,7 @@ export function Header() {
                   </a>
 
                   <Link
-                    href="/#accreditation"
+                    href="/#credentials"
                     onClick={() => setProgramsOpen(false)}
                     style={{ textDecoration: 'none' }}
                   >
@@ -339,7 +323,7 @@ export function Header() {
           </Link>
 
           <Text fontSize="$1" fontWeight="700" color="var(--muted-foreground)" fontFamily="$mono" pt={6}>
-            ACCREDITED COURSES & CREDENTIALS
+            COURSES & CREDENTIALS
           </Text>
 
           {UNIVERSITY_COURSES.map((c) => (
@@ -385,9 +369,9 @@ export function Header() {
               Compute Rebate Fellowships
             </Text>
           </Link>
-          <Link href="/#accreditation" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}>
+          <Link href="/#credentials" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}>
             <Text fontSize="$3" color="var(--white)">
-              W3C Credentials & Accreditation
+              W3C Credentials & Standards
             </Text>
           </Link>
         </YStack>

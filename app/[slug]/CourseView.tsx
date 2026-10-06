@@ -111,7 +111,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   borderColor="var(--border)"
                 >
                   <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
-                    ACCREDITATION
+                    CREDENTIAL FORMAT
                   </Text>
                   <Text fontSize="$2" fontWeight="700" color="var(--white)">
                     W3C Verifiable Credential

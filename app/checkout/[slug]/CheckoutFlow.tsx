@@ -326,7 +326,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       {course.code}: {course.title}
                     </Text>
                     <Text fontSize="$2" color="var(--muted-foreground)">
-                      {course.credential}: {course.credentialFull} ({course.units}.0 Accredited Units)
+                      {course.credential}: {course.credentialFull} ({course.units}.0 Academic Units)
                     </Text>
                   </YStack>
 

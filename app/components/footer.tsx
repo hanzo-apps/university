@@ -29,7 +29,7 @@ export function Footer() {
         <YStack gap={16} maxW={360}>
           <HanzoWordmark label="Hanzo University" size={24} />
           <Text fontSize="$2" color="var(--muted-foreground)" lineHeight={22}>
-            The academic and systems engineering accreditation institute of the Hanzo AI ecosystem. Training engineers in frontier decision models, zero-regression AST code agents, and native reinforcement learning.
+            The systems engineering institute of the Hanzo AI ecosystem. Training engineers in frontier decision models, zero-regression AST code agents, and native reinforcement learning.
           </Text>
           <XStack items="center" gap={8} pt={8}>
             <Award size={16} color="var(--emerald-400)" />
@@ -117,7 +117,7 @@ export function Footer() {
         gap={16}
       >
         <Text fontSize="$1" color="var(--muted-foreground)">
-          © {new Date().getFullYear()} Hanzo Industries Inc. Hanzo University is an open academic accreditation institution.
+          © {new Date().getFullYear()} Hanzo Industries Inc. Hanzo University is an open engineering and research institution.
         </Text>
         <XStack items="center" gap={16}>
           <a href="https://hanzo.ai/legal/terms" style={{ color: 'var(--muted-foreground)', fontSize: '12px', textDecoration: 'none' }}>

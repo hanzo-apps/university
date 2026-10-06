@@ -1095,7 +1095,7 @@ export default function StudentPortalPage() {
                   HANZO UNIVERSITY · RESEARCH FOUNDATION
                 </Text>
                 <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  ACCREDITED & SIGNED ON-CHAIN
+                  VERIFIED & SIGNED ON-CHAIN
                 </Chip>
               </XStack>
 
@@ -1141,7 +1141,7 @@ export default function StudentPortalPage() {
                 <XStack justify="space-between">
                   <Text color="var(--muted-foreground)">Status:</Text>
                   <Text color="var(--emerald-400)" fontWeight="600">
-                    VERIFIED & ACCREDITED (GRADE: 100% PASS WITH DISTINCTION)
+                    VERIFIED & CERTIFIED (GRADE: 100% PASS WITH DISTINCTION)
                   </Text>
                 </XStack>
                 <XStack justify="space-between">
@@ -1236,7 +1236,7 @@ export default function StudentPortalPage() {
                       `Student DID:        did:hanzo:student:${studentHandle}\n` +
                       `Degree:             ${activeCourse.credentialFull} (${activeCourse.credential})\n` +
                       `Course:             ${activeCourse.code}: ${activeCourse.title}\n` +
-                      `Accredited Units:   ${activeCourse.units}.0 Units\n` +
+                      `Academic Units:     ${activeCourse.units}.0 Units\n` +
                       `Level:              ${activeCourse.level}\n` +
                       `Instructor:         ${activeCourse.instructor.name} (${activeCourse.instructor.role})\n` +
                       `Issuance Date:      October 2026\n` +
