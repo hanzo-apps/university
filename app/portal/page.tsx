@@ -724,7 +724,7 @@ export default function StudentPortalPage() {
             </Card>
 
             {/* Sandbox Container Specifications */}
-            <Card p={16} bg="$panel">
+            <Card p={16} bg="$panel" borderWidth={1} borderColor="var(--border)">
               <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
                 <XStack items="center" gap="$3">
                   <Cpu size={16} color="var(--white)" />
@@ -762,7 +762,7 @@ export default function StudentPortalPage() {
 
           {/* RIGHT: Curriculum Modules, Lectures & Capstone Submission */}
           <YStack gap="$4">
-            <Card p={20} bg="$panel">
+            <Card p={20} bg="$panel" borderWidth={1} borderColor="var(--border)">
               <XStack items="center" justify="space-between" mb="$4">
                 <YStack gap="$1">
                   <Text fontSize="$3" fontWeight="700" color="var(--white)">

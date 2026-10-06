@@ -129,7 +129,7 @@ export default function UniversityHomePage() {
         <Box
           rounded="var(--radius-2xl)"
           borderWidth={1}
-          borderColor="var(--neutral-800)"
+          borderColor="var(--border)"
           bg="var(--pure-black)"
           overflow="hidden"
         >
@@ -140,7 +140,7 @@ export default function UniversityHomePage() {
             px="$4"
             py="$3"
             borderBottomWidth={1}
-            borderColor="var(--neutral-850)"
+            borderColor="var(--border)"
             bg="rgba(10, 10, 10, 0.95)"
           >
             <XStack items="center" gap="$2">
@@ -204,7 +204,7 @@ export default function UniversityHomePage() {
             px="$4"
             py="$3"
             borderTopWidth={1}
-            borderColor="var(--neutral-850)"
+            borderColor="var(--border)"
             bg="rgba(10, 10, 10, 0.95)"
           >
             <XStack items="center" gap="$3">
@@ -232,7 +232,8 @@ export default function UniversityHomePage() {
       <Band pad={40} measure={1080}>
         <Card
           p={24}
-          borderColor="var(--white-20)"
+          borderWidth={1}
+          borderColor="var(--border)"
           bg="$panel"
           display="flex"
           flexDirection="column"
@@ -275,7 +276,7 @@ export default function UniversityHomePage() {
                 p="$3"
                 rounded="var(--radius-lg)"
                 borderWidth={1}
-                borderColor="var(--neutral-800)"
+                borderColor="var(--border)"
                 bg="var(--pure-black)"
                 $platform-web={{ textAlign: 'center' }}
               >
@@ -306,7 +307,7 @@ export default function UniversityHomePage() {
         <Box
           rounded="var(--radius-2xl)"
           borderWidth={1}
-          borderColor="var(--neutral-800)"
+          borderColor="var(--border)"
           bg="$panel"
           overflow="hidden"
           mb="$8"
@@ -321,7 +322,7 @@ export default function UniversityHomePage() {
                 <Text
                   render="tr"
                   borderBottomWidth={1}
-                  borderColor="var(--neutral-800)"
+                  borderColor="var(--border)"
                   bg="var(--pure-black)"
                   $platform-web={{ display: 'table-row' }}
                 >
@@ -369,7 +370,7 @@ export default function UniversityHomePage() {
                     key={idx}
                     render="tr"
                     borderBottomWidth={idx === COMPARISON_ROWS.length - 1 ? 0 : 1}
-                    borderColor="var(--neutral-850)"
+                    borderColor="var(--border)"
                     bg={idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)'}
                     $platform-web={{ display: 'table-row' }}
                   >
@@ -604,7 +605,8 @@ export default function UniversityHomePage() {
               display="flex"
               flexDirection="column"
               justify="space-between"
-              borderColor={course.featured ? 'var(--white-35)' : 'var(--neutral-800)'}
+              borderWidth={1}
+              borderColor="var(--border)"
               bg="$panel"
               position="relative"
             >
@@ -635,7 +637,7 @@ export default function UniversityHomePage() {
                   rounded="var(--radius-md)"
                   bg="var(--pure-black)"
                   borderWidth={1}
-                  borderColor="var(--neutral-850)"
+                  borderColor="var(--border)"
                 >
                   <Text fontFamily="$mono" fontSize="$1" color="var(--white-70)" fontWeight="600" mb="$1">
                     Verified Capstone:
@@ -679,7 +681,7 @@ export default function UniversityHomePage() {
 
                 <XStack gap="$2" width="100%">
                   <Action href={`/${course.slug}`} flex={1} $platform-web={{ textAlign: 'center' }}>
-                    Syllabus & Coupon →
+                    Syllabus →
                   </Action>
                   <Action
                     href={courseCheckoutUrl(course.slug)}
@@ -706,7 +708,7 @@ export default function UniversityHomePage() {
         />
 
         <Grid columns={{ min: 380, max: 2 }} gap={20}>
-          <Card p={24} bg="$panel">
+          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 How does the 25% usage credit rebate work?
@@ -717,7 +719,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel">
+          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 How are capstone projects graded and evaluated?
@@ -728,7 +730,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel">
+          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 Why do hiring managers value Hanzo credentials over AWS/Azure/Coursera?
@@ -739,7 +741,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel">
+          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 What format are credentials issued in?
@@ -750,7 +752,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel">
+          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 Can I expense this course through my employer?
@@ -761,7 +763,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel">
+          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 Do I need a high-end local GPU?
@@ -772,7 +774,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel">
+          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 Are courses self-paced, and what happens if my agent fails a test?
@@ -783,7 +785,7 @@ export default function UniversityHomePage() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="$panel">
+          <Card p={24} bg="$panel" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$2">
               <Text fontSize="$2" fontWeight="700" color="var(--white)">
                 What are the technical prerequisites?

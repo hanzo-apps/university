@@ -310,7 +310,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
             {/* Left Column: Order Breakdown, Perks, and Coupon */}
 
             <YStack gap="$5">
-              <Card p={28}>
+              <Card p={28} borderWidth={1} borderColor="var(--border)">
                 <YStack gap="$4">
                   <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
                     <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
@@ -565,7 +565,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
             {/* Right Column: Payment Form */}
             <YStack gap="$5">
-              <Card p={28}>
+              <Card p={28} borderWidth={1} borderColor="var(--border)">
                 <YStack gap="$5">
                   <YStack gap="$1">
                     <Text fontSize="$4" fontWeight="700" color="var(--white)">
@@ -919,7 +919,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
             </Box>
 
             {/* Account Creation Card */}
-            <Card p={32}>
+            <Card p={32} borderWidth={1} borderColor="var(--border)">
               <YStack gap="$5">
                 <YStack gap="$2">
                   <Text fontSize="$5" fontWeight="700" color="var(--white)">
@@ -1242,7 +1242,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
         {/* ========================================================================= */}
         {(step === 'provisioning' || step === 'complete') && (
           <YStack gap="$5" maxW={820} mx="auto">
-            <Card p={32}>
+            <Card p={32} borderWidth={1} borderColor="var(--border)">
               <YStack gap="$4">
                 <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
                   <XStack items="center" gap="$2">

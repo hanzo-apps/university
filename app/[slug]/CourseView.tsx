@@ -15,7 +15,6 @@ import {
   Code2,
 } from 'lucide-react'
 import { UNIVERSITY_COURSES, type UniversityCourse } from '../courses-data'
-import { CouponInput } from '../CouponInput'
 import { courseCheckoutUrl } from '@/lib/pay'
 
 export function CourseView({ course }: { course: UniversityCourse }) {
@@ -39,11 +38,11 @@ export function CourseView({ course }: { course: UniversityCourse }) {
         </Action>
       </Hero>
 
-      {/* ── Course Specification Matrix & Interactive Tuition Card with Coupon Code ── */}
+      {/* ── Course Specification Matrix & Tuition Card ── */}
       <Band pad={40} measure={1152}>
         <Grid columns={{ min: 340, max: 2 }} gap={24}>
           {/* Academic Specifications Card */}
-          <Card p={24} display="flex" flexDirection="column" justify="space-between">
+          <Card p={24} display="flex" flexDirection="column" justify="space-between" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$5">
               <XStack items="center" justify="space-between">
                 <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)" letterSpacing={1}>
@@ -157,8 +156,8 @@ export function CourseView({ course }: { course: UniversityCourse }) {
             </YStack>
           </Card>
 
-          {/* Interactive Tuition & Enrollment Card with Coupon Code */}
-          <Card p={24} display="flex" flexDirection="column" justify="space-between">
+          {/* Tuition & Enrollment Card */}
+          <Card p={24} display="flex" flexDirection="column" justify="space-between" borderWidth={1} borderColor="var(--border)">
             <YStack gap="$4">
               <XStack items="center" justify="space-between">
                 <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)" letterSpacing={1}>
@@ -169,18 +168,63 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                 </Chip>
               </XStack>
 
-              {/* Coupon Input & Live Discount Calculator */}
-              <CouponInput
-                originalPrice={course.price}
-                planId={course.planId}
-                courseSlug={course.slug}
-                courseCode={course.code}
-                rebateCredits={course.rebateCredits}
-                returnPath={`/${course.slug}`}
-              />
+              {/* Tuition Price and Rebate Breakdown */}
+              <YStack
+                gap="$3"
+                p={20}
+                bg="var(--pure-black)"
+                rounded="var(--radius-lg)"
+                borderWidth={1}
+                borderColor="var(--border)"
+              >
+                <XStack items="baseline" justify="space-between">
+                  <YStack>
+                    <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">
+                      TOTAL TUITION
+                    </Text>
+                    <XStack items="baseline" gap="$1">
+                      <Text fontSize="$6" fontWeight="700" color="var(--white)">
+                        ${course.price}
+                      </Text>
+                      <Text fontSize="$1" color="var(--muted-foreground)">
+                        USD
+                      </Text>
+                    </XStack>
+                  </YStack>
+                  <Chip px={10} py={4} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                    +${course.rebateCredits} CREDITS (25% REBATE)
+                  </Chip>
+                </XStack>
+                <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$1">
+                  Guaranteed compute allocation deposited immediately on enrollment. Subsidizes Zen 6 inference and gVisor sandbox runtimes.
+                </Text>
+              </YStack>
+
+              {/* Primary Enrollment CTA Button */}
+              <YStack gap="$2">
+                <Action
+                  href={defaultEnrollUrl}
+                  fill
+                  $platform-web={{
+                    textAlign: 'center',
+                    padding: '16px 24px',
+                    fontWeight: 700,
+                    fontSize: '15px',
+                  }}
+                >
+                  Enroll in {course.code} — ${course.price} USD →
+                </Action>
+                <Text
+                  fontSize="$1"
+                  color="var(--muted-foreground)"
+                  $platform-web={{ textAlign: 'center' }}
+                >
+                  Have a coupon code or fellowship grant? Enter it during checkout.
+                </Text>
+              </YStack>
 
               {/* Rebate Explanation Card */}
-              <Card p={16} bg="$panel">
+              <Card p={16} bg="$panel" borderWidth={1} borderColor="var(--border)">
                 <XStack items="center" gap="$2" mb="$1">
                   <Coins size={16} color="var(--emerald-400)" />
                   <Text fontSize="$1" fontWeight="700" color="var(--white)">
@@ -226,7 +270,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
 
         <Grid columns={{ min: 260, max: 4 }} gap={16}>
           {course.competencies.map((comp, idx) => (
-            <Card key={idx} p={20}>
+            <Card key={idx} p={20} borderWidth={1} borderColor="var(--border)">
               <XStack items="flex-start" gap="$3">
                 <Box
                   p="$2"
@@ -255,7 +299,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
 
         <YStack gap="$6">
           {course.syllabus.map((week) => (
-            <Card key={week.week} p={24}>
+            <Card key={week.week} p={24} borderWidth={1} borderColor="var(--border)">
               <YStack gap="$4">
                 <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
                   <XStack items="center" gap="$3">
@@ -276,7 +320,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                 </Text>
 
                 <Grid columns={{ min: 320, max: 2 }} gap={16} pt="$2">
-                  <YStack gap="$2" p="$4" rounded="var(--radius-md)" bg="$panel">
+                  <YStack gap="$2" p="$4" rounded="var(--radius-md)" bg="$panel" borderWidth={1} borderColor="var(--border)">
                     <Text fontSize="$1" fontWeight="700" color="var(--white)">
                       Key Topics & Lectures:
                     </Text>
@@ -292,7 +336,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                     ))}
                   </YStack>
 
-                  <YStack gap="$2" p="$4" rounded="var(--radius-md)" bg="$panel">
+                  <YStack gap="$2" p="$4" rounded="var(--radius-md)" bg="$panel" borderWidth={1} borderColor="var(--border)">
                     <Text fontSize="$1" fontWeight="700" color="var(--white)">
                       Assigned Readings:
                     </Text>
@@ -368,6 +412,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
               key={c.slug}
               p={20}
               bg={c.slug === course.slug ? 'var(--pure-black)' : '$panel'}
+              borderWidth={1}
               borderColor={c.slug === course.slug ? 'var(--white)' : 'var(--border)'}
             >
               <YStack gap="$3" justify="space-between" height="100%">
