@@ -27,16 +27,56 @@ import {
   Share2,
   Sparkles,
   BookOpen,
+  ArrowRight,
+  CheckCircle,
 } from 'lucide-react'
 import { UNIVERSITY_COURSES, type UniversityCourse } from '../courses-data'
+import { COURSE_PORTAL_DATA } from './portal-data'
 
 export default function StudentPortalPage() {
   const [selectedCourseSlug, setSelectedCourseSlug] = useState<string>('agentic-coding')
   const [activeTab, setActiveTab] = useState<'terminal' | 'ast' | 'grader' | 'metering'>('terminal')
-  const [activeWeekIndex, setActiveWeekIndex] = useState<number>(2) // Week 3 in progress
-  const [studentHandle, setStudentHandle] = useState<string>('hz-stu-9821a')
+  const [activeWeekIndex, setActiveWeekIndex] = useState<number>(0)
+  const [studentHandle, setStudentHandle] = useState<string>('alex')
+  const [studentName, setStudentName] = useState<string>('Alex Rivers')
   const [welcomeBanner, setWelcomeBanner] = useState<boolean>(false)
 
+  // Module completion map per course: slug -> list of completed week indices
+  const [completedModules, setCompletedModules] = useState<Record<string, number[]>>({
+    'agentic-coding': [0, 1, 2],
+    'reinforcement-learning': [0, 1, 2],
+    'agentic-marketing': [0, 1],
+    'systems-engineering': [0, 1],
+    'ai-practitioner': [0],
+    'ai-architect': [0, 1, 2, 3],
+  })
+
+  // Capstone defense passed per course
+  const [capstonePassed, setCapstonePassed] = useState<Record<string, boolean>>({
+    'agentic-coding': false,
+    'reinforcement-learning': false,
+    'agentic-marketing': false,
+    'systems-engineering': false,
+    'ai-practitioner': false,
+    'ai-architect': false,
+  })
+
+  const [isRunningCommand, setIsRunningCommand] = useState(false)
+  const [isDefending, setIsDefending] = useState(false)
+  const [showCredentialModal, setShowCredentialModal] = useState(false)
+  const [feedbackToast, setFeedbackToast] = useState<string | null>(null)
+
+  // Active course & course workspace data
+  const activeCourse: UniversityCourse =
+    UNIVERSITY_COURSES.find((c) => c.slug === selectedCourseSlug) || UNIVERSITY_COURSES[0]
+
+  const workspaceData =
+    COURSE_PORTAL_DATA[selectedCourseSlug] || COURSE_PORTAL_DATA['agentic-coding']
+
+  // Terminal history state
+  const [terminalHistory, setTerminalHistory] = useState<string[]>(workspaceData.initialHistory)
+
+  // Handle URL query parameters for enrollment and student name
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
@@ -49,6 +89,7 @@ export default function StudentPortalPage() {
       }
       if (student) {
         setStudentHandle(student)
+        setStudentName(student.charAt(0).toUpperCase() + student.slice(1))
       }
       if (welcome === '1') {
         setWelcomeBanner(true)
@@ -56,66 +97,97 @@ export default function StudentPortalPage() {
     }
   }, [])
 
-  const [terminalHistory, setTerminalHistory] = useState<string[]>([
-    'alex@hanzo-sandbox:~/swe-bench-agent$ hanzo dev status',
-    '[OK] gVisor runsc sandbox lease active (id: pod-gvs-uswest2-01)',
-    '[OK] Zen 6 (27.3B) inference endpoint connected via ZAP RPC (latency: 1.4ms)',
-    '[OK] Compute credit balance: $37.55 USD remaining of $50.00 deposit',
-    'alex@hanzo-sandbox:~/swe-bench-agent$ pytest -v tests/test_agent.py',
-    '============================= test session starts =============================',
-    'platform linux -- Python 3.12.3, pytest-8.1.1, pluggy-1.4.0',
-    'tests/test_agent.py::test_ast_symbol_resolution PASSED                   [ 25%]',
-    'tests/test_agent.py::test_zap_zerocopy_serialization PASSED             [ 50%]',
-    'tests/test_agent.py::test_gvisor_sandboxed_reproduction PASSED           [ 75%]',
-    'tests/test_agent.py::test_kai_zerotoken_decision_checkpoint PASSED       [100%]',
-    '============================== 4 passed in 0.42s ===============================',
-    'alex@hanzo-sandbox:~/swe-bench-agent$ _',
-  ])
-  const [isRunningCommand, setIsRunningCommand] = useState(false)
-  const [showCredentialModal, setShowCredentialModal] = useState(false)
+  // Sync terminal and active week when course changes
+  useEffect(() => {
+    const data = COURSE_PORTAL_DATA[selectedCourseSlug] || COURSE_PORTAL_DATA['agentic-coding']
+    setTerminalHistory(data.initialHistory)
+    setActiveWeekIndex(0)
+  }, [selectedCourseSlug])
 
-  const activeCourse: UniversityCourse =
-    UNIVERSITY_COURSES.find((c) => c.slug === selectedCourseSlug) || UNIVERSITY_COURSES[0]
-
+  // Execute terminal command
   const executeCommand = (cmd: string) => {
     setIsRunningCommand(true)
-    setTerminalHistory((prev) => [...prev, `alex@hanzo-sandbox:~/swe-bench-agent$ ${cmd}`])
+    const prompt = workspaceData.terminalPrompt
+    setTerminalHistory((prev) => [...prev, `${prompt} ${cmd}`])
 
     setTimeout(() => {
       let output: string[] = []
-      if (cmd === 'zen eval --benchmark swe-bench') {
-        output = [
-          '[HANZO EVAL] Running SWE-bench Lite benchmark evaluation harness...',
-          '  [1/5] django/django-14999: AST diff generated (cost: $0.038) -> TEST PASSED [100%]',
-          '  [2/5] sympy/sympy-18057: Symbol extraction verified (cost: $0.041) -> TEST PASSED [100%]',
-          '  [3/5] scikit-learn/scikit-learn-14092: Reproducing bug in gVisor -> TEST PASSED [100%]',
-          '  [4/5] pytest-dev/pytest-7432: Zero syntax regressions -> TEST PASSED [100%]',
-          '  [5/5] astropy/astropy-12907: Synthesizing patch -> TEST PASSED [100%]',
-          '--------------------------------------------------------------------------------',
-          '[SUMMARY] 5 of 5 SWE-bench benchmark issues resolved autonomously.',
-          '[ECONOMICS] Average compute cost per patch: $0.042 USD (Budget cap: $0.50).',
-          '[STATUS] 100% Test Pass Rate. Verification verified by Kai Decision Model.',
-        ]
-      } else if (cmd === 'hanzo dev diff') {
-        output = [
-          '--- a/src/agent/synthesizer.py',
-          '+++ b/src/agent/synthesizer.py',
-          '@@ -42,7 +42,7 @@ class CodePatchSynthesizer:',
-          '-    def repair_ast(self, tree: ast.AST) -> str:',
-          '+    def repair_ast(self, tree: ast.AST, budget_usd: float = 0.05) -> ast.AST:',
-          '         """Generates syntax-safe diff with zero syntax regressions."""',
-          '+        kai_check = self.evaluator.verify_state(tree, ceiling=budget_usd)',
-          '+        assert kai_check.safe_to_execute, "Refusing execution: budget violation"',
-        ]
+      if (workspaceData.commandOutputs[cmd]) {
+        output = workspaceData.commandOutputs[cmd]
       } else {
         output = [
-          '[COMMAND EXECUTED] Task processed in ephemeral gVisor container (exit code 0).',
+          `[COMMAND EXECUTED] Task "${cmd}" processed in gVisor sandbox pod (exit code 0).`,
+          `[EVAL] All unit tests passed with zero runtime errors.`,
         ]
       }
-      setTerminalHistory((prev) => [...prev, ...output, 'alex@hanzo-sandbox:~/swe-bench-agent$ _'])
+      setTerminalHistory((prev) => [...prev, ...output, `${prompt} _`])
       setIsRunningCommand(false)
     }, 600)
   }
+
+  // Submit lab coursework and mark module as completed
+  const handleCompleteLab = (weekIdx: number) => {
+    setIsRunningCommand(true)
+    const week = activeCourse.syllabus[weekIdx]
+    const prompt = workspaceData.terminalPrompt
+    setTerminalHistory((prev) => [
+      ...prev,
+      `${prompt} hanzo autograder --submit ${week.code}`,
+      `[AUTOGRADER] Evaluating coursework for ${week.code}: ${week.title}...`,
+      `  [+] Testing runtime constraints in gVisor microVM container...`,
+      `  [+] Running AST tree-sitter & benchmark assertions...`,
+      `  [+] Verifying zero syntax regressions and clean memory bounds...`,
+      `[PASS] 100% Tests Passed for ${week.code}! Marking module as COMPLETED.`,
+      `${prompt} _`,
+    ])
+
+    setTimeout(() => {
+      setCompletedModules((prev) => {
+        const current = prev[selectedCourseSlug] || []
+        if (!current.includes(weekIdx)) {
+          return {
+            ...prev,
+            [selectedCourseSlug]: [...current, weekIdx].sort((a, b) => a - b),
+          }
+        }
+        return prev
+      })
+      setIsRunningCommand(false)
+      setFeedbackToast(`Module ${week.code} passed! Coursework progress updated.`)
+      setTimeout(() => setFeedbackToast(null), 3500)
+    }, 800)
+  }
+
+  // Defend Capstone and officially graduate
+  const handleDefendCapstone = () => {
+    setIsDefending(true)
+    const prompt = workspaceData.terminalPrompt
+    setTerminalHistory((prev) => [
+      ...prev,
+      `${prompt} hanzo defense --capstone ${activeCourse.code}`,
+      `==================== CAPSTONE DEFENSE: ${activeCourse.credential} ====================`,
+      `[1/4] Cloning candidate repository into cleanroom gVisor environment...`,
+      `[2/4] Executing full test suite & production benchmarks for ${activeCourse.title}...`,
+      `[3/4] Cryptographically auditing zero regression errors & budget bounds...`,
+      `[4/4] Generating W3C Verifiable Credential on Lux Chain...`,
+      `[CONGRATULATIONS] Capstone Defended with Distinction! Score: 100%.`,
+      `[ISSUANCE] Credential #${activeCourse.credential}-2026-9821 minted on-chain.`,
+      `${prompt} _`,
+    ])
+
+    setTimeout(() => {
+      setIsDefending(false)
+      setCapstonePassed((prev) => ({ ...prev, [selectedCourseSlug]: true }))
+      setShowCredentialModal(true)
+    }, 1200)
+  }
+
+  // Calculate course progress
+  const currentCompleted = completedModules[selectedCourseSlug] || []
+  const totalWeeks = activeCourse.syllabus.length
+  const progressPercent = Math.min(100, Math.round((currentCompleted.length / totalWeeks) * 100))
+  const isDefenseUnlocked = currentCompleted.length >= totalWeeks || capstonePassed[selectedCourseSlug]
+  const isDegreeAwarded = capstonePassed[selectedCourseSlug]
 
   return (
     <Box minH="100vh" bg="$background" $platform-web={{ color: 'var(--foreground)' }}>
@@ -181,13 +253,12 @@ export default function StudentPortalPage() {
             >
               <ShieldCheck size={14} color="var(--white)" />
               <Text fontSize="$1" color="var(--muted-foreground)">
-                Student ID:
+                Student DID:
               </Text>
               <Text fontSize="$1" fontWeight="600" color="var(--white)" fontFamily="$mono">
-                {studentHandle.startsWith('hz-stu-') ? studentHandle : `@${studentHandle}`}
+                {studentHandle.startsWith('did:') ? studentHandle : `@${studentHandle}`}
               </Text>
             </XStack>
-
 
             <Action
               render="button"
@@ -199,7 +270,7 @@ export default function StudentPortalPage() {
               <XStack items="center" gap="$1">
                 <Award size={14} />
                 <Text fontSize="$1" fontWeight="600" color="inherit">
-                  View Credential
+                  {isDegreeAwarded ? 'View Degree Certificate' : 'Preview Credential'}
                 </Text>
               </XStack>
             </Action>
@@ -211,40 +282,68 @@ export default function StudentPortalPage() {
       <Box borderBottomWidth={1} borderColor="var(--border)" bg="var(--card)" px="$6" py="$2">
         <XStack items="center" gap="$2" overflow="scroll" flexWrap="nowrap">
           <Text fontSize="$1" color="var(--muted-foreground)" pr="$2" fontFamily="$mono">
-            COURSES:
+            YOUR ENROLLED TRACKS:
           </Text>
-          {UNIVERSITY_COURSES.map((c) => (
-            <Box
-              key={c.slug}
-              render="button"
-              onClick={() => setSelectedCourseSlug(c.slug)}
-              px="$3"
-              py="$1"
-              rounded="var(--radius-md)"
-              bg={selectedCourseSlug === c.slug ? 'var(--white)' : 'transparent'}
-              borderWidth={1}
-              borderColor={selectedCourseSlug === c.slug ? 'var(--white)' : 'transparent'}
-              $platform-web={{
-                cursor: 'pointer',
-                border: 'none',
-                outline: 'none',
-              }}
-            >
-              <Text
-                fontSize="$1"
-                fontWeight="600"
-                fontFamily="$mono"
-                color={selectedCourseSlug === c.slug ? 'var(--pure-black)' : 'var(--muted-foreground)'}
+          {UNIVERSITY_COURSES.map((c) => {
+            const isCompleted = capstonePassed[c.slug]
+            return (
+              <Box
+                key={c.slug}
+                render="button"
+                onClick={() => setSelectedCourseSlug(c.slug)}
+                px="$3"
+                py="$1"
+                rounded="var(--radius-md)"
+                bg={selectedCourseSlug === c.slug ? 'var(--white)' : 'transparent'}
+                borderWidth={1}
+                borderColor={selectedCourseSlug === c.slug ? 'var(--white)' : 'transparent'}
+                $platform-web={{
+                  cursor: 'pointer',
+                  border: 'none',
+                  outline: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
               >
-                {c.code} · {c.credential}
-              </Text>
-            </Box>
-          ))}
+                <Text
+                  fontSize="$1"
+                  fontWeight="600"
+                  fontFamily="$mono"
+                  color={selectedCourseSlug === c.slug ? 'var(--pure-black)' : 'var(--muted-foreground)'}
+                >
+                  {c.code} · {c.credential}
+                </Text>
+                {isCompleted && (
+                  <Check size={12} color={selectedCourseSlug === c.slug ? 'var(--pure-black)' : 'var(--emerald-400)'} />
+                )}
+              </Box>
+            )
+          })}
         </XStack>
       </Box>
 
       {/* ── Main Workspace Dashboard ── */}
       <Band pad={40} measure={1280}>
+        {/* Toast Notification */}
+        {feedbackToast && (
+          <Box
+            p="$3"
+            mb="$4"
+            rounded="var(--radius-md)"
+            bg="var(--emerald-950)"
+            borderWidth={1}
+            borderColor="var(--emerald-700)"
+          >
+            <XStack items="center" gap="$2">
+              <CheckCircle2 size={16} color="var(--emerald-400)" />
+              <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                {feedbackToast}
+              </Text>
+            </XStack>
+          </Box>
+        )}
+
         {/* Newly Enrolled Welcome Banner */}
         {welcomeBanner && (
           <Box
@@ -286,14 +385,13 @@ export default function StudentPortalPage() {
         )}
 
         {/* Welcome Notification Banner */}
-
         <Box
           p="$4"
           mb="$6"
           rounded="var(--radius-lg)"
           bg="var(--pure-black)"
           borderWidth={1}
-          borderColor="var(--emerald-850)"
+          borderColor={isDegreeAwarded ? 'var(--emerald-500)' : 'var(--emerald-850)'}
         >
           <XStack items="center" justify="space-between" flexWrap="wrap" gap="$4">
             <XStack items="center" gap="$3">
@@ -303,98 +401,112 @@ export default function StudentPortalPage() {
                 bg="$panel"
                 $platform-web={{ backgroundColor: 'color-mix(in srgb, var(--emerald-500) 20%, transparent)' }}
               >
-                <CheckCircle2 size={20} color="var(--emerald-400)" />
+                {isDegreeAwarded ? <Award size={20} color="var(--emerald-400)" /> : <CheckCircle2 size={20} color="var(--emerald-400)" />}
               </Box>
               <YStack gap="$1">
                 <XStack items="center" gap="$2">
                   <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                    Enrolled & Active: {activeCourse.code} — {activeCourse.title}
+                    {isDegreeAwarded ? 'Graduated & Certified' : 'Enrolled & Active'}: {activeCourse.code} — {activeCourse.title}
                   </Text>
                   <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                    DAY 1 DEPOSIT ACTIVE
+                    {isDegreeAwarded ? 'W3C DEGREE ISSUED' : 'DAY 1 DEPOSIT ACTIVE'}
                   </Chip>
                 </XStack>
                 <Text fontSize="$1" color="var(--muted-foreground)">
-                  Your 25% compute credit rebate (${activeCourse.rebateCredits}.00 USD) was deposited into your Hanzo Cloud account. All laboratory sandboxes are provisioned and accessible below.
+                  Coursework: {currentCompleted.length} of {totalWeeks} modules passed ({progressPercent}% completed).
+                  {isDegreeAwarded
+                    ? ' Official verifiable credential signed by Hanzo Research Board.'
+                    : ' Complete all assignments to defend your capstone.'}
                 </Text>
               </YStack>
             </XStack>
 
-            <XStack items="center" gap="$2">
+            <XStack items="center" gap="$3">
               <Link
                 href={`/${activeCourse.slug}`}
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--white)',
-                  fontSize: '12px',
+                  fontSize: '13px',
+                  color: 'var(--white-80)',
                   textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
                 }}
               >
-                <BookOpen size={13} />
-                Course Syllabus
+                Course Syllabus ↗
               </Link>
-              <Action
-                render="button"
-                onClick={() => executeCommand('zen eval --benchmark swe-bench')}
-                disabled={isRunningCommand}
-                px={12}
-                py={6}
-                $platform-web={{ fontSize: '12px' }}
-              >
-                Run Autograder →
-              </Action>
+              {isDegreeAwarded ? (
+                <Action
+                  render="button"
+                  onClick={() => setShowCredentialModal(true)}
+                  px={14}
+                  py={8}
+                  fill
+                  $platform-web={{ fontSize: '13px' }}
+                >
+                  View W3C Degree Certificate →
+                </Action>
+              ) : isDefenseUnlocked ? (
+                <Action
+                  render="button"
+                  onClick={handleDefendCapstone}
+                  disabled={isDefending}
+                  px={14}
+                  py={8}
+                  fill
+                  $platform-web={{ fontSize: '13px' }}
+                >
+                  {isDefending ? 'Defending Capstone...' : `Defend Capstone & Graduate →`}
+                </Action>
+              ) : (
+                <Action
+                  render="button"
+                  onClick={() => handleCompleteLab(activeWeekIndex)}
+                  disabled={isRunningCommand}
+                  px={14}
+                  py={8}
+                  $platform-web={{ fontSize: '13px' }}
+                >
+                  Run Module Autograder →
+                </Action>
+              )}
             </XStack>
           </XStack>
         </Box>
 
-        {/* ── Two-Column Layout: Left (Live Workspace / Terminal), Right (Curriculum & Tasks) ── */}
-        <Grid columns={{ min: 420, max: 2 }} gap={24}>
-          {/* LEFT: Live Laboratory Pod & Workstation */}
+        {/* ── Main Two-Column Layout: Left (Interactive Sandbox & Labs), Right (Modules & Capstone) ── */}
+        <Grid columns={{ min: 380, max: 2 }} gap={32} items="flex-start">
+          {/* LEFT: gVisor MicroVM Sandbox & Inspection Console */}
           <YStack gap="$4">
-            <Card p={0} overflow="hidden" bg="var(--pure-black)" borderColor="var(--border)">
-              {/* Terminal Header */}
+            <Card p={0} overflow="hidden" borderColor="var(--border)" borderWidth={1}>
+              {/* Terminal / Tool Tab Navigation */}
               <XStack
                 items="center"
                 justify="space-between"
-                p="$3"
                 px="$4"
+                py="$3"
+                bg="var(--pure-black)"
                 borderBottomWidth={1}
                 borderColor="var(--border)"
-                bg="var(--card)"
               >
-                <XStack items="center" gap="$3">
-                  <XStack gap="$1">
-                    <Box width={10} height={10} rounded={9999} bg="var(--red-500)" />
-                    <Box width={10} height={10} rounded={9999} bg="var(--amber-500)" />
-                    <Box width={10} height={10} rounded={9999} bg="var(--emerald-500)" />
-                  </XStack>
-                  <Text fontSize="$1" fontFamily="$mono" color="var(--white)" fontWeight="600">
-                    gVisor Sandbox: pod-gvs-uswest2-01
+                <XStack items="center" gap="$2">
+                  <Terminal size={16} color="var(--emerald-400)" />
+                  <Text fontSize="$1" fontWeight="700" color="var(--white)" fontFamily="$mono">
+                    gVisor Sandbox: pod-gvs-uswest2-{studentHandle}
                   </Text>
-                  <Chip px={6} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                  <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
                     ONLINE
                   </Chip>
                 </XStack>
 
-                {/* Workspace Tabs */}
-                <XStack items="center" gap="$1">
-                  {(
-                    [
-                      ['terminal', 'Shell'],
-                      ['ast', 'AST Diff'],
-                      ['grader', 'Autograder'],
-                      ['metering', 'Spend'],
-                    ] as const
-                  ).map(([tab, label]) => (
+                <XStack gap="$1">
+                  {[
+                    { tab: 'terminal', label: 'Shell' },
+                    { tab: 'ast', label: 'Code Inspector' },
+                    { tab: 'grader', label: 'Autograder' },
+                    { tab: 'metering', label: 'Spend' },
+                  ].map(({ tab, label }) => (
                     <Box
                       key={tab}
                       render="button"
-                      onClick={() => setActiveTab(tab)}
+                      onClick={() => setActiveTab(tab as any)}
                       px="$2"
                       py="$1"
                       rounded="var(--radius-sm)"
@@ -429,11 +541,11 @@ export default function StudentPortalPage() {
                         fontFamily="$mono"
                         fontSize="$1"
                         color={
-                          line.startsWith('alex@')
+                          line.startsWith(workspaceData.terminalPrompt.slice(0, 5))
                             ? 'var(--emerald-400)'
-                            : line.includes('PASSED')
+                            : line.includes('PASSED') || line.includes('[PASS]') || line.includes('[CONGRATULATIONS]')
                             ? 'var(--emerald-300)'
-                            : line.includes('[OK]')
+                            : line.includes('[OK]') || line.includes('[RUST VERIFIED]')
                             ? 'var(--white)'
                             : 'var(--muted-foreground)'
                         }
@@ -444,89 +556,111 @@ export default function StudentPortalPage() {
                   </Box>
 
                   {/* Quick Command Action Toolbar */}
-                  <XStack
-                    items="center"
-                    gap="$2"
-                    pt="$3"
-                    borderTopWidth={1}
-                    borderColor="var(--border)"
-                    flexWrap="wrap"
-                  >
-                    <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                      Quick Run:
-                    </Text>
-                    {[
-                      'pytest -v tests/test_agent.py',
-                      'zen eval --benchmark swe-bench',
-                      'hanzo dev diff',
-                    ].map((cmd) => (
-                      <Box
-                        key={cmd}
+                  <YStack gap="$2" pt="$3" borderTopWidth={1} borderColor="var(--border)">
+                    <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
+                      <XStack items="center" gap="$2" flexWrap="wrap">
+                        <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
+                          Quick Run:
+                        </Text>
+                        {workspaceData.quickCommands.map((cmd) => (
+                          <Box
+                            key={cmd}
+                            render="button"
+                            onClick={() => !isRunningCommand && executeCommand(cmd)}
+                            px="$2"
+                            py="$1"
+                            rounded="var(--radius-sm)"
+                            bg="var(--card)"
+                            borderWidth={1}
+                            borderColor="var(--border)"
+                            $platform-web={{
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              fontFamily: 'monospace',
+                              color: 'var(--white-80)',
+                            }}
+                            hoverStyle={{ borderColor: 'var(--white)' }}
+                          >
+                            {cmd}
+                          </Box>
+                        ))}
+                      </XStack>
+
+                      <Action
                         render="button"
-                        onClick={() => !isRunningCommand && executeCommand(cmd)}
-                        px="$2"
-                        py="$1"
-                        rounded="var(--radius-sm)"
-                        bg="var(--card)"
-                        borderWidth={1}
-                        borderColor="var(--border)"
-                        $platform-web={{
-                          cursor: 'pointer',
-                          fontSize: '11px',
-                          fontFamily: 'monospace',
-                          color: 'var(--white-80)',
-                        }}
-                        hoverStyle={{ borderColor: 'var(--white)' }}
+                        onClick={() => handleCompleteLab(activeWeekIndex)}
+                        disabled={isRunningCommand}
+                        px={10}
+                        py={4}
+                        $platform-web={{ fontSize: '11px' }}
                       >
-                        {cmd}
-                      </Box>
-                    ))}
-                  </XStack>
+                        Submit Lab {activeWeekIndex + 1} →
+                      </Action>
+                    </XStack>
+                  </YStack>
                 </YStack>
               )}
 
-              {/* Tab Content 2: AST Diff Inspector */}
+              {/* Tab Content 2: Code / Architecture Inspector */}
               {activeTab === 'ast' && (
-                <YStack p="$4" bg="var(--pure-black)" minH={380}>
-                  <Text fontSize="$1" color="var(--muted-foreground)" mb="$2" fontFamily="$mono">
-                    AST Diff Inspector: Verified zero syntax regressions & budget bounds
-                  </Text>
+                <YStack p="$4" bg="var(--pure-black)" minH={380} gap="$3">
+                  <YStack gap={1}>
+                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                      {workspaceData.codeInspectorTitle}
+                    </Text>
+                    <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
+                      {workspaceData.codeInspectorSubtitle}
+                    </Text>
+                  </YStack>
+
                   <Box
                     p="$3"
                     rounded="var(--radius-md)"
                     bg="var(--card)"
                     borderWidth={1}
                     borderColor="var(--border)"
-                    $platform-web={{ whiteSpace: 'pre-wrap' }}
+                    $platform-web={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}
                   >
-                    <Text color="var(--red-400)">- def repair_ast(self, tree: ast.AST) -&gt; str:</Text>
-                    <Text color="var(--emerald-400)">+ def repair_ast(self, tree: ast.AST, budget_usd: float = 0.05) -&gt; ast.AST:</Text>
-                    <Text color="var(--white-70)">      &quot;&quot;&quot;Generates syntax-safe diff with zero syntax regressions.&quot;&quot;&quot;</Text>
-                    <Text color="var(--emerald-400)">+     kai_check = self.evaluator.verify_state(tree, ceiling=budget_usd)</Text>
-                    <Text color="var(--emerald-400)">+     assert kai_check.safe_to_execute, &quot;Refusing execution: budget violation&quot;</Text>
+                    {workspaceData.codeInspectorDiff.map((line, dIdx) => (
+                      <Text
+                        key={dIdx}
+                        fontSize="$1"
+                        fontFamily="$mono"
+                        color={
+                          line.type === 'del'
+                            ? 'var(--red-400)'
+                            : line.type === 'add'
+                            ? 'var(--emerald-400)'
+                            : 'var(--white-70)'
+                        }
+                      >
+                        {line.text}
+                      </Text>
+                    ))}
                   </Box>
-                  <XStack items="center" gap="$2" mt="$3">
+
+                  <XStack items="center" gap="$2" mt="$1">
                     <CheckCircle2 size={14} color="var(--emerald-400)" />
                     <Text fontSize="$1" color="var(--emerald-300)" fontWeight="600">
-                      AST Tree-Sitter validation: 0 errors · 0 unused symbols · Exit Code 0
+                      {workspaceData.codeInspectorValidation}
                     </Text>
                   </XStack>
                 </YStack>
               )}
 
-              {/* Tab Content 3: Autograder Logs */}
+              {/* Tab Content 3: Course-Specific Autograder Logs */}
               {activeTab === 'grader' && (
                 <YStack p="$4" bg="var(--pure-black)" minH={380} gap="$3">
-                  <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                    SWE-bench Automated Evaluation Harness
-                  </Text>
-                  {[
-                    { task: 'django/django-14999', cost: '$0.038', time: '1.2s', status: 'PASS' },
-                    { task: 'sympy/sympy-18057', cost: '$0.041', time: '1.4s', status: 'PASS' },
-                    { task: 'scikit-learn/scikit-learn-14092', cost: '$0.044', time: '1.8s', status: 'PASS' },
-                    { task: 'pytest-dev/pytest-7432', cost: '$0.029', time: '0.9s', status: 'PASS' },
-                    { task: 'astropy/astropy-12907', cost: '$0.052', time: '2.1s', status: 'PASS' },
-                  ].map((row) => (
+                  <XStack items="center" justify="space-between">
+                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                      {workspaceData.graderTitle}
+                    </Text>
+                    <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                      ALL TESTS PASSING
+                    </Chip>
+                  </XStack>
+
+                  {workspaceData.graderTasks.map((row) => (
                     <XStack
                       key={row.task}
                       items="center"
@@ -570,24 +704,20 @@ export default function StudentPortalPage() {
                     </YStack>
                     <YStack p="$3" rounded="var(--radius-md)" bg="var(--card)" gap="$1">
                       <Text fontSize="$1" color="var(--muted-foreground)">Balance Remaining</Text>
-                      <Text fontSize="$4" fontWeight="800" color="var(--emerald-400)">$37.55 USD</Text>
+                      <Text fontSize="$4" fontWeight="800" color="var(--emerald-400)">
+                        ${(activeCourse.rebateCredits * 0.75).toFixed(2)} USD
+                      </Text>
                     </YStack>
                   </Grid>
 
                   <YStack gap="$2">
                     <Text fontSize="$1" color="var(--muted-foreground)">Resource Usage Breakdown:</Text>
-                    <XStack justify="space-between">
-                      <Text fontSize="$1" color="var(--white)">Zen 6 (27.3B) Inference (142k tokens)</Text>
-                      <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">$7.10</Text>
-                    </XStack>
-                    <XStack justify="space-between">
-                      <Text fontSize="$1" color="var(--white)">gVisor Pod Execution (18.4 runtime hrs)</Text>
-                      <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">$4.60</Text>
-                    </XStack>
-                    <XStack justify="space-between">
-                      <Text fontSize="$1" color="var(--white)">ZAP Zero-Copy RPC Channels</Text>
-                      <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">$0.75</Text>
-                    </XStack>
+                    {workspaceData.resourceBreakdown.map((res, rIdx) => (
+                      <XStack key={rIdx} justify="space-between">
+                        <Text fontSize="$1" color="var(--white)">{res.item}</Text>
+                        <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">{res.cost}</Text>
+                      </XStack>
+                    ))}
                   </YStack>
                 </YStack>
               )}
@@ -636,28 +766,33 @@ export default function StudentPortalPage() {
               <XStack items="center" justify="space-between" mb="$4">
                 <YStack gap="$1">
                   <Text fontSize="$3" fontWeight="700" color="var(--white)">
-                    Course Modules & Progress
+                    {activeCourse.code} Coursework & Qualifications
                   </Text>
                   <Text fontSize="$1" color="var(--muted-foreground)">
-                    Complete all 4 laboratory modules to qualify for HACE Credential Defense
+                    Pass all {totalWeeks} laboratory modules to unlock the official {activeCourse.credential} Capstone Defense
                   </Text>
                 </YStack>
-                <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  75% COMPLETED
+                <Chip
+                  px={10}
+                  py={3}
+                  fontSize="$1"
+                  fontFamily="$mono"
+                  color={isDefenseUnlocked ? 'var(--emerald-400)' : 'var(--amber-400)'}
+                >
+                  {progressPercent}% COMPLETED
                 </Chip>
               </XStack>
 
               {/* Progress Bar */}
               <Box height={6} rounded={9999} bg="var(--neutral-800)" overflow="hidden" mb="$4">
-                <Box height="100%" width="75%" bg="var(--emerald-400)" />
+                <Box height="100%" width={`${progressPercent}%`} bg="var(--emerald-400)" />
               </Box>
 
               {/* Week Modules List */}
               <YStack gap="$3">
                 {activeCourse.syllabus.map((week, idx) => {
-                  const isCompleted = idx < 2
-                  const isActive = idx === 2
-                  const isLocked = idx > 2
+                  const isCompleted = currentCompleted.includes(idx)
+                  const isActive = activeWeekIndex === idx
 
                   return (
                     <Box
@@ -732,7 +867,7 @@ export default function StudentPortalPage() {
                               : 'var(--muted-foreground)'
                           }
                         >
-                          {isCompleted ? 'COMPLETED' : isActive ? 'IN PROGRESS' : 'UP NEXT'}
+                          {isCompleted ? 'COMPLETED' : isActive ? 'IN PROGRESS' : 'READY TO START'}
                         </Chip>
                       </XStack>
 
@@ -751,7 +886,7 @@ export default function StudentPortalPage() {
 
                           <YStack gap="$1">
                             <Text fontSize="$1" fontWeight="600" color="var(--white)">
-                              Lectures & Topics:
+                              Lectures & Core Topics:
                             </Text>
                             {week.lectures.map((lec, lIdx) => (
                               <XStack key={lIdx} items="center" gap="$2">
@@ -763,18 +898,35 @@ export default function StudentPortalPage() {
                             ))}
                           </YStack>
 
+                          {week.readings.length > 0 && (
+                            <YStack gap="$1">
+                              <Text fontSize="$1" fontWeight="600" color="var(--white)">
+                                Required Academic Readings:
+                              </Text>
+                              {week.readings.map((read, rIdx) => (
+                                <XStack key={rIdx} items="center" gap="$2">
+                                  <BookOpen size={10} color="var(--white-70)" />
+                                  <Text fontSize="$1" color="var(--muted-foreground)">
+                                    {read}
+                                  </Text>
+                                </XStack>
+                              ))}
+                            </YStack>
+                          )}
+
                           <XStack items="center" justify="space-between" pt="$2">
                             <Text fontSize="$1" color="var(--emerald-400)" fontWeight="600">
-                              Lab Assignment: Active in terminal above
+                              {isCompleted ? '✓ Laboratory Passed' : 'Lab Assignment: Ready for testing'}
                             </Text>
                             <Action
                               render="button"
-                              onClick={() => executeCommand('pytest -v tests/test_agent.py')}
-                              px={10}
-                              py={5}
+                              onClick={() => handleCompleteLab(idx)}
+                              disabled={isRunningCommand}
+                              px={12}
+                              py={6}
                               $platform-web={{ fontSize: '11px' }}
                             >
-                              Submit Lab →
+                              {isCompleted ? 'Re-Run Autograder' : 'Submit Lab & Pass Module →'}
                             </Action>
                           </XStack>
                         </YStack>
@@ -785,11 +937,11 @@ export default function StudentPortalPage() {
               </YStack>
             </Card>
 
-            {/* Capstone Project Defense Card */}
+            {/* Capstone Project Defense & Certification Card */}
             <Card
               p={20}
               bg="var(--pure-black)"
-              borderColor="var(--emerald-850)"
+              borderColor={isDegreeAwarded ? 'var(--emerald-500)' : isDefenseUnlocked ? 'var(--emerald-700)' : 'var(--border)'}
               borderWidth={1}
             >
               <YStack gap="$3">
@@ -800,22 +952,65 @@ export default function StudentPortalPage() {
                       Capstone Defense: {activeCourse.credential}
                     </Text>
                   </XStack>
-                  <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                    READY FOR DEFENSE
+                  <Chip
+                    px={8}
+                    py={2}
+                    fontSize="$1"
+                    fontFamily="$mono"
+                    color={isDegreeAwarded ? 'var(--emerald-400)' : isDefenseUnlocked ? 'var(--emerald-400)' : 'var(--amber-400)'}
+                  >
+                    {isDegreeAwarded ? 'DEGREE AWARDED' : isDefenseUnlocked ? 'QUALIFICATIONS MET' : 'PREREQUISITES PENDING'}
                   </Chip>
                 </XStack>
+
                 <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                  {activeCourse.capstone} Submit your repository for automated gVisor autograder verification.
+                  {activeCourse.capstone}
                 </Text>
-                <XStack items="center" gap="$3" pt="$1">
-                  <Action
-                    render="button"
-                    onClick={() => setShowCredentialModal(true)}
-                    fill
-                  >
-                    Claim & Preview {activeCourse.credential} Credential →
-                  </Action>
-                </XStack>
+
+                {isDegreeAwarded ? (
+                  <YStack gap="$2" pt="$1">
+                    <Box p="$2" rounded="var(--radius-sm)" bg="var(--emerald-950)" borderWidth={1} borderColor="var(--emerald-800)">
+                      <Text fontSize="$1" color="var(--emerald-300)" fontWeight="600">
+                        🎉 Passed with 100% Distinction! Verified W3C Credential on Lux Chain.
+                      </Text>
+                    </Box>
+                    <Action
+                      render="button"
+                      onClick={() => setShowCredentialModal(true)}
+                      fill
+                    >
+                      View & Share {activeCourse.credential} Certificate →
+                    </Action>
+                  </YStack>
+                ) : isDefenseUnlocked ? (
+                  <YStack gap="$2" pt="$1">
+                    <Text fontSize="$1" color="var(--emerald-400)" fontWeight="600">
+                      All {totalWeeks} modules passed! You meet the qualifications to defend your capstone.
+                    </Text>
+                    <Action
+                      render="button"
+                      onClick={handleDefendCapstone}
+                      disabled={isDefending}
+                      fill
+                    >
+                      {isDefending ? 'Evaluating Defense in Cleanroom Pod...' : `Defend Capstone & Issue ${activeCourse.credential} Degree →`}
+                    </Action>
+                  </YStack>
+                ) : (
+                  <YStack gap="$2" pt="$1">
+                    <Text fontSize="$1" color="var(--muted-foreground)">
+                      Complete the remaining {totalWeeks - currentCompleted.length} laboratory modules to unlock the official Capstone Defense.
+                    </Text>
+                    <Action
+                      render="button"
+                      onClick={() => handleCompleteLab(activeWeekIndex)}
+                      disabled={isRunningCommand}
+                      fill
+                    >
+                      Complete Lab Assignment ({activeCourse.syllabus[activeWeekIndex]?.code}) →
+                    </Action>
+                  </YStack>
+                )}
               </YStack>
             </Card>
           </YStack>
@@ -834,24 +1029,26 @@ export default function StudentPortalPage() {
           items="center"
           justify="center"
           p="$4"
-          $platform-web={{ backdropFilter: 'blur(8px)', zIndex: 100 }}
+          $platform-web={{ backdropFilter: 'blur(12px)', zIndex: 100 }}
         >
           <Box
             width="100%"
-            maxW={680}
+            maxW={720}
             bg="var(--pure-black)"
             rounded="var(--radius-2xl)"
             borderWidth={1}
             borderColor="var(--neutral-700)"
             p="$6"
             position="relative"
+            maxH="90vh"
+            overflow="scroll"
           >
             {/* Modal Header */}
             <XStack items="center" justify="space-between" mb="$4">
               <XStack items="center" gap="$2">
                 <Award size={20} color="var(--emerald-400)" />
                 <Text fontSize="$3" fontWeight="700" color="var(--white)">
-                  W3C Verifiable Credential Issued
+                  W3C Verifiable Credential · {activeCourse.credential}
                 </Text>
               </XStack>
               <Box
@@ -886,10 +1083,10 @@ export default function StudentPortalPage() {
                 position="absolute"
                 t={-40}
                 r={-40}
-                width={120}
-                height={120}
+                width={140}
+                height={140}
                 rounded={9999}
-                $platform-web={{ backgroundColor: 'color-mix(in srgb, var(--emerald-500) 10%, transparent)' }}
+                $platform-web={{ backgroundColor: 'color-mix(in srgb, var(--emerald-500) 12%, transparent)' }}
                 pointerEvents="none"
               />
 
@@ -898,7 +1095,7 @@ export default function StudentPortalPage() {
                   HANZO UNIVERSITY · RESEARCH FOUNDATION
                 </Text>
                 <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  VERIFIED ON-CHAIN
+                  ACCREDITED & SIGNED ON-CHAIN
                 </Chip>
               </XStack>
 
@@ -907,10 +1104,10 @@ export default function StudentPortalPage() {
                   THIS CERTIFIES THAT
                 </Text>
                 <Text fontSize="$5" fontWeight="800" color="var(--white)">
-                  Alex Chen
+                  {studentName}
                 </Text>
                 <Text fontSize="$1" color="var(--muted-foreground)">
-                  HAS SUCCESSFULLY MASTERED ALL ACADEMIC SPECIFICATIONS & DEFENDED THE CAPSTONE FOR
+                  HAS COMPLETED ALL COURSEWORK SPECIFICATIONS, PASSED THE AUTOGRADER CI SUITE, AND DEFENDED THE CAPSTONE FOR
                 </Text>
                 <Text fontSize="$3" fontWeight="700" color="var(--emerald-300)" mt="$1">
                   {activeCourse.credentialFull} ({activeCourse.credential})
@@ -931,29 +1128,41 @@ export default function StudentPortalPage() {
               >
                 <XStack justify="space-between">
                   <Text color="var(--muted-foreground)">DID Subject:</Text>
-                  <Text color="var(--white)">did:hanzo:user:hz-stu-9821a</Text>
+                  <Text color="var(--white)" fontFamily="$mono">
+                    did:hanzo:student:{studentHandle}
+                  </Text>
                 </XStack>
                 <XStack justify="space-between">
                   <Text color="var(--muted-foreground)">Issuer DID:</Text>
-                  <Text color="var(--white)">did:hanzo:university:accreditation</Text>
+                  <Text color="var(--white)" fontFamily="$mono">
+                    did:hanzo:university:accreditation
+                  </Text>
                 </XStack>
                 <XStack justify="space-between">
-                  <Text color="var(--muted-foreground)">Ed25519 Proof:</Text>
-                  <Text color="var(--emerald-400)">0x7f4a8b1c...99e2e89b (VERIFIED)</Text>
+                  <Text color="var(--muted-foreground)">Status:</Text>
+                  <Text color="var(--emerald-400)" fontWeight="600">
+                    VERIFIED & ACCREDITED (GRADE: 100% PASS WITH DISTINCTION)
+                  </Text>
+                </XStack>
+                <XStack justify="space-between">
+                  <Text color="var(--muted-foreground)">Lux Chain Proof:</Text>
+                  <Text color="var(--emerald-400)" fontFamily="$mono">
+                    0x7f4a8b1c...99e2e89b (Block #9,418,290)
+                  </Text>
                 </XStack>
               </Box>
 
               <XStack items="center" justify="space-between" pt="$2">
                 <YStack>
-                  <Text fontSize="$1" color="var(--muted-foreground)">Accreditation Officer</Text>
+                  <Text fontSize="$1" color="var(--muted-foreground)">Course Director & Evaluator</Text>
                   <Text fontSize="$1" fontWeight="600" color="var(--white)">{activeCourse.instructor.name}</Text>
                   <Text fontSize="$1" color="var(--muted-foreground)">{activeCourse.instructor.role}</Text>
                 </YStack>
 
                 <YStack items="flex-end">
-                  <Text fontSize="$1" color="var(--muted-foreground)">Issue Date</Text>
+                  <Text fontSize="$1" color="var(--muted-foreground)">Issuance Date</Text>
                   <Text fontSize="$1" fontWeight="600" color="var(--white)">October 2026</Text>
-                  <Text fontSize="$1" color="var(--emerald-400)">Tamper-Proof Proof v2.0</Text>
+                  <Text fontSize="$1" color="var(--emerald-400)">W3C VC 2.0 Standard</Text>
                 </YStack>
               </XStack>
             </Box>
@@ -963,7 +1172,41 @@ export default function StudentPortalPage() {
               <XStack items="center" gap="$2">
                 <Box
                   render="button"
-                  onClick={() => alert('W3C JSON-LD Credential copied to clipboard!')}
+                  onClick={() => {
+                    const jsonLd = JSON.stringify(
+                      {
+                        '@context': [
+                          'https://www.w3.org/ns/credentials/v2',
+                          'https://hanzo.university/credentials/v1',
+                        ],
+                        id: `urn:uuid:hanzo-cert-2026-${activeCourse.code.replace(/\s+/g, '')}-9821a`,
+                        type: ['VerifiableCredential', 'HanzoUniversityDegree'],
+                        issuer: {
+                          id: 'did:hanzo:university:accreditation',
+                          name: 'Hanzo University Research Foundation',
+                        },
+                        validFrom: new Date().toISOString(),
+                        credentialSubject: {
+                          id: `did:hanzo:student:${studentHandle}`,
+                          name: studentName,
+                          course: `${activeCourse.code}: ${activeCourse.title}`,
+                          degree: `${activeCourse.credentialFull} (${activeCourse.credential})`,
+                          units: activeCourse.units,
+                          grade: 'Pass with Distinction (100% Autograder Score)',
+                        },
+                        proof: {
+                          type: 'Ed25519Signature2020',
+                          verificationMethod: 'did:hanzo:university:accreditation#key-1',
+                          proofValue: '0x7f4a8b1c99e2e89b3f4a1c2d88e0a1b2c3d4e5f6',
+                        },
+                      },
+                      null,
+                      2,
+                    )
+                    navigator.clipboard.writeText(jsonLd)
+                    setFeedbackToast('W3C JSON-LD Credential copied to clipboard!')
+                    setTimeout(() => setFeedbackToast(null), 3000)
+                  }}
                   px="$3"
                   py="$2"
                   rounded="var(--radius-md)"
@@ -982,9 +1225,35 @@ export default function StudentPortalPage() {
                   <Copy size={13} />
                   Copy JSON-LD
                 </Box>
+
                 <Box
                   render="button"
-                  onClick={() => alert('PDF Certificate downloaded.')}
+                  onClick={() => {
+                    const certSummary = `========================================================================\n` +
+                      `                    HANZO UNIVERSITY DEGREE CERTIFICATE                  \n` +
+                      `========================================================================\n` +
+                      `Student:            ${studentName}\n` +
+                      `Student DID:        did:hanzo:student:${studentHandle}\n` +
+                      `Degree:             ${activeCourse.credentialFull} (${activeCourse.credential})\n` +
+                      `Course:             ${activeCourse.code}: ${activeCourse.title}\n` +
+                      `Accredited Units:   ${activeCourse.units}.0 Units\n` +
+                      `Level:              ${activeCourse.level}\n` +
+                      `Instructor:         ${activeCourse.instructor.name} (${activeCourse.instructor.role})\n` +
+                      `Issuance Date:      October 2026\n` +
+                      `Blockchain Proof:   Lux Chain Block #9,418,290 (Ed25519 Verified)\n` +
+                      `W3C Standard:       Verifiable Credentials Data Model v2.0\n` +
+                      `========================================================================\n`
+
+                    const blob = new Blob([certSummary], { type: 'text/plain' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `Hanzo-${activeCourse.credential}-Certificate-${studentHandle}.txt`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    setFeedbackToast('Certificate downloaded successfully!')
+                    setTimeout(() => setFeedbackToast(null), 3000)
+                  }}
                   px="$3"
                   py="$2"
                   rounded="var(--radius-md)"
@@ -1001,7 +1270,7 @@ export default function StudentPortalPage() {
                   }}
                 >
                   <Download size={13} />
-                  Download PDF
+                  Download Certificate
                 </Box>
               </XStack>
 
@@ -1012,7 +1281,7 @@ export default function StudentPortalPage() {
                 py={8}
                 fill
               >
-                Close & Return to Lab
+                Close & Return to Workspace
               </Action>
             </XStack>
           </Box>
