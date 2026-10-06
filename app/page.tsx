@@ -230,8 +230,7 @@ export default function UniversityHomePage() {
 
         {/* 3-Course Layout */}
         <Grid columns={{ min: 340, max: 3 }} gap={28} mt="$6">
-          {UNIVERSITY_COURSES.map((course, idx) => {
-            const isFeatured = course.slug === 'reinforcement-learning'
+          {UNIVERSITY_COURSES.map((course) => {
             return (
               <Card
                 key={course.code}
@@ -240,36 +239,13 @@ export default function UniversityHomePage() {
                 flexDirection="column"
                 justify="space-between"
                 borderWidth={1}
-                borderColor={isFeatured ? 'rgba(255, 255, 255, 0.35)' : 'var(--border)'}
+                borderColor="var(--border)"
                 bg="$panel"
                 position="relative"
-                $platform-web={{
-                  boxShadow: isFeatured ? '0 0 32px rgba(255, 255, 255, 0.05)' : 'none',
-                }}
               >
-                {/* Featured Badge */}
-                {isFeatured && (
-                  <Box
-                    position="absolute"
-                    t={-12}
-                    l="50%"
-                    $platform-web={{ transform: 'translateX(-50%)' }}
-                    px={12}
-                    py={3}
-                    rounded={999}
-                    bg="var(--pure-black)"
-                    borderWidth={1}
-                    borderColor="var(--white)"
-                  >
-                    <Text fontSize="$1" fontFamily="$mono" fontWeight="700" color="var(--white)">
-                      FEATURED TRACK
-                    </Text>
-                  </Box>
-                )}
-
                 <YStack gap="$4">
                   {/* Code & Credential Header */}
-                  <XStack items="center" justify="space-between" pt={isFeatured ? '$1' : 0}>
+                  <XStack items="center" justify="space-between">
                     <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
                       {course.code} · {course.level}
                     </Text>
@@ -409,7 +385,6 @@ export default function UniversityHomePage() {
                 tuition: '$249 USD',
                 rebate: '+$63 USD',
                 desc: 'Gymnasium & Zoo Gym GPU Clusters',
-                highlight: true,
               },
               {
                 code: 'SYS 103',
@@ -426,7 +401,7 @@ export default function UniversityHomePage() {
                 p="$5"
                 rounded="var(--radius-lg)"
                 borderWidth={1}
-                borderColor={tier.highlight ? 'rgba(255, 255, 255, 0.35)' : 'var(--border)'}
+                borderColor="var(--border)"
                 bg="var(--pure-black)"
                 $platform-web={{ textAlign: 'center' }}
               >
