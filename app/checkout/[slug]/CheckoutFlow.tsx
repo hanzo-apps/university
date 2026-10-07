@@ -315,7 +315,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
         px="$6"
         position="sticky"
         t={0}
-        $platform-web={{ zIndex: 50 }}
+        $platform-web={{ zIndex: 20 }}
       >
         <XStack items="center" justify="space-between" flexWrap="wrap" gap="$4">
           <XStack items="center" gap="$3">
@@ -441,29 +441,25 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                   <Box height={1} bg="var(--border)" />
 
                   {/* Included Benefits */}
-                  <YStack gap="$3">
-                    <Text fontSize="$1" fontWeight="700" color="var(--white-70)" fontFamily="$mono">
+                  <YStack gap={16}>
+                    <Text fontSize={12} fontWeight="600" color="rgba(255, 255, 255, 0.45)" fontFamily="$mono" letterSpacing={1.2}>
                       EVERY ENROLLMENT INCLUDES:
                     </Text>
 
-                    <XStack items="flex-start" gap="$3">
-                      <Box p="$1" rounded="var(--radius-sm)" bg="var(--pure-black)" borderWidth={1} borderColor="var(--border)">
-                        <Coins size={15} color="var(--emerald-400)" />
-                      </Box>
+                    <XStack items="flex-start" gap={12}>
+                      <Coins size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
                       <YStack gap={2}>
                         <Text fontSize="$2" fontWeight="600" color="var(--white)">
-                          ${rebateCredits}.00 USD Compute Grant Deposit (25% Rebate)
+                          + $50 usage credit for free
                         </Text>
                         <Text fontSize="$1" color="var(--muted-foreground)">
-                          Credited to your Hanzo Cloud wallet on Day 1 for model training & API calls.
+                          Credited to your Hanzo Cloud wallet on Day 1 for model training &amp; API calls.
                         </Text>
                       </YStack>
                     </XStack>
 
-                    <XStack items="flex-start" gap="$3">
-                      <Box p="$1" rounded="var(--radius-sm)" bg="var(--pure-black)" borderWidth={1} borderColor="var(--border)">
-                        <Cpu size={15} color="var(--white)" />
-                      </Box>
+                    <XStack items="flex-start" gap={12}>
+                      <Cpu size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
                       <YStack gap={2}>
                         <Text fontSize="$2" fontWeight="600" color="var(--white)">
                           Dedicated gVisor MicroVM Sandbox
@@ -474,10 +470,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       </YStack>
                     </XStack>
 
-                    <XStack items="flex-start" gap="$3">
-                      <Box p="$1" rounded="var(--radius-sm)" bg="var(--pure-black)" borderWidth={1} borderColor="var(--border)">
-                        <GraduationCap size={15} color="var(--white)" />
-                      </Box>
+                    <XStack items="flex-start" gap={12}>
+                      <GraduationCap size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
                       <YStack gap={2}>
                         <Text fontSize="$2" fontWeight="600" color="var(--white)">
                           W3C Verifiable Credential on Lux Chain
@@ -587,30 +581,32 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         <Box
                           render="button"
                           onClick={() => handleApplyCoupon('STUDENT50')}
-                          px="$2"
-                          py="$1"
-                          rounded="var(--radius-sm)"
-                          bg="var(--card)"
+                          px={10}
+                          py={4}
+                          rounded={999}
+                          bg="rgba(255, 255, 255, 0.04)"
                           borderWidth={1}
-                          borderColor="var(--border)"
-                          $platform-web={{ cursor: 'pointer', border: 'none' }}
+                          borderColor="rgba(255, 255, 255, 0.1)"
+                          hoverStyle={{ background: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                          $platform-web={{ cursor: 'pointer' }}
                         >
-                          <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)">
+                          <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.8)">
                             STUDENT50 (50% Off)
                           </Text>
                         </Box>
                         <Box
                           render="button"
                           onClick={() => handleApplyCoupon('DEVCOMMUNITY')}
-                          px="$2"
-                          py="$1"
-                          rounded="var(--radius-sm)"
-                          bg="var(--card)"
+                          px={10}
+                          py={4}
+                          rounded={999}
+                          bg="rgba(255, 255, 255, 0.04)"
                           borderWidth={1}
-                          borderColor="var(--border)"
-                          $platform-web={{ cursor: 'pointer', border: 'none' }}
+                          borderColor="rgba(255, 255, 255, 0.1)"
+                          hoverStyle={{ background: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                          $platform-web={{ cursor: 'pointer' }}
                         >
-                          <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)">
+                          <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.8)">
                             DEVCOMMUNITY (30% Off)
                           </Text>
                         </Box>
@@ -680,62 +676,9 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       Payment Method
                     </Text>
                     <Text fontSize="$2" color="var(--muted-foreground)">
-                      Secure one-time payment settled via Square & Hanzo Treasury Layer.
+                      Secure one-time payment settled via Hanzo Treasury Layer.
                     </Text>
                   </YStack>
-
-                  {/* Regular Hanzo Payment Gateway Link (Square) */}
-                  <Box
-                    p="$3"
-                    rounded="var(--radius-md)"
-                    bg="var(--pure-black)"
-                    borderWidth={1}
-                    borderColor="var(--border)"
-                  >
-                    <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
-                      <XStack items="center" gap="$2.5">
-                        <Box p="$1.5" rounded="var(--radius-sm)" bg="var(--card)" borderWidth={1} borderColor="var(--border)">
-                          <SquareLogo size={16} color="var(--white)" />
-                        </Box>
-                        <YStack>
-                          <XStack items="center" gap="$2">
-                            <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                              Hanzo Pay
-                            </Text>
-                            <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                              SQUARE COMMERCE
-                            </Chip>
-                          </XStack>
-                          <Text fontSize="$1" color="var(--muted-foreground)">
-                            Standard payment flow via pay.hanzo.ai
-                          </Text>
-                        </YStack>
-                      </XStack>
-
-                      <Action
-                        href={hanzoPayUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        px={12}
-                        py={6}
-                        $platform-web={{ fontSize: '12px', fontWeight: 600 }}
-                      >
-                        <XStack items="center" gap="$1.5">
-                          <Text fontSize="$1" fontWeight="600" color="inherit">
-                            Open Hanzo Pay ↗
-                          </Text>
-                        </XStack>
-                      </Action>
-                    </XStack>
-                  </Box>
-
-                  <XStack items="center" gap="$2" my="$1">
-                    <Box flex={1} height={1} bg="var(--border)" />
-                    <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                      OR DIRECT CHECKOUT VIA SQUARE
-                    </Text>
-                    <Box flex={1} height={1} bg="var(--border)" />
-                  </XStack>
 
                   {/* Method Tabs */}
                   <XStack gap="$2" width="100%">

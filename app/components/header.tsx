@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Box, Text, View, XStack, YStack } from '@hanzo/ui'
 import { HanzoWordmark } from '@hanzogui/shell'
 
@@ -65,10 +66,16 @@ export function Header() {
   const [grounded, setGrounded] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [programsOpen, setProgramsOpen] = useState(false)
+  const pathname = usePathname()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinnedRef = useRef(false)
   const hoverOpenedAtRef = useRef<number>(0)
+
+  // Automatically close dropdown on navigation
+  useEffect(() => {
+    closeMenu()
+  }, [pathname])
 
   useEffect(() => {
     const handleScroll = () => setGrounded(window.scrollY > 10)
@@ -131,7 +138,7 @@ export function Header() {
     closeTimerRef.current = setTimeout(() => {
       setProgramsOpen(false)
       isPinnedRef.current = false
-    }, 280)
+    }, 400)
   }
 
   const handleToggleClick = (e: React.MouseEvent) => {
@@ -161,12 +168,13 @@ export function Header() {
         render="header"
         position="sticky"
         t={0}
-        z={50}
+        z={100}
+        $platform-web={{ zIndex: 1000 }}
         items="center"
         justify="space-between"
         height={64}
         px={24}
-        bg={grounded ? 'rgba(10, 10, 10, 0.92)' : 'rgba(10, 10, 10, 0.75)'}
+        bg={grounded ? 'rgba(10, 10, 10, 0.94)' : 'rgba(10, 10, 10, 0.85)'}
         backdropFilter="blur(20px)"
         borderBottomWidth={1}
         borderColor="var(--border)"
@@ -239,10 +247,10 @@ export function Header() {
                 className="programs-dropdown-menu"
                 style={{
                   position: 'absolute',
-                  top: '100%',
+                  top: 'calc(100% - 2px)',
                   left: -140,
                   paddingTop: 8,
-                  zIndex: 100,
+                  zIndex: 1001,
                 }}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -251,17 +259,17 @@ export function Header() {
                   width={560}
                   p={16}
                   rounded="var(--radius-xl)"
-                  bg="rgba(14, 14, 14, 0.98)"
+                  bg="rgba(10, 10, 10, 0.98)"
                   backdropFilter="blur(24px)"
                   borderWidth={1}
-                  borderColor="var(--border)"
+                  borderColor="rgba(255, 255, 255, 0.08)"
                   gap={12}
                   $platform-web={{
-                    boxShadow: '0 20px 48px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 24px 48px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.15)',
                   }}
                 >
-                  <XStack items="center" justify="space-between" px={8} pb={6} borderBottomWidth={1} borderColor="var(--border)">
-                    <Text fontSize="$1" fontWeight="700" color="var(--white-70)" fontFamily="$mono">
+                  <XStack items="center" justify="space-between" px={8} pb={8} borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                    <Text fontSize="$1" fontWeight="700" color="rgba(255, 255, 255, 0.5)" fontFamily="$mono">
                       3 CERTIFICATION TRACKS
                     </Text>
                     <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">
@@ -274,8 +282,8 @@ export function Header() {
                       <Link
                         key={c.slug}
                         href={`/${c.slug}`}
-                        onClick={closeMenu}
-                        style={{ textDecoration: 'none', color: 'inherit' }}
+                        onClick={() => setTimeout(closeMenu, 80)}
+                        style={{ textDecoration: 'none', color: 'inherit', display: 'block', cursor: 'pointer' }}
                       >
                         <XStack
                           items="center"
@@ -294,7 +302,7 @@ export function Header() {
                               rounded="var(--radius-sm)"
                               bg="var(--pure-black)"
                               borderWidth={1}
-                              borderColor="var(--border)"
+                              borderColor="rgba(255, 255, 255, 0.12)"
                             >
                               <Text fontSize="$1" fontWeight="700" fontFamily="$mono" color="var(--white)">
                                 {c.code}
@@ -311,10 +319,10 @@ export function Header() {
                           </XStack>
 
                           <XStack items="center" gap={6}>
-                            <Text fontSize="$1" color="var(--white-70)" fontFamily="$mono">
+                            <Text fontSize="$1" color="rgba(255, 255, 255, 0.6)" fontFamily="$mono">
                               ${c.price}
                             </Text>
-                            <ArrowRight size={13} color="var(--muted-foreground)" />
+                            <ArrowRight size={13} color="rgba(255, 255, 255, 0.4)" />
                           </XStack>
                         </XStack>
                       </Link>
@@ -327,12 +335,12 @@ export function Header() {
                     pt={10}
                     px={8}
                     borderTopWidth={1}
-                    borderColor="var(--border)"
+                    borderColor="rgba(255, 255, 255, 0.08)"
                   >
                     <Link
                       href="/portal"
-                      onClick={closeMenu}
-                      style={{ textDecoration: 'none' }}
+                      onClick={() => setTimeout(closeMenu, 80)}
+                      style={{ textDecoration: 'none', cursor: 'pointer' }}
                     >
                       <XStack items="center" gap={4}>
                         <Text fontSize="$1" color="var(--emerald-400)" fontWeight="600">
@@ -345,8 +353,8 @@ export function Header() {
                       href="https://hanzo.ai/blog/kai-decision-models"
                       target="_blank"
                       rel="noreferrer"
-                      onClick={closeMenu}
-                      style={{ textDecoration: 'none' }}
+                      onClick={() => setTimeout(closeMenu, 80)}
+                      style={{ textDecoration: 'none', cursor: 'pointer' }}
                     >
                       <XStack items="center" gap={4}>
                         <Text fontSize="$1" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
@@ -357,8 +365,8 @@ export function Header() {
 
                     <Link
                       href="/#credentials"
-                      onClick={closeMenu}
-                      style={{ textDecoration: 'none' }}
+                      onClick={() => setTimeout(closeMenu, 80)}
+                      style={{ textDecoration: 'none', cursor: 'pointer' }}
                     >
                       <Text fontSize="$1" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
                         W3C Standards

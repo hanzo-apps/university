@@ -143,7 +143,7 @@ function VerifyContent() {
         px="$6"
         position="sticky"
         t={0}
-        $platform-web={{ zIndex: 50 }}
+        $platform-web={{ zIndex: 20 }}
       >
         <XStack items="center" justify="space-between" maxW={1200} mx="auto">
           <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
