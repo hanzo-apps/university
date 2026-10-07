@@ -140,26 +140,30 @@ function VerifyContent() {
         borderColor="var(--border)"
         bg="var(--pure-black)"
         py="$3"
-        px="$6"
+        px={14}
+        $sm={{ px: 20 }}
         position="sticky"
         t={0}
+        width="100%"
+        maxW="100vw"
+        overflow="hidden"
         $platform-web={{ zIndex: 20 }}
       >
-        <XStack items="center" justify="space-between" maxW={1200} mx="auto">
-          <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <XStack items="center" gap="$2">
+        <XStack items="center" justify="space-between" maxW={1200} mx="auto" flexWrap="wrap" gap={8} width="100%">
+          <Link href="/" style={{ textDecoration: 'none', color: 'inherit', minWidth: 0, flexShrink: 1 }}>
+            <XStack items="center" gap="$2" minW={0}>
               <Text fontSize="$2" fontWeight="700" color="var(--white)" fontFamily="$mono">
                 hanzo.university
               </Text>
               <Chip px={6} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                PUBLIC REGISTRY
+                REGISTRY
               </Chip>
             </XStack>
           </Link>
 
-          <XStack items="center" gap="$3">
+          <XStack items="center" gap="$2" style={{ flexShrink: 0 }}>
             <Link href="/portal" style={{ textDecoration: 'none' }}>
-              <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
+              <Text fontSize="$1" $sm={{ fontSize: '$2' }} color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
                 Student Portal →
               </Text>
             </Link>
@@ -216,9 +220,10 @@ function VerifyContent() {
 
         {/* Official Verified Credential Certificate */}
         <Card
-          p={32}
-          borderWidth={1}
-          borderColor="var(--emerald-500)"
+          p={16}
+          $sm={{ p: 24 }}
+          $md={{ p: 32 }}
+          borderWidth={0}
           bg="$panel"
           position="relative"
           overflow="hidden"
@@ -227,10 +232,10 @@ function VerifyContent() {
           {/* Subtle Ambient Radial Glow */}
           <Box
             position="absolute"
-            t={-60}
-            r={-60}
-            width={200}
-            height={200}
+            t={0}
+            r={0}
+            width="min(200px, 40vw)"
+            height="min(200px, 40vw)"
             rounded={9999}
             $platform-web={{
               backgroundColor: 'color-mix(in srgb, var(--emerald-500) 12%, transparent)',
@@ -240,10 +245,10 @@ function VerifyContent() {
 
           {/* Validation Header */}
           <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3" mb="$4">
-            <XStack items="center" gap="$2">
-              <ShieldCheck size={24} color="var(--emerald-400)" />
-              <YStack>
-                <Text fontSize="$3" fontWeight="800" color="var(--white)">
+            <XStack items="center" gap="$2" flex={1} minW={0}>
+              <ShieldCheck size={24} color="var(--emerald-400)" style={{ flexShrink: 0 }} />
+              <YStack flex={1} minW={0}>
+                <Text fontSize="$3" fontWeight="800" color="var(--white)" $xs={{ fontSize: '$2' }}>
                   VALID & CRYPTOGRAPHICALLY VERIFIED
                 </Text>
                 <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
@@ -279,29 +284,29 @@ function VerifyContent() {
           </YStack>
 
           {/* Verification Details Grid */}
-          <Grid columns={{ min: 280, max: 2 }} gap={16} mt="$4">
-            <Box p="$3" rounded="var(--radius-md)" bg="var(--pure-black)" borderWidth={1} borderColor="var(--border)">
+          <Grid columns={{ min: 260, max: 2 }} gap={16} mt="$4">
+            <Box p="$3" rounded="var(--radius-md)" bg="var(--pure-black)" borderWidth={0}>
               <Text fontSize="$1" color="var(--muted-foreground)">DID Subject:</Text>
               <Text fontSize="$1" fontFamily="$mono" color="var(--white)" mt="$1">
                 did:hanzo:student:{studentHandle}
               </Text>
             </Box>
 
-            <Box p="$3" rounded="var(--radius-md)" bg="var(--pure-black)" borderWidth={1} borderColor="var(--border)">
+            <Box p="$3" rounded="var(--radius-md)" bg="var(--pure-black)" borderWidth={0}>
               <Text fontSize="$1" color="var(--muted-foreground)">Issuing Authority:</Text>
               <Text fontSize="$1" fontFamily="$mono" color="var(--white)" mt="$1">
                 did:hanzo:trust:accreditation
               </Text>
             </Box>
 
-            <Box p="$3" rounded="var(--radius-md)" bg="var(--pure-black)" borderWidth={1} borderColor="var(--border)">
+            <Box p="$3" rounded="var(--radius-md)" bg="var(--pure-black)" borderWidth={0}>
               <Text fontSize="$1" color="var(--muted-foreground)">Evaluation Grade:</Text>
               <Text fontSize="$1" fontWeight="700" color="var(--emerald-300)" mt="$1">
                 100% Pass with Distinction (Automated Cleanroom Harness)
               </Text>
             </Box>
 
-            <Box p="$3" rounded="var(--radius-md)" bg="var(--pure-black)" borderWidth={1} borderColor="var(--border)">
+            <Box p="$3" rounded="var(--radius-md)" bg="var(--pure-black)" borderWidth={0}>
               <Text fontSize="$1" color="var(--muted-foreground)">Lux Ledger Signature:</Text>
               <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)" mt="$1">
                 0x7f4a8b1c...99e2e89b (Ed25519 Verified)
@@ -310,39 +315,39 @@ function VerifyContent() {
           </Grid>
 
           {/* Action Buttons */}
-          <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3" mt="$6" pt="$4" borderTopWidth={1} borderColor="var(--border)">
-            <XStack items="center" gap="$2" flexWrap="wrap">
+          <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3" mt="$6" pt="$4" borderTopWidth={1} borderColor="var(--border)" width="100%">
+            <XStack items="center" gap="$2" flexWrap="wrap" width="100%" minW={0}>
               <Action
                 render="button"
                 onClick={() => handleCopy(JSON.stringify(jsonLdPayload, null, 2), 'json')}
-                px={12}
+                px={10}
                 py={6}
-                $platform-web={{ fontSize: '11px' }}
+                $platform-web={{ fontSize: '11px', flex: '1 1 auto', minWidth: '90px', textAlign: 'center' }}
               >
                 <Copy size={13} style={{ marginRight: 4 }} />
-                {copied === 'json' ? 'Copied JSON-LD!' : 'Copy JSON-LD'}
+                {copied === 'json' ? 'Copied JSON!' : 'Copy JSON'}
               </Action>
 
               <Action
                 render="button"
                 onClick={handleDownloadJson}
-                px={12}
+                px={10}
                 py={6}
-                $platform-web={{ fontSize: '11px' }}
+                $platform-web={{ fontSize: '11px', flex: '1 1 auto', minWidth: '90px', textAlign: 'center' }}
               >
                 <Download size={13} style={{ marginRight: 4 }} />
-                Download JSON
+                JSON-LD
               </Action>
 
               <Action
                 render="button"
                 onClick={handleDownloadSvg}
-                px={12}
+                px={10}
                 py={6}
-                $platform-web={{ fontSize: '11px' }}
+                $platform-web={{ fontSize: '11px', flex: '1 1 auto', minWidth: '100px', textAlign: 'center' }}
               >
                 <Download size={13} style={{ marginRight: 4 }} />
-                Download GitHub SVG Badge
+                SVG Badge
               </Action>
             </XStack>
 
@@ -351,6 +356,7 @@ function VerifyContent() {
               fill
               px={16}
               py={8}
+              $platform-web={{ width: '100%', textAlign: 'center' }}
             >
               Access Student Portal →
             </Action>

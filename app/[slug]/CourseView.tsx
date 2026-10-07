@@ -58,9 +58,9 @@ export function CourseView({ course }: { course: UniversityCourse }) {
 
       {/* ── Course Specification Matrix & Tuition Card ── */}
       <Band pad={40} measure={1152}>
-        <Grid columns={{ min: 340, max: 2 }} gap={24}>
+        <Grid columns={{ min: 280, max: 2 }} gap={24}>
           {/* Academic Specifications Card */}
-          <Card p={24} display="flex" flexDirection="column" justify="space-between" borderWidth={1} borderColor="var(--border)">
+          <Card p={24} display="flex" flexDirection="column" justify="space-between" borderWidth={0}>
             <YStack gap="$5">
               <XStack items="center" justify="space-between">
                 <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)" letterSpacing={1}>
@@ -77,8 +77,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   p="$3"
                   rounded="var(--radius-lg)"
                   bg="var(--pure-black)"
-                  borderWidth={1}
-                  borderColor="var(--border)"
+                  borderWidth={0}
                 >
                   <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
                     DURATION
@@ -93,8 +92,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   p="$3"
                   rounded="var(--radius-lg)"
                   bg="var(--pure-black)"
-                  borderWidth={1}
-                  borderColor="var(--border)"
+                  borderWidth={0}
                 >
                   <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
                     LEVEL
@@ -109,8 +107,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   p="$3"
                   rounded="var(--radius-lg)"
                   bg="var(--pure-black)"
-                  borderWidth={1}
-                  borderColor="var(--border)"
+                  borderWidth={0}
                 >
                   <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
                     CREDENTIAL
@@ -125,8 +122,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   p="$3"
                   rounded="var(--radius-lg)"
                   bg="var(--pure-black)"
-                  borderWidth={1}
-                  borderColor="var(--border)"
+                  borderWidth={0}
                 >
                   <Text fontFamily="$mono" fontSize="$1" color="var(--muted-foreground)">
                     CREDENTIAL FORMAT
@@ -175,7 +171,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
           </Card>
 
           {/* Tuition & Enrollment Card */}
-          <Card p={24} display="flex" flexDirection="column" justify="space-between" borderWidth={1} borderColor="var(--border)">
+          <Card p={24} display="flex" flexDirection="column" justify="space-between" borderWidth={0}>
             <YStack gap="$4">
               <XStack items="center" justify="space-between">
                 <Text fontSize="$1" fontFamily="$mono" color="var(--white-70)" letterSpacing={1}>
@@ -192,8 +188,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                 p={20}
                 bg="var(--pure-black)"
                 rounded="var(--radius-lg)"
-                borderWidth={1}
-                borderColor="var(--border)"
+                borderWidth={0}
               >
                 <XStack items="baseline" justify="space-between">
                   <YStack>
@@ -259,7 +254,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
               </YStack>
 
               {/* Rebate Explanation Card */}
-              <Card p={16} bg="$panel" borderWidth={1} borderColor="var(--border)">
+              <Card p={16} bg="$panel" borderWidth={0}>
                 <XStack items="center" gap="$2" mb="$1">
                   <Coins size={16} color="var(--emerald-400)" />
                   <Text fontSize="$1" fontWeight="700" color="var(--white)">
@@ -334,10 +329,10 @@ export function CourseView({ course }: { course: UniversityCourse }) {
 
         <YStack gap="$6">
           {course.syllabus.map((week) => (
-            <Card key={week.week} p={24} borderWidth={1} borderColor="var(--border)">
+            <Card key={week.week} p={24} borderWidth={0}>
               <YStack gap="$4">
                 <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
-                  <XStack items="center" gap="$3" flex={1} minW={0}>
+                  <XStack items="center" gap="$3" flex={1} minW={0} flexWrap="wrap">
                     <Chip px={10} py={3} fontSize="$1" fontFamily="$mono">
                       {week.code}
                     </Chip>
@@ -354,8 +349,8 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   {week.summary}
                 </Text>
 
-                <Grid columns={{ min: 320, max: 2 }} gap={16} pt="$2">
-                  <YStack gap="$2" p="$4" rounded="var(--radius-md)" bg="$panel" borderWidth={1} borderColor="var(--border)">
+                <Grid columns={{ min: 260, max: 2 }} gap={16} pt="$2">
+                  <YStack gap="$2" p="$4" rounded="var(--radius-md)" bg="$panel" borderWidth={0}>
                     <Text fontSize="$1" fontWeight="700" color="var(--white)">
                       Key Topics & Lectures:
                     </Text>
@@ -371,7 +366,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                     ))}
                   </YStack>
 
-                  <YStack gap="$2" p="$4" rounded="var(--radius-md)" bg="$panel" borderWidth={1} borderColor="var(--border)">
+                  <YStack gap="$2" p="$4" rounded="var(--radius-md)" bg="$panel" borderWidth={0}>
                     <Text fontSize="$1" fontWeight="700" color="var(--white)">
                       Assigned Readings:
                     </Text>
@@ -393,8 +388,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   px="$4"
                   rounded="var(--radius-md)"
                   bg="var(--pure-black)"
-                  borderWidth={1}
-                  borderColor="var(--border)"
+                  borderWidth={0}
                 >
                   <XStack items="center" gap="$2">
                     <Code2 size={16} color="var(--emerald-400)" />
@@ -411,9 +405,9 @@ export function CourseView({ course }: { course: UniversityCourse }) {
 
       {/* ── Capstone Project Defense Card ── */}
       <Band pad={40} measure={1080} ground="var(--pure-black)">
-        <Card p={32} bg="$panel" borderColor="var(--border)" borderWidth={1}>
+        <Card p={32} bg="$panel" borderWidth={0}>
           <XStack items="center" justify="space-between" flexWrap="wrap" gap="$4">
-            <YStack gap="$2" flex={1} minW={280}>
+            <YStack gap="$2" flex={1} minW={0}>
               <Eyebrow>Final Examination</Eyebrow>
               <Title quiet={false}>Capstone Defense & Credential Issuance</Title>
               <Lede maxW={640}>
@@ -441,14 +435,13 @@ export function CourseView({ course }: { course: UniversityCourse }) {
           lede="Six specialized engineering credentials designed for the frontier of autonomous intelligence."
         />
 
-        <Grid columns={{ min: 320, max: 3 }} gap={16}>
+        <Grid columns={{ min: 280, max: 3 }} gap={16}>
           {UNIVERSITY_COURSES.map((c) => (
             <Card
               key={c.slug}
               p={20}
               bg={c.slug === course.slug ? 'var(--pure-black)' : '$panel'}
-              borderWidth={1}
-              borderColor={c.slug === course.slug ? 'var(--white)' : 'var(--border)'}
+              borderWidth={0}
             >
               <YStack gap="$3" justify="space-between" height="100%">
                 <YStack gap="$2">

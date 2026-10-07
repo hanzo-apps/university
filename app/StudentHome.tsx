@@ -296,8 +296,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
           {/* ──── 1. LEFT SIDEBAR NAVIGATION ──── */}
           <Box
             className="dashboard-sidebar"
-            borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.08)"
+            borderWidth={0}
             bg="#080808"
             p={18}
             style={{
@@ -320,7 +319,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                 style={{
                   width: '100%',
                   background: activeNav === 'home' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  border: `1px solid ${activeNav === 'home' ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
+                  border: 'none',
                   borderRadius: '14px',
                   padding: '11px 14px',
                   display: 'flex',
@@ -350,7 +349,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                 style={{
                   width: '100%',
                   background: activeNav === 'records' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  border: `1px solid ${activeNav === 'records' ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
+                  border: 'none',
                   borderRadius: '14px',
                   padding: '11px 14px',
                   display: 'flex',
@@ -381,7 +380,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                 style={{
                   width: '100%',
                   background: activeNav === 'verify' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  border: `1px solid ${activeNav === 'verify' ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
+                  border: 'none',
                   borderRadius: '14px',
                   padding: '11px 14px',
                   display: 'flex',
@@ -409,7 +408,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                   textDecoration: 'none',
                   width: '100%',
                   background: activeNav === 'resources' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  border: `1px solid ${activeNav === 'resources' ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
+                  border: 'none',
                   borderRadius: '14px',
                   padding: '11px 14px',
                   display: 'flex',
@@ -434,7 +433,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                   textDecoration: 'none',
                   width: '100%',
                   background: activeNav === 'support' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  border: `1px solid ${activeNav === 'support' ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
+                  border: 'none',
                   borderRadius: '14px',
                   padding: '11px 14px',
                   display: 'flex',
@@ -519,8 +518,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
 
               {/* Active Student Status Card */}
               <Box
-                borderWidth={1}
-                borderColor="rgba(255, 255, 255, 0.08)"
+                borderWidth={0}
                 bg="#0a0a0a"
                 p={16}
                 style={{
@@ -576,8 +574,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
 
             {/* Cryptographic Credential Verification Card */}
             <Box
-              borderWidth={1}
-              borderColor="rgba(255, 255, 255, 0.08)"
+              borderWidth={0}
               bg="#080808"
               p={24}
               position="relative"
@@ -763,8 +760,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
 
             {/* Your Academic Credentials Card */}
             <Box
-              borderWidth={1}
-              borderColor="rgba(255, 255, 255, 0.08)"
+              borderWidth={0}
               bg="#080808"
               p={24}
               style={{
@@ -785,7 +781,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                   onClick={() => setShowDetailModal(true)}
                   style={{
                     background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: 'none',
                     borderRadius: '999px',
                     padding: '4px 12px',
                     fontSize: '12px',
@@ -805,8 +801,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
 
               {/* Inner Credential Record Box */}
               <Box
-                borderWidth={1}
-                borderColor="rgba(255, 255, 255, 0.08)"
+                borderWidth={0}
                 bg="rgba(0, 0, 0, 0.5)"
                 p={20}
                 style={{
@@ -830,8 +825,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                       width={48}
                       height={48}
                       bg="rgba(255, 255, 255, 0.04)"
-                      borderWidth={1}
-                      borderColor="rgba(255, 255, 255, 0.1)"
+                      borderWidth={0}
                       items="center"
                       justify="center"
                       style={{
@@ -848,7 +842,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                         <Box
                           style={{
                             background: 'rgba(16, 185, 129, 0.12)',
-                            border: '1px solid rgba(16, 185, 129, 0.35)',
+                            border: 'none',
                             borderRadius: '999px',
                             padding: '2px 8px',
                             display: 'inline-flex',
@@ -969,8 +963,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
           >
             {/* Quick Actions Card */}
             <Box
-              borderWidth={1}
-              borderColor="rgba(255, 255, 255, 0.08)"
+              borderWidth={0}
               bg="#080808"
               p={20}
               style={{
@@ -1019,7 +1012,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                     textDecoration: 'none',
                     width: '100%',
                     background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    border: 'none',
                     color: 'var(--white)',
                     borderRadius: '14px',
                     padding: '13px 16px',
@@ -1046,7 +1039,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                   style={{
                     width: '100%',
                     background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    border: 'none',
                     color: 'var(--white)',
                     borderRadius: '14px',
                     padding: '13px 16px',
@@ -1072,7 +1065,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                   style={{
                     width: '100%',
                     background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    border: 'none',
                     color: 'var(--white)',
                     borderRadius: '14px',
                     padding: '13px 16px',
@@ -1097,8 +1090,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
 
             {/* Helpful Links Card */}
             <Box
-              borderWidth={1}
-              borderColor="rgba(255, 255, 255, 0.08)"
+              borderWidth={0}
               bg="#080808"
               p={20}
               style={{
@@ -1209,7 +1201,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
           <Box
             style={{
               borderRadius: '24px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: 'none',
               background: '#090c12',
               padding: '22px 20px',
               position: 'relative',
@@ -1217,16 +1209,13 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
             }}
           >
             {/* Top Row: Welcome Info on Left, 3D Glass Shield on Right */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: '14px',
-              }}
+            <XStack
+              justify="space-between"
+              items="flex-start"
+              gap={14}
+              width="100%"
             >
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <YStack flex={1} minW={0} gap={6}>
                 <Text
                   fontFamily="$mono"
                   fontSize={11}
@@ -1234,33 +1223,35 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                   textTransform="uppercase"
                   letterSpacing={1.2}
                   fontWeight="600"
+                  display="block"
                 >
                   STUDENT PORTAL
                 </Text>
                 <Text
-                  fontSize={26}
+                  fontSize={24}
                   fontWeight="700"
                   color="var(--white)"
-                  lineHeight={32}
-                  style={{ letterSpacing: '-0.02em', margin: '6px 0 8px 0' }}
+                  lineHeight={30}
+                  letterSpacing={-0.5}
+                  display="block"
                 >
                   Welcome back, {name}
                 </Text>
-                <Text fontSize={13} color="rgba(255, 255, 255, 0.65)" lineHeight={19}>
+                <Text fontSize={13} color="rgba(255, 255, 255, 0.65)" lineHeight={19} display="block">
                   Access your academic records, verify your credentials, and take the next step in your journey at Hanzo University.
                 </Text>
-              </div>
+              </YStack>
 
               {/* 3D Glass Shield Artwork situated in top right */}
-              <GlassShieldArtwork size={76} />
-            </div>
+              <GlassShieldArtwork size={68} />
+            </XStack>
 
             {/* Inset Active Student Card */}
             <Box
               style={{
                 marginTop: '18px',
                 borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                border: 'none',
                 background: '#06080d',
                 padding: '14px 16px',
                 display: 'flex',
@@ -1332,7 +1323,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
               style={{
                 width: '100%',
                 background: '#090c12',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: 'none',
                 borderRadius: '16px',
                 padding: '15px 18px',
                 display: 'flex',
@@ -1357,7 +1348,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                 textDecoration: 'none',
                 width: '100%',
                 background: '#090c12',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: 'none',
                 borderRadius: '16px',
                 padding: '15px 18px',
                 display: 'flex',
@@ -1382,7 +1373,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
               style={{
                 width: '100%',
                 background: '#090c12',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: 'none',
                 borderRadius: '16px',
                 padding: '15px 18px',
                 display: 'flex',
@@ -1407,7 +1398,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
               style={{
                 width: '100%',
                 background: '#090c12',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: 'none',
                 borderRadius: '16px',
                 padding: '15px 18px',
                 display: 'flex',
@@ -1441,7 +1432,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                 onClick={() => setShowDetailModal(true)}
                 style={{
                   background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: 'none',
                   borderRadius: '999px',
                   padding: '4px 10px',
                   fontSize: '11px',
@@ -1462,7 +1453,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
             <Box
               style={{
                 borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: 'none',
                 background: '#090c12',
                 padding: '20px',
               }}
@@ -1484,7 +1475,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                       height: '44px',
                       borderRadius: '14px',
                       background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      border: 'none',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1497,7 +1488,7 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                   <div
                     style={{
                       background: 'rgba(16, 185, 129, 0.12)',
-                      border: '1px solid rgba(16, 185, 129, 0.35)',
+                      border: 'none',
                       borderRadius: '999px',
                       padding: '2px 8px',
                       display: 'inline-flex',
@@ -1527,19 +1518,21 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
               </div>
 
               {/* Title & Standard Subtitle */}
-              <Text
-                fontFamily="$mono"
-                fontSize={20}
-                fontWeight="700"
-                color="var(--white)"
-                letterSpacing={0.5}
-                style={{ marginTop: '14px' }}
-              >
-                {defaultRecord.id}
-              </Text>
-              <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.5)">
-                {defaultRecord.standard}
-              </Text>
+              <YStack gap={2} mt={14}>
+                <Text
+                  fontFamily="$mono"
+                  fontSize={18}
+                  fontWeight="700"
+                  color="var(--white)"
+                  letterSpacing={0.5}
+                  display="block"
+                >
+                  {defaultRecord.id}
+                </Text>
+                <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.5)" display="block">
+                  {defaultRecord.standard}
+                </Text>
+              </YStack>
 
               {/* Divider */}
               <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)', margin: '16px 0' }} />
@@ -1637,211 +1630,232 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
           height="100vh"
           bg="rgba(0, 0, 0, 0.85)"
           backdropFilter="blur(20px)"
-          items="center"
-          justify="center"
-          p={20}
+          p={10}
+          $sm={{ p: 20 }}
           z={100}
+          overflowY="auto"
+          $platform-web={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            boxSizing: 'border-box',
+          }}
         >
           <Box
             width="100%"
-            maxW={680}
-            maxH="90vh"
-            overflowY="auto"
-            borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.15)"
-            bg="#0A0A0A"
-            p={28}
+            maxW={580}
+            borderWidth={0}
+            bg="#0c1017"
+            p={14}
+            $sm={{ p: 28 }}
             style={{
               borderRadius: '24px',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.95)',
+              margin: 'auto',
+              maxWidth: 'calc(100vw - 20px)',
             }}
           >
             {/* Modal Header */}
-            <XStack items="center" justify="space-between" pb={20} borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
-              <XStack items="center" gap={12}>
+            <XStack items="center" justify="space-between" pb={14} borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.06)" gap={8}>
+              <XStack items="center" gap={10} flex={1} minW={0}>
                 <View
-                  width={38}
-                  height={38}
-                  bg="rgba(255, 255, 255, 0.06)"
-                  borderWidth={1}
-                  borderColor="rgba(255, 255, 255, 0.12)"
+                  width={34}
+                  height={34}
+                  $sm={{ width: 40, height: 40 }}
+                  bg="rgba(16, 185, 129, 0.12)"
                   items="center"
                   justify="center"
                   style={{
-                    borderRadius: '12px',
+                    borderRadius: '10px',
+                    flexShrink: 0,
                   }}
                 >
-                  <ShieldCheck size={20} color="var(--white)" />
+                  <ShieldCheck size={18} color="#34d399" />
                 </View>
-                <YStack gap={2}>
-                  <Text fontSize={16} fontWeight="700" color="var(--white)">
-                    W3C Verifiable Credential Record
+                <YStack gap={2} flex={1} minW={0}>
+                  <Text fontSize={14} $sm={{ fontSize: 16 }} fontWeight="700" color="var(--white)" display="block" numberOfLines={1}>
+                    W3C Verifiable Credential
                   </Text>
-                  <Text fontFamily="$mono" fontSize={12} color="rgba(255, 255, 255, 0.5)">
-                    {verificationResult?.id || defaultRecord.id} · Signed on Lux Ledger
+                  <Text fontFamily="$mono" fontSize={10} $sm={{ fontSize: 12 }} color="rgba(255, 255, 255, 0.5)" display="block" numberOfLines={1}>
+                    {verificationResult?.id || defaultRecord.id} · Lux Ledger
                   </Text>
                 </YStack>
               </XStack>
 
-              <Box
-                render="button"
+              <button
+                type="button"
                 onClick={() => setShowDetailModal(false)}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
                   borderRadius: '999px',
                   width: 32,
                   height: 32,
                   display: 'flex',
-                  flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
                   color: 'var(--white)',
+                  flexShrink: 0,
                 }}
               >
                 <X size={16} />
-              </Box>
+              </button>
             </XStack>
 
             {/* Modal Body */}
-            <YStack gap={20} pt={20}>
+            <YStack gap={14} pt={14}>
               {/* Status Ribbon */}
               <Box
-                bg="rgba(16, 185, 129, 0.08)"
-                borderWidth={1}
-                borderColor="rgba(16, 185, 129, 0.25)"
-                p={14}
+                bg="rgba(16, 185, 129, 0.1)"
+                p={10}
                 style={{
-                  borderRadius: '14px',
+                  borderRadius: '12px',
                 }}
               >
-                <XStack items="center" justify="space-between">
-                  <XStack items="center" gap={10}>
-                    <CheckCircle2 size={18} color="#34d399" />
-                    <Text fontSize={13} fontWeight="600" color="#34d399">
-                      Cryptographically Valid & Immutable Commitment
+                <XStack items="center" justify="space-between" flexWrap="wrap" gap={6}>
+                  <XStack items="center" gap={6} flex={1} minW={0}>
+                    <CheckCircle2 size={14} color="#34d399" style={{ flexShrink: 0 }} />
+                    <Text fontSize={11} $sm={{ fontSize: 12 }} fontWeight="600" color="#34d399">
+                      Cryptographically Valid &amp; Immutable
                     </Text>
                   </XStack>
-                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.6)">
+                  <Text fontFamily="$mono" fontSize={10} $sm={{ fontSize: 11 }} color="rgba(255, 255, 255, 0.6)">
                     Block {defaultRecord.leaderBlock}
                   </Text>
                 </XStack>
               </Box>
 
-              {/* Data Field Rows */}
-              <YStack gap={12}>
-                <Box
-                  p={14}
-                  bg="rgba(255, 255, 255, 0.02)"
-                  borderWidth={1}
-                  borderColor="rgba(255, 255, 255, 0.06)"
-                  style={{
-                    borderRadius: '12px',
-                  }}
-                >
-                  <Text fontSize={11} color="rgba(255, 255, 255, 0.5)" textTransform="uppercase" fontFamily="$mono">
-                    Degree Recipient
+              {/* Data Fields: Clean, unclumped, responsive */}
+              <YStack gap={10}>
+                {/* Field 1: Degree Recipient */}
+                <YStack gap={4} p={14} bg="rgba(255, 255, 255, 0.03)" style={{ borderRadius: '12px' }}>
+                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.45)" textTransform="uppercase" letterSpacing={0.8} display="block">
+                    DEGREE RECIPIENT
                   </Text>
-                  <Text fontSize={14} fontWeight="700" color="var(--white)" mt={4}>
+                  <Text fontSize={16} fontWeight="700" color="var(--white)" display="block">
                     {verificationResult?.recipient || defaultRecord.recipient}
                   </Text>
-                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.45)" mt={2}>
+                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.5)" display="block" style={{ wordBreak: 'break-all' }}>
                     DID: {defaultRecord.subjectDid}
                   </Text>
-                </Box>
+                </YStack>
 
-                <Box
-                  p={14}
-                  bg="rgba(255, 255, 255, 0.02)"
-                  borderWidth={1}
-                  borderColor="rgba(255, 255, 255, 0.06)"
-                  style={{
-                    borderRadius: '12px',
-                  }}
-                >
-                  <Text fontSize={11} color="rgba(255, 255, 255, 0.5)" textTransform="uppercase" fontFamily="$mono">
-                    Program & Evaluation
+                {/* Field 2: Program & Evaluation */}
+                <YStack gap={4} p={14} bg="rgba(255, 255, 255, 0.03)" style={{ borderRadius: '12px' }}>
+                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.45)" textTransform="uppercase" letterSpacing={0.8} display="block">
+                    PROGRAM &amp; EVALUATION
                   </Text>
-                  <Text fontSize={14} fontWeight="700" color="var(--white)" mt={4}>
+                  <Text fontSize={15} fontWeight="700" color="var(--white)" display="block">
                     {verificationResult?.program || defaultRecord.program}
                   </Text>
-                  <Text fontSize={12} color="#34d399" fontWeight="600" mt={2}>
+                  <Text fontSize={13} color="#34d399" fontWeight="600" display="block">
                     {verificationResult?.grade || defaultRecord.grade}
                   </Text>
-                </Box>
+                </YStack>
 
-                <Box
-                  p={14}
-                  bg="rgba(255, 255, 255, 0.02)"
-                  borderWidth={1}
-                  borderColor="rgba(255, 255, 255, 0.06)"
-                  style={{
-                    borderRadius: '12px',
-                  }}
-                >
-                  <Text fontSize={11} color="rgba(255, 255, 255, 0.5)" textTransform="uppercase" fontFamily="$mono">
-                    Issuing Authority & Cryptographic Proof
+                {/* Field 3: Issuing Authority & Cryptographic Proof */}
+                <YStack gap={4} p={14} bg="rgba(255, 255, 255, 0.03)" style={{ borderRadius: '12px' }}>
+                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.45)" textTransform="uppercase" letterSpacing={0.8} display="block">
+                    ISSUING AUTHORITY &amp; CRYPTOGRAPHIC PROOF
                   </Text>
-                  <Text fontFamily="$mono" fontSize={12} color="var(--white)" mt={4}>
+                  <Text fontFamily="$mono" fontSize={12} color="rgba(255, 255, 255, 0.9)" display="block" style={{ wordBreak: 'break-all' }}>
                     {defaultRecord.issuerDid}
                   </Text>
-                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.45)" mt={4}>
-                    Signature: {defaultRecord.signature.slice(0, 36)}...
+                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.4)" display="block" style={{ wordBreak: 'break-all' }}>
+                    Signature: {defaultRecord.signature}
                   </Text>
-                </Box>
+                </YStack>
+
+                {/* How to Earn Credentials Card */}
+                <YStack gap={6} p={14} bg="rgba(59, 130, 246, 0.08)" style={{ borderRadius: '12px' }}>
+                  <XStack items="center" gap={6}>
+                    <Sparkles size={14} color="#60a5fa" />
+                    <Text fontFamily="$mono" fontSize={11} fontWeight="700" color="#93c5fd" textTransform="uppercase" letterSpacing={0.5}>
+                      HOW TO EARN YOUR CREDENTIAL
+                    </Text>
+                  </XStack>
+                  <Text fontSize={12} color="rgba(255, 255, 255, 0.75)" lineHeight={18}>
+                    Students must complete weekly course modules, defend capstone assignments, and pass live autograder test suites inside the Hanzo Visor cleanroom. Once all tests exit code 0, credentials are automatically signed and anchored to the Lux Ledger.
+                  </Text>
+                </YStack>
               </YStack>
 
               {/* Action Buttons in Modal */}
-              <XStack gap={10} pt={8}>
-                <Box
-                  render="button"
-                  onClick={handleDownloadJson}
+              <YStack gap={8} pt={4}>
+                <Link
+                  href="/portal"
                   style={{
-                    flex: 1,
+                    textDecoration: 'none',
                     background: 'var(--white)',
                     color: 'var(--pure-black)',
                     borderRadius: '12px',
-                    padding: '12px',
+                    padding: '12px 16px',
                     fontWeight: 600,
                     fontSize: '13px',
-                    border: 'none',
-                    cursor: 'pointer',
                     display: 'flex',
-                    flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 6,
+                    width: '100%',
+                    boxSizing: 'border-box',
                   }}
                 >
-                  <Download size={15} color="var(--pure-black)" />
-                  <span>Download JSON-LD</span>
-                </Box>
+                  <GraduationCap size={16} color="var(--pure-black)" />
+                  <span>Continue Coursework &amp; Workstations →</span>
+                </Link>
 
-                <Box
-                  render="button"
-                  onClick={handleDownloadBadge}
-                  style={{
-                    flex: 1,
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: 'var(--white)',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <ShieldCheck size={15} color="var(--white)" />
-                  <span>Download SVG Badge</span>
-                </Box>
-              </XStack>
+                <XStack gap={8} flexWrap="wrap" width="100%">
+                  <button
+                    type="button"
+                    onClick={handleDownloadJson}
+                    style={{
+                      flex: 1,
+                      minWidth: '140px',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: 'none',
+                      color: 'var(--white)',
+                      borderRadius: '12px',
+                      padding: '11px',
+                      fontWeight: 500,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Download size={14} color="var(--white)" />
+                    <span>Download JSON-LD</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadBadge}
+                    style={{
+                      flex: 1,
+                      minWidth: '140px',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: 'none',
+                      color: 'var(--white)',
+                      borderRadius: '12px',
+                      padding: '11px',
+                      fontWeight: 500,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <ShieldCheck size={14} color="var(--white)" />
+                    <span>Download SVG Badge</span>
+                  </button>
+                </XStack>
+              </YStack>
             </YStack>
           </Box>
         </Box>

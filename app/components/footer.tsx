@@ -10,12 +10,15 @@ export function Footer() {
   return (
     <YStack
       render="footer"
-      borderTopWidth={1}
-      borderColor="var(--border)"
+      borderTopWidth={0}
       bg="var(--pure-black)"
       py={64}
-      px={24}
+      px={16}
+      $md={{ px: 24 }}
       gap={48}
+      width="100%"
+      maxW="100vw"
+      overflow="hidden"
     >
       <XStack
         maxW={1280}
@@ -26,7 +29,7 @@ export function Footer() {
         gap={40}
       >
         {/* Brand Column */}
-        <YStack gap={16} maxW={360}>
+        <YStack gap={16} maxW="100%" minW={0} width={340}>
           <HanzoWordmark label="Hanzo University" size={24} />
           <Text fontSize="$2" color="var(--muted-foreground)" lineHeight={22}>
             The systems engineering institute of the Hanzo AI ecosystem. Training engineers in frontier decision models, zero-regression AST code agents, and native reinforcement learning.

@@ -339,16 +339,15 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
           </XStack>
 
           {/* Stepper Pill */}
-          <XStack items="center" gap="$2" flexWrap="wrap" maxW="100%">
+          <XStack items="center" gap="$2" flexWrap="wrap" maxW="100%" minW={0}>
             <XStack
               items="center"
-              gap="$2"
-              px="$3"
+              gap="$1.5"
+              px="$2.5"
               py="$1"
               rounded="var(--radius-md)"
               bg={step === 'payment' ? 'var(--white)' : 'var(--card)'}
-              borderWidth={1}
-              borderColor="var(--border)"
+              borderWidth={0}
             >
               <Text
                 fontSize="$1"
@@ -356,7 +355,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                 fontFamily="$mono"
                 color={step === 'payment' ? 'var(--pure-black)' : 'var(--muted-foreground)'}
               >
-                1. TUITION PAYMENT
+                1. PAYMENT
               </Text>
               {step !== 'payment' && <Check size={12} color="var(--emerald-400)" />}
             </XStack>
@@ -365,13 +364,12 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
             <XStack
               items="center"
-              gap="$2"
-              px="$3"
+              gap="$1.5"
+              px="$2.5"
               py="$1"
               rounded="var(--radius-md)"
               bg={step === 'hanzo_id' || step === 'provisioning' ? 'var(--white)' : 'var(--card)'}
-              borderWidth={1}
-              borderColor="var(--border)"
+              borderWidth={0}
             >
               <Text
                 fontSize="$1"
@@ -383,7 +381,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                     : 'var(--muted-foreground)'
                 }
               >
-                2. HANZO ID ACCOUNT
+                2. ACCOUNT
               </Text>
               {step === 'complete' && <Check size={12} color="var(--emerald-400)" />}
             </XStack>
@@ -392,13 +390,12 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
             <XStack
               items="center"
-              gap="$2"
-              px="$3"
+              gap="$1.5"
+              px="$2.5"
               py="$1"
               rounded="var(--radius-md)"
               bg={step === 'complete' ? 'var(--emerald-400)' : 'var(--card)'}
-              borderWidth={1}
-              borderColor="var(--border)"
+              borderWidth={0}
             >
               <Text
                 fontSize="$1"
@@ -406,7 +403,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                 fontFamily="$mono"
                 color={step === 'complete' ? 'var(--pure-black)' : 'var(--muted-foreground)'}
               >
-                3. STUDENT PORTAL
+                3. PORTAL
               </Text>
             </XStack>
           </XStack>
@@ -419,11 +416,11 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
         {/* STEP 1: TUITION PAYMENT (Pay for the class first)                          */}
         {/* ========================================================================= */}
         {step === 'payment' && (
-          <Grid columns={{ min: 360, max: 2 }} gap={32} items="flex-start">
+          <Grid columns={{ min: 280, max: 2 }} gap={32} items="flex-start">
             {/* Left Column: Order Breakdown, Perks, and Coupon */}
 
             <YStack gap="$5">
-              <Card p={28} borderWidth={1} borderColor="var(--border)">
+              <Card p={28} borderWidth={0}>
                 <YStack gap="$4">
                   <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
                     <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
@@ -512,6 +509,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           type="text"
                           style={{
                             ...inputStyle,
+                            flex: 1,
+                            minWidth: 0,
                             fontFamily: 'monospace',
                             borderColor: couponError ? 'var(--red-500)' : 'var(--border)',
                           }}
@@ -675,7 +674,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
             {/* Right Column: Payment Form */}
             <YStack gap="$5">
-              <Card p={28} borderWidth={1} borderColor="var(--border)">
+              <Card p={28} borderWidth={0}>
                 <YStack gap="$5">
                   <YStack gap="$1">
                     <Text fontSize="$4" fontWeight="700" color="var(--white)">
@@ -1144,7 +1143,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
             </Box>
 
             {/* Account Creation Card */}
-            <Card p={32} borderWidth={1} borderColor="var(--border)">
+            <Card p={32} borderWidth={0}>
               <YStack gap="$5">
                 <YStack gap="$2">
                   <Text fontSize="$5" fontWeight="700" color="var(--white)">
@@ -1519,7 +1518,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
         {/* ========================================================================= */}
         {(step === 'provisioning' || step === 'complete') && (
           <YStack gap="$5" maxW={820} mx="auto">
-            <Card p={32} borderWidth={1} borderColor="var(--border)">
+            <Card p={32} borderWidth={0}>
               <YStack gap="$4">
                 <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
                   <XStack items="center" gap="$2">

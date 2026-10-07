@@ -20,7 +20,7 @@ export function Band({
   id,
   measure = 1280,
   pad = 48,
-  rule = true,
+  rule = false,
   ...props
 }: {
   children: React.ReactNode
@@ -34,8 +34,10 @@ export function Band({
     <GuiBox
       id={id}
       width="100%"
+      maxW="100vw"
+      overflow="hidden"
       py={pad as any}
-      px={20}
+      px={16}
       borderTopWidth={rule ? 1 : 0}
       borderColor="var(--border)"
       {...props}
@@ -50,10 +52,12 @@ export function Band({
 export function Card({
   children,
   p = 24,
+  borderWidth = 0,
   ...props
 }: {
   children: React.ReactNode
   p?: number | string
+  borderWidth?: number | string
   [key: string]: any
 }) {
   return (
@@ -61,8 +65,8 @@ export function Card({
       p={p as any}
       rounded="var(--radius-lg)"
       bg="var(--card)"
-      borderWidth={1}
-      borderColor="var(--border)"
+      borderWidth={borderWidth as any}
+      borderColor="transparent"
       {...props}
     >
       {children}

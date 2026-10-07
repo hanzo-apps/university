@@ -12,7 +12,7 @@ export const FADE_UP = 'linear-gradient(to top, var(--background), color-mix(in 
 
 export function Band({
   id,
-  rule = true,
+  rule = false,
   measure = 1280,
   pad = 48,
   ground,
@@ -33,8 +33,9 @@ export function Band({
       position="relative"
       overflow="hidden"
       width="100%"
+      maxW="100vw"
       py={pad as any}
-      px={20}
+      px={16}
       borderTopWidth={rule ? 1 : 0}
       borderColor="var(--border)"
       background={ground}
@@ -50,17 +51,19 @@ export function Band({
 export function Card({
   p = 24,
   children,
+  borderWidth = 0,
   ...props
 }: {
   p?: number | string
   children: ReactNode
+  borderWidth?: number | string
   [key: string]: any
 }) {
   return (
     <Box
       rounded="var(--radius-xl)"
-      borderWidth={1}
-      borderColor="var(--border)"
+      borderWidth={borderWidth as any}
+      borderColor="transparent"
       bg="var(--card)"
       p={p as any}
       {...props}
@@ -117,9 +120,11 @@ export function Hero({
     <Box
       position="relative"
       overflow="hidden"
+      width="100%"
+      maxW="100vw"
       pt={100}
       pb={48}
-      px={20}
+      px={16}
       $platform-web={{ textAlign: 'center' }}
     >
       <View
@@ -128,7 +133,8 @@ export function Hero({
         t={0}
         l="50%"
         x="-50%"
-        width={720}
+        width="min(720px, 90vw)"
+        maxW="100vw"
         height={420}
         pointerEvents="none"
         backgroundImage="radial-gradient(circle, var(--white-10) 0%, transparent 68%)"

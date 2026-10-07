@@ -315,8 +315,7 @@ export default function Catalog() {
       <Band pad={56} measure={1200} rule={true}>
         <Card
           p={32}
-          borderWidth={1}
-          borderColor="rgba(255, 255, 255, 0.1)"
+          borderWidth={0}
           bg="#080808"
           display="flex"
           flexDirection="column"
@@ -356,8 +355,7 @@ export default function Catalog() {
                 key={idx}
                 p={18}
                 rounded="var(--radius-lg)"
-                borderWidth={1}
-                borderColor="rgba(255, 255, 255, 0.1)"
+                borderWidth={0}
                 bg="var(--pure-black)"
                 style={{
                   display: 'flex',
@@ -421,7 +419,7 @@ export default function Catalog() {
           ))}
         </XStack>
 
-        <Grid columns={{ min: 360, max: 3 }} gap={24}>
+        <Grid columns={{ min: 280, max: 3 }} gap={24}>
           {filteredCourses.map((course) => (
             <Card
               key={course.code}
@@ -429,8 +427,7 @@ export default function Catalog() {
               display="flex"
               flexDirection="column"
               justify="space-between"
-              borderWidth={1}
-              borderColor="rgba(255, 255, 255, 0.1)"
+              borderWidth={0}
               bg="#080808"
               position="relative"
             >
@@ -460,8 +457,7 @@ export default function Catalog() {
                   p={12}
                   rounded="var(--radius-md)"
                   bg="var(--pure-black)"
-                  borderWidth={1}
-                  borderColor="rgba(255, 255, 255, 0.08)"
+                  borderWidth={0}
                 >
                   <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.75)" fontWeight="600" mb={4}>
                     Verified Capstone:
@@ -581,8 +577,7 @@ export default function Catalog() {
         {/* Master Comparison Table View */}
         {activeCompetitorTab === 'all' ? (
           <Box
-            borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.1)"
+            borderWidth={0}
             bg="#080808"
             overflow="hidden"
             mb={32}
@@ -842,8 +837,7 @@ export default function Catalog() {
                 <Card
                   p={28}
                   bg="#080808"
-                  borderWidth={1}
-                  borderColor="rgba(255, 255, 255, 0.12)"
+                  borderWidth={0}
                 >
                   <YStack gap={16}>
                     <XStack items="center" justify="space-between" flexWrap="wrap" gap={12}>
@@ -1006,8 +1000,7 @@ export default function Catalog() {
 
                 {/* Direct Head-to-Head Specification Table */}
                 <Box
-                  borderWidth={1}
-                  borderColor="rgba(255, 255, 255, 0.1)"
+                  borderWidth={0}
                   bg="#080808"
                   overflow="hidden"
                   style={{ borderRadius: '20px' }}
@@ -1212,8 +1205,8 @@ export default function Catalog() {
           lede="Clear answers regarding our 25% compute rebate, automated cleanroom grading, hardware specifications, and credential verification."
         />
 
-        <Grid columns={{ min: 380, max: 2 }} gap={20}>
-          <Card p={24} bg="#080808" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+        <Grid columns={{ min: 280, max: 2 }} gap={20}>
+          <Card p={24} bg="#080808" borderWidth={0}>
             <YStack gap={8}>
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 How does the 25% usage credit rebate work?
@@ -1224,7 +1217,7 @@ export default function Catalog() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="#080808" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+          <Card p={24} bg="#080808" borderWidth={0}>
             <YStack gap={8}>
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 How are capstone projects graded and evaluated?
@@ -1235,7 +1228,7 @@ export default function Catalog() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="#080808" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+          <Card p={24} bg="#080808" borderWidth={0}>
             <YStack gap={8}>
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 Why do hiring managers value Hanzo credentials over AWS/Azure/Coursera?
@@ -1246,7 +1239,7 @@ export default function Catalog() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="#080808" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+          <Card p={24} bg="#080808" borderWidth={0}>
             <YStack gap={8}>
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 What format are credentials issued in?
@@ -1257,7 +1250,7 @@ export default function Catalog() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="#080808" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+          <Card p={24} bg="#080808" borderWidth={0}>
             <YStack gap={8}>
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 Can I expense this course through my employer?
@@ -1268,7 +1261,7 @@ export default function Catalog() {
             </YStack>
           </Card>
 
-          <Card p={24} bg="#080808" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+          <Card p={24} bg="#080808" borderWidth={0}>
             <YStack gap={8}>
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 Do I need a high-end local GPU?

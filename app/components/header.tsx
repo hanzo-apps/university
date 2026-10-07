@@ -173,7 +173,12 @@ export function Header() {
         items="center"
         justify="space-between"
         height={64}
-        px={24}
+        width="100%"
+        maxW="100vw"
+        overflow="hidden"
+        px={14}
+        $sm={{ px: 20 }}
+        $md={{ px: 24 }}
         bg={grounded ? 'rgba(10, 10, 10, 0.94)' : 'rgba(10, 10, 10, 0.85)'}
         backdropFilter="blur(20px)"
         borderBottomWidth={1}
@@ -181,9 +186,9 @@ export function Header() {
         transition="quickest"
       >
         {/* Brand Link */}
-        <Link href="/" style={{ textDecoration: 'none', color: 'inherit', flexShrink: 0 }}>
-          <XStack items="center" gap={10}>
-            <HanzoWordmark label="Hanzo University" size={22} />
+        <Link href="/" style={{ textDecoration: 'none', color: 'inherit', flexShrink: 1, minWidth: 0, overflow: 'hidden' }}>
+          <XStack items="center" gap={8} minW={0}>
+            <HanzoWordmark label="Hanzo University" size={20} />
           </XStack>
         </Link>
 
@@ -416,7 +421,7 @@ export function Header() {
         </XStack>
 
         {/* Action Buttons */}
-        <XStack items="center" gap={12} style={{ flexShrink: 0 }}>
+        <XStack items="center" gap={8} $sm={{ gap: 12 }} style={{ flexShrink: 0 }}>
           {/* Desktop Only Buttons */}
           <Link
             href="/portal"
@@ -450,7 +455,7 @@ export function Header() {
             Enroll in Track →
           </Link>
 
-          {/* Mobile Only: Student Portal Pill Button (Matching mobile.png left screen) */}
+          {/* Mobile Only: Student Portal Pill Button */}
           <Link
             href="/portal"
             className="show-on-mobile-only"
@@ -458,19 +463,19 @@ export function Header() {
               background: 'rgba(255, 255, 255, 0.08)',
               border: '1px solid rgba(255, 255, 255, 0.14)',
               borderRadius: '999px',
-              padding: '6px 14px',
+              padding: '5px 10px',
               color: 'var(--white)',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 500,
               textDecoration: 'none',
               display: 'flex',
               alignItems: 'center',
-              gap: 5,
+              gap: 4,
               whiteSpace: 'nowrap',
             }}
           >
-            <span>Student Portal</span>
-            <span style={{ fontSize: '13px' }}>→</span>
+            <span>Portal</span>
+            <span style={{ fontSize: '12px' }}>→</span>
           </Link>
 
           {/* Mobile Menu Toggle (Matching mobile.png left screen hamburger icon) */}
