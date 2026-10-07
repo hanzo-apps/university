@@ -148,7 +148,7 @@ const TOP_5_COMPETITORS: CompetitorProfile[] = [
       'Centralized, forgeable Coursera PDF certificate with no verifiable cryptographic proof or code telemetry.',
     ],
     hanzoAdvantages: [
-      '100% automated cleanroom CI grading inside ephemeral gVisor sandboxes; agents must repair bugs and pass tests with exit code 0.',
+      '100% automated cleanroom CI grading inside ephemeral Hanzo Visor sandboxes; agents must repair bugs and pass tests with exit code 0.',
       'Finite-state Kai decision models with 0 generation tokens, eliminating branching hallucinations.',
       'Sub-2ms zero-copy ZAP binary protocols via Cap’n Proto, 90x lower latency than HTTP JSON.',
       'Integer micro-USD budget ceilings ($0.000001 precision) with hardware in-band refusals.',
@@ -180,14 +180,14 @@ const TOP_5_COMPETITORS: CompetitorProfile[] = [
     hanzoAdvantages: [
       '98% lower tuition ($149–$249 one-time) with lifetime curriculum access and continuous updates.',
       'Instant sub-second cleanroom CI execution with automated defect injection and real-time pass/fail telemetry.',
-      'Production systems engineering: AST tree-sitter diffing, gVisor process isolation, and asynchronous IPC.',
+      'Production systems engineering: AST tree-sitter diffing, Hanzo Visor process isolation, and asynchronous IPC.',
       'Permanent cryptographic W3C credential commitment on Lux Chain.',
       '+25% tuition compute rebate to run Zen 6 models immediately in Hanzo Cloud.',
     ],
     metrics: [
       { label: 'Tuition Cost', legacyVal: '$12,000 – $20,000 USD', hanzoVal: '$149 – $249 USD (One-time)' },
       { label: 'Grading Turnaround', legacyVal: '2 to 3 weeks (Manual TA review)', hanzoVal: '< 5 seconds (Automated cleanroom CI)' },
-      { label: 'Systems Tooling', legacyVal: 'Theoretical math proofs & static PyTorch', hanzoVal: 'Tree-sitter AST, gVisor runsc, ZAP RPC' },
+      { label: 'Systems Tooling', legacyVal: 'Theoretical math proofs & static PyTorch', hanzoVal: 'Tree-sitter AST, Hanzo Visor, ZAP RPC' },
       { label: 'Decentralized Proof', legacyVal: 'Static PDF diploma / Credly badge', hanzoVal: 'W3C cryptographic proof + Live GitHub SVG' },
       { label: 'Compute Subsidy', legacyVal: '0% (Students pay separate cloud lab fees)', hanzoVal: '+25% tuition rebate ($38–$63)' },
     ],
@@ -217,7 +217,7 @@ const TOP_5_COMPETITORS: CompetitorProfile[] = [
     metrics: [
       { label: 'Target Audience', legacyVal: 'Non-technical business executives & managers', hanzoVal: 'Production software engineers & systems architects' },
       { label: 'Grading Objectivity', legacyVal: 'Peer forum review & subjective rubrics', hanzoVal: '100% Automated cleanroom CI exit code 0' },
-      { label: 'Engineering Depth', legacyVal: 'Slide decks & qualitative enterprise memos', hanzoVal: 'Cap’n Proto binary RPC, gVisor sandboxes, AST' },
+      { label: 'Engineering Depth', legacyVal: 'Slide decks & qualitative enterprise memos', hanzoVal: 'Cap’n Proto binary RPC, Hanzo Visor sandboxes, AST' },
       { label: 'Tuition Cost', legacyVal: '$2,800 – $3,500 USD', hanzoVal: '$149 – $249 USD' },
       { label: 'Compute Subsidy', legacyVal: '$0 compute credits included', hanzoVal: '+25% tuition rebate ($38–$63)' },
     ],
@@ -239,14 +239,14 @@ const TOP_5_COMPETITORS: CompetitorProfile[] = [
     ],
     hanzoAdvantages: [
       'Modern agentic engineering: Autonomous code repair, SWE-bench test resolution, and tool execution.',
-      'Ephemeral gVisor user-space kernel containers providing hermetic unprivileged execution.',
+      'Ephemeral Hanzo Visor user-space kernel containers providing hermetic unprivileged execution.',
       'Micro-USD token budgeting and zero-token Kai decision engines.',
       'Cryptographic W3C on-chain credentials demonstrating cutting-edge production agent architecture.',
       'Reinforcement learning via native Gymnasium MDP environments and Zoo Gym fine-tuning.',
     ],
     metrics: [
       { label: 'Curriculum Focus', legacyVal: '1990s Classical AI (Minimax, A*, Nim, Logic)', hanzoVal: 'Modern Agentic Swarms, RL, SWE-bench, Tool Use' },
-      { label: 'Execution Environment', legacyVal: 'Local terminal python script output', hanzoVal: 'Ephemeral Google gVisor micro-kernel sandboxes' },
+      { label: 'Execution Environment', legacyVal: 'Local terminal python script output', hanzoVal: 'Ephemeral Hanzo Visor micro-kernel sandboxes' },
       { label: 'Cost Architecture', legacyVal: 'None (Local CPU execution only)', hanzoVal: 'Hardware integer micro-USD ceilings ($0.000001)' },
       { label: 'Decision Control', legacyVal: 'Static decision trees & game boards', hanzoVal: 'Finite-state Kai decision models (0 output tokens)' },
       { label: 'Compute Subsidy', legacyVal: '$0 compute subsidy', hanzoVal: '+25% tuition rebate ($38–$63)' },
@@ -279,7 +279,7 @@ const TOP_5_COMPETITORS: CompetitorProfile[] = [
       { label: 'Verification & Gate', legacyVal: 'Self-guided (No automated tests or gate)', hanzoVal: 'Automated cleanroom SWE-bench test exit code 0' },
       { label: 'Credential Issued', legacyVal: 'None (Self-study only, no credential)', hanzoVal: 'W3C Cryptographic Credential + Live GitHub SVG' },
       { label: 'Compute Subsidy', legacyVal: '$0 (Student pays GPU host hourly fees)', hanzoVal: '+25% tuition rebate ($38–$63)' },
-      { label: 'Production Runtime', legacyVal: 'Jupyter notebook cells', hanzoVal: 'Google gVisor sandbox + Cap’n Proto ZAP RPC' },
+      { label: 'Production Runtime', legacyVal: 'Jupyter notebook cells', hanzoVal: 'Hanzo Visor sandbox + Cap’n Proto ZAP RPC' },
     ],
   },
 ]
@@ -296,7 +296,7 @@ const MASTER_COMPARISON_MATRIX = [
   },
   {
     dimension: 'Execution Runtime',
-    hanzo: 'Ephemeral Google gVisor (runsc) user-space kernel pods',
+    hanzo: 'Ephemeral Hanzo Visor user-space kernel pods',
     deeplearning: 'Standard web notebooks (Colab/Jupyter)',
     stanford: 'Shared university cluster / Colab',
     mit: 'None (slide decks & case studies)',
@@ -403,7 +403,7 @@ export default function UniversityHomePage() {
     grade: '100% Pass with Distinction',
     issuerDid: 'did:hanzo:trust:accreditation',
     subjectDid: 'did:hanzo:student:alex',
-    evidence: 'Cleanroom SWE-bench test exit code 0 · 0 syntax regressions · gVisor pod-8921b',
+    evidence: 'Cleanroom SWE-bench test exit code 0 · 0 syntax regressions · Hanzo Visor pod-8921b',
     proofMethod: 'did:hanzo:trust:accreditation#key-1 (Ed25519Signature2020)',
     signature: '0x7f4a8b1c99e2e89b3f4a1c2d88e0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8',
     blockchainCommitment: 'Lux Chain Block #9,418,290',
@@ -480,7 +480,7 @@ export default function UniversityHomePage() {
       evidence: [
         {
           type: 'AutomatedCleanroomExecution',
-          verifier: 'gVisor runsc sandbox pod-8921b',
+          verifier: 'Hanzo Visor sandbox pod-8921b',
           evaluationSpendMicroUsd: 184200,
         },
       ],
@@ -2138,7 +2138,7 @@ export default function UniversityHomePage() {
           <Text fontSize={14} color="rgba(255, 255, 255, 0.75)" lineHeight={22}>
             Every enrollment immediately deposits 25% of tuition (rounded up to the nearest dollar)
             directly into your Hanzo Cloud account. Use your credits across Zen 6, Enso reasoning models,
-            Kai finite-state decision loops, and gVisor sandbox container leases.
+            Kai finite-state decision loops, and Hanzo Visor sandbox container leases.
           </Text>
 
           {/* Rebate Tiers */}
@@ -2717,7 +2717,7 @@ export default function UniversityHomePage() {
                           HANZO ENVIRONMENT
                         </Text>
                         <Text fontSize={13} color="var(--white)" fontWeight="600" mt={4}>
-                          gVisor pods + Dev Sandboxes
+                          Hanzo Visor pods + Dev Sandboxes
                         </Text>
                       </View>
                     </Grid>
@@ -2884,7 +2884,7 @@ export default function UniversityHomePage() {
               </Text>
               <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
                 Move past frontend wrappers into core systems engineering. Master tree-sitter AST parsing,
-                zero-copy ZAP IPC, and isolated gVisor execution pods to command top-tier compensation ($180k–$240k).
+                zero-copy ZAP IPC, and isolated Hanzo Visor execution pods to command top-tier compensation ($180k–$240k).
               </Text>
             </YStack>
           </Card>
@@ -3015,7 +3015,7 @@ export default function UniversityHomePage() {
                 How does the 25% usage credit rebate work?
               </Text>
               <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                When you enroll in any course (e.g. $199 for ENG 100), exactly 25% of your payment rounded up to the nearest dollar ($50 USD) is deposited immediately into your Hanzo Cloud compute account. These credits never expire and can be used across Zen 6, Enso, Kai decision models, and gVisor sandbox container leases.
+                When you enroll in any course (e.g. $199 for ENG 100), exactly 25% of your payment rounded up to the nearest dollar ($50 USD) is deposited immediately into your Hanzo Cloud compute account. These credits never expire and can be used across Zen 6, Enso, Kai decision models, and Hanzo Visor sandbox container leases.
               </Text>
             </YStack>
           </Card>

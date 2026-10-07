@@ -21,7 +21,7 @@ The open academic accreditation and systems engineering institute of the [Hanzo 
 
 - **Static Export**: 100% pre-rendered via Next.js (`output: "export"`) with zero runtime server pods.
 - **W3C Verifiable Credentials**: Cryptographically signed proof issued on-chain to student DIDs (`did:hanzo:user:...`).
-- **Student Learning Portal**: Interactive gVisor terminal simulation, AST diff inspection, automated grading telemetry, and compute metering.
+- **Student Learning Portal**: Interactive Hanzo Visor terminal simulation, AST diff inspection, automated grading telemetry, and compute metering.
 - **Tuition Rebate Engine**: 25% of all tuition rounded up deposited immediately into Hanzo Cloud.
 - **Interactive Coupon Engine**: Validates real-time promo codes (`STUDENT50`, `HANZO20`, `EARLYBIRD`, `LAUNCH25`, `DEVCOMMUNITY`, `VIP100`, `KAI`).
 

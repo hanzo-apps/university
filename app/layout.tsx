@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     url: 'https://hanzo.university',
     title: 'Hanzo University — Frontier AI Systems & Engineering Certifications',
     description:
-      'Rigorous degree programs and credentials in frontier AI engineering. Includes 25% compute credit rebates, gVisor container sandboxes, and cryptographic W3C credentials.',
+      'Rigorous degree programs and credentials in frontier AI engineering. Includes 25% compute credit rebates, Hanzo Visor container sandboxes, and cryptographic W3C credentials.',
     siteName: 'Hanzo University',
     images: [
       {

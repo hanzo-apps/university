@@ -253,7 +253,7 @@ export function CouponInput({
             color="var(--muted-foreground)"
             $platform-web={{ textAlign: 'center', display: 'block' }}
           >
-            Includes {activeRebate} compute credit rebate, gVisor sandbox pod & HACE Credential
+            Includes {activeRebate} compute credit rebate, Hanzo Visor sandbox pod & HACE Credential
           </Text>
         </YStack>
       </YStack>

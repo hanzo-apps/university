@@ -268,7 +268,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
       setProvisionLogs((prev) => [
         ...prev,
         `> [COMPUTE] Depositing 25% compute fellowship ($${rebateCredits}.00 USD) into Hanzo Cloud wallet.`,
-        `> [SANDBOX] Allocating isolated gVisor MicroVM container lease: pod-gvs-uswest2-${finalHandle}...`,
+        `> [SANDBOX] Allocating isolated Hanzo Visor microVM container lease: pod-vsr-uswest2-${finalHandle}...`,
       ])
     }, 1200)
 
@@ -462,7 +462,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       <Cpu size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
                       <YStack gap={2}>
                         <Text fontSize="$2" fontWeight="600" color="var(--white)">
-                          Dedicated gVisor MicroVM Sandbox
+                          Dedicated Hanzo Visor MicroVM Sandbox
                         </Text>
                         <Text fontSize="$1" color="var(--muted-foreground)">
                           Isolated execution runtime with pre-configured SWE-bench and Zen 6 ZAP RPC.
@@ -1146,7 +1146,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                   </Text>
                   <Text fontSize="$2" color="var(--muted-foreground)">
                     Your class payment is locked in. Now configure your decentralized Hanzo ID to claim your
-                    Student DID (`did:hanzo:student:...`), unlock your ${rebateCredits}.00 USD compute grant, and initialize your gVisor sandbox.
+                    Student DID (`did:hanzo:student:...`), unlock your ${rebateCredits}.00 USD compute grant, and initialize your Hanzo Visor sandbox.
                   </Text>
                 </YStack>
 

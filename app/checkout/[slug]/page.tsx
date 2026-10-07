@@ -20,7 +20,7 @@ export async function generateMetadata({
   const title = `Enroll in ${course.code}: ${course.title} — Hanzo University Checkout`
   return {
     title,
-    description: `Complete enrollment for ${course.code}. Pay one-time class tuition, then create or link your Hanzo ID to receive your student credentials, gVisor sandbox, and 25% compute credit deposit.`,
+    description: `Complete enrollment for ${course.code}. Pay one-time class tuition, then create or link your Hanzo ID to receive your student credentials, Hanzo Visor sandbox, and 25% compute credit deposit.`,
     openGraph: {
       title,
       description: `Enroll in ${course.code}: ${course.title}. One-time class tuition, W3C verifiable credential, and 25% compute credit rebate.`,

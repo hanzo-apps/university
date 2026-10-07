@@ -20,7 +20,7 @@ export async function generateMetadata({
   const title = `${course.code}: ${course.title} (${course.credential}) — Hanzo University`
   return {
     title,
-    description: `${course.summary} Earn your ${course.credential} credential with 25% compute credit rebate and isolated gVisor sandboxes.`,
+    description: `${course.summary} Earn your ${course.credential} credential with 25% compute credit rebate and isolated Hanzo Visor sandboxes.`,
     openGraph: {
       title,
       description: course.summary,

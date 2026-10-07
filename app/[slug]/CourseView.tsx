@@ -196,7 +196,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   </Chip>
                 </XStack>
                 <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$1">
-                  Guaranteed compute allocation deposited immediately on enrollment. Subsidizes Zen 6 inference and gVisor sandbox runtimes.
+                  Guaranteed compute allocation deposited immediately on enrollment. Subsidizes Zen 6 inference and Hanzo Visor sandbox runtimes.
                 </Text>
               </YStack>
 
@@ -233,7 +233,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                 </XStack>
                 <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
                   25% of tuition (rounded up) is immediately deposited into your Hanzo Cloud compute
-                  balance on day one. Fully subsidizes your gVisor sandbox container leases and model
+                  balance on day one. Fully subsidizes your Hanzo Visor sandbox container leases and model
                   inference throughout the course.
                 </Text>
               </Card>

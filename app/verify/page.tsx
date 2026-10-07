@@ -80,7 +80,7 @@ function VerifyContent() {
     evidence: [
       {
         type: 'AutomatedCleanroomExecution',
-        verifier: 'gVisor runsc sandbox pod-8921b',
+        verifier: 'Hanzo Visor sandbox pod-8921b',
         evaluationSpendMicroUsd: 184200,
       },
     ],

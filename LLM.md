@@ -7,7 +7,7 @@
 ## Key Routes
 - `/`: University home catalog, comparison matrix, 6 pillars of production rigor, FAQs, and enrollment actions.
 - `/[slug]`: Dedicated course syllabus pages (`/agentic-coding`, `/reinforcement-learning`, `/agentic-marketing`, `/systems-engineering`, `/ai-practitioner`, `/ai-architect`) with real-time `CouponInput`.
-- `/portal`: Enrolled Student Learning Workstation with gVisor sandbox shell simulator, AST diff inspector, autograder logs, spend metering, and W3C credential modal.
+- `/portal`: Enrolled Student Learning Workstation with Hanzo Visor sandbox shell simulator, AST diff inspector, autograder logs, spend metering, and W3C credential modal.
 
 ## Design & UI Tokens
 - Substrate: `@hanzo/ui` on `@hanzo/gui` primitives.

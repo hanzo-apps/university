@@ -185,7 +185,7 @@ export default function StudentPortalPage() {
         output = workspaceData.commandOutputs[cmd]
       } else {
         output = [
-          `[COMMAND EXECUTED] Task "${cmd}" processed in gVisor sandbox pod (exit code 0).`,
+          `[COMMAND EXECUTED] Task "${cmd}" processed in Hanzo Visor sandbox pod (exit code 0).`,
           `[EVAL] All unit tests passed with zero runtime errors.`,
         ]
       }
@@ -203,7 +203,7 @@ export default function StudentPortalPage() {
       ...prev,
       `${prompt} hanzo autograder --submit ${week.code}`,
       `[AUTOGRADER] Evaluating coursework for ${week.code}: ${week.title}...`,
-      `  [+] Testing runtime constraints in gVisor microVM container...`,
+      `  [+] Testing runtime constraints in Hanzo Visor microVM container...`,
       `  [+] Running AST tree-sitter & benchmark assertions...`,
       `  [+] Verifying zero syntax regressions and clean memory bounds...`,
       `[PASS] 100% Tests Passed for ${week.code}! Marking module as COMPLETED.`,
@@ -304,7 +304,7 @@ export default function StudentPortalPage() {
       ...prev,
       `${prompt} hanzo defense --capstone ${activeCourse.code}`,
       `==================== CAPSTONE DEFENSE: ${activeCourse.credential} ====================`,
-      `[1/4] Cloning candidate repository into cleanroom gVisor environment...`,
+      `[1/4] Cloning candidate repository into cleanroom Hanzo Visor environment...`,
       `[2/4] Executing full test suite & production benchmarks for ${activeCourse.title}...`,
       `[3/4] Cryptographically auditing zero regression errors & budget bounds...`,
       `[4/4] Generating W3C Verifiable Credential on Lux Chain...`,
@@ -576,7 +576,7 @@ export default function StudentPortalPage() {
                     🎉 Welcome to Hanzo University, @{studentHandle}!
                   </Text>
                   <Text fontSize="$1" color="var(--white-70)">
-                    Tuition payment cleared. Your Hanzo ID (`did:hanzo:student:{studentHandle}`) is verified, ${activeCourse.rebateCredits}.00 USD Day 1 compute tokens are loaded, and your gVisor sandbox container is provisioned.
+                    Tuition payment cleared. Your Hanzo ID (`did:hanzo:student:{studentHandle}`) is verified, ${activeCourse.rebateCredits}.00 USD Day 1 compute tokens are loaded, and your Hanzo Visor sandbox container is provisioned.
                   </Text>
                 </YStack>
               </XStack>
@@ -682,7 +682,7 @@ export default function StudentPortalPage() {
 
         {/* ── Main Two-Column Layout: Left (Interactive Sandbox & Labs), Right (Modules & Capstone) ── */}
         <Grid columns={{ min: 380, max: 2 }} gap={32} items="flex-start">
-          {/* LEFT: gVisor MicroVM Sandbox & Inspection Console */}
+          {/* LEFT: Hanzo Visor MicroVM Sandbox & Inspection Console */}
           <YStack gap="$4">
             <Card p={0} overflow="hidden" borderColor="var(--border)" borderWidth={1}>
               {/* Terminal / Tool Tab Navigation */}
@@ -698,7 +698,7 @@ export default function StudentPortalPage() {
                 <XStack items="center" gap="$2">
                   <Terminal size={16} color="var(--emerald-400)" />
                   <Text fontSize="$1" fontWeight="700" color="var(--white)" fontFamily="$mono">
-                    gVisor Sandbox: pod-gvs-uswest2-{studentHandle}
+                    Hanzo Visor Sandbox: pod-vsr-uswest2-{studentHandle}
                   </Text>
                   <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
                     ONLINE
@@ -942,7 +942,7 @@ export default function StudentPortalPage() {
                       Hardware Leases: 4 vCPU · 16 GB RAM · Apple Silicon Metal / CUDA L4
                     </Text>
                     <Text fontSize="$1" color="var(--muted-foreground)">
-                      Sandboxed under Google gVisor runsc kernel virtualization in region us-west-2
+                      Sandboxed under Hanzo Visor kernel virtualization in region us-west-2
                     </Text>
                   </YStack>
                 </XStack>
@@ -1885,7 +1885,7 @@ export default function StudentPortalPage() {
                     </Chip>
                   </XStack>
                   <Text fontSize="$1" color="var(--white-80)" lineHeight="$2" mb="$3">
-                    Abstract: This curriculum monograph establishes the formal methodology used throughout Hanzo University's cleanroom testing suite. We demonstrate how autonomous verification harnesses evaluate model rollouts in gVisor runsc microVMs, proving mathematically bounded runtime execution.
+                    Abstract: This curriculum monograph establishes the formal methodology used throughout Hanzo University's cleanroom testing suite. We demonstrate how autonomous verification harnesses evaluate model rollouts in Hanzo Visor microVMs, proving mathematically bounded runtime execution.
                   </Text>
                   <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
                     Required reading for the {activeLectureModal.weekCode} laboratory. Students must implement the algorithms discussed in Section 3 and defend the performance metrics during capstone defense.

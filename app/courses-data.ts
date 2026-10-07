@@ -121,13 +121,13 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
     level: 'Advanced',
     prerequisites: 'Proficiency in Python/Rust/Go/TS + standard Git workflows',
     summary:
-      'Architect autonomous coding agents capable of multi-file refactoring, test-driven debugging, and opening verified pull requests using Zen 6, ZAP RPC, and isolated gVisor sandboxes.',
+      'Architect autonomous coding agents capable of multi-file refactoring, test-driven debugging, and opening verified pull requests using Zen 6, ZAP RPC, and isolated Hanzo Visor sandboxes.',
     capstone: 'Build an autonomous SWE-bench repair bot that resolves real GitHub issues within strict budget caps.',
     competencies: [
       'Zen 6 (27.3B) & Zen 6 Flash local serving',
       'SWE-bench self-healing test execution loops',
       'ZAP Zero-Copy Cap’n Proto multi-agent swarms',
-      'Physical sandbox pod leasing & gVisor isolation',
+      'Physical sandbox pod leasing & Hanzo Visor isolation',
     ],
     planId: 'course-eng-100',
     featured: true,
@@ -141,15 +141,15 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
         code: 'ENG 100.1',
         title: 'Runtime Virtualization, Ephemeral Sandboxes & Zero-Copy ZAP RPC',
         summary:
-          'Analyze the systems boundary of autonomous code execution. Configure local high-throughput quantized serving for Zen 6 (27.3B) and Zen 6 Flash. Engineer gVisor user-space kernel virtualization with ephemeral lease lifecycles and zero-copy Cap’n Proto RPC channels.',
+          'Analyze the systems boundary of autonomous code execution. Configure local high-throughput quantized serving for Zen 6 (27.3B) and Zen 6 Flash. Engineer Hanzo Visor user-space kernel virtualization with ephemeral lease lifecycles and zero-copy Cap’n Proto RPC channels.',
         lectures: [
           'Zen 6 architecture: quantized GGUF/AWQ local inference on Apple Silicon (Metal) and Linux (CUDA)',
           'The 4-surface boundary contract: unified ergonomics across CLI, SDKs, HTTP REST, and MCP sockets',
           'ZAP Zero-Copy RPC over Cap’n Proto: replacing high-overhead JSON serialization with microsecond IPC',
-          'User-space container virtualization: gVisor / runsc process boundaries and ephemeral rootfs mounts',
+          'User-space container virtualization: Hanzo Visor process boundaries and ephemeral rootfs mounts',
         ],
         readings: [
-          'Google Engineering: Container Isolation through User-Space Kernel Virtualization (gVisor Architecture)',
+          'Hanzo Systems: Container Isolation through User-Space Kernel Virtualization (Hanzo Visor Architecture)',
           'Kent: Cap’n Proto Serialization and RPC Protocol Specification',
         ],
         lab: 'Lab 1: Provision an isolated multi-process execution jail with ZAP IPC socket bridge and evaluate inter-process latency.',
