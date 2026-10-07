@@ -1622,38 +1622,41 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
 
       {/* ── VERIFIABLE CREDENTIAL MODAL / DETAILS DRAWER ── */}
       {showDetailModal && (
-        <Box
-          position="fixed"
-          t={0}
-          l={0}
-          width="100vw"
-          height="100vh"
-          bg="rgba(0, 0, 0, 0.85)"
-          backdropFilter="blur(20px)"
-          p={10}
-          $sm={{ p: 20 }}
-          z={100}
-          overflowY="auto"
-          $platform-web={{
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.88)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            zIndex: 99999,
+            overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'flex-start',
+            padding: '16px 10px',
             boxSizing: 'border-box',
           }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDetailModal(false)
+          }}
         >
-          <Box
-            width="100%"
-            maxW={580}
-            borderWidth={0}
-            bg="#0c1017"
-            p={14}
-            $sm={{ p: 28 }}
+          <div
             style={{
+              width: '100%',
+              maxWidth: '560px',
+              backgroundColor: '#0c1017',
               borderRadius: '24px',
               boxShadow: '0 24px 60px rgba(0, 0, 0, 0.95)',
-              margin: 'auto',
-              maxWidth: 'calc(100vw - 20px)',
+              padding: '18px',
+              boxSizing: 'border-box',
+              margin: 'auto 0',
             }}
           >
             {/* Modal Header */}
@@ -1857,8 +1860,8 @@ export default function StudentHome({ name = 'Student', handle = 'student' }: { 
                 </XStack>
               </YStack>
             </YStack>
-          </Box>
-        </Box>
+          </div>
+        </div>
       )}
 
       <Catalog />
