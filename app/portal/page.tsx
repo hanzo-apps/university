@@ -1952,7 +1952,7 @@ export default function StudentPortalPage() {
             {/* Header Badge & Title */}
             <XStack items="flex-start" justify="space-between" flexWrap="wrap" gap="$4">
               <YStack gap="$2" maxW={720}>
-                <XStack items="center" gap="$2" flexWrap="wrap">
+                <XStack items="center" gap="$2" flexWrap="wrap" mb="$1">
                   <Chip px={8} py={3} fontSize="$1" fontFamily="$mono" color="var(--amber-400)">
                     <Lock size={11} style={{ marginRight: 4, verticalAlign: 'middle', display: 'inline' }} />
                     COURSE ACCESS LOCKED
@@ -1961,10 +1961,10 @@ export default function StudentPortalPage() {
                     {activeCourse.code} · {activeCourse.units}.0 UNITS · {activeCourse.credential}
                   </Chip>
                 </XStack>
-                <Text fontSize="$6" fontWeight="800" color="var(--white)">
+                <Text fontSize="$5" fontWeight="800" color="var(--white)">
                   Enrollment Required to Access {activeCourse.code}: {activeCourse.title}
                 </Text>
-                <Text fontSize="$2" color="var(--muted-foreground)" $platform-web={{ lineHeight: 1.6 }}>
+                <Text fontSize="$2" color="var(--muted-foreground)">
                   You are signed in as <strong style={{ color: 'var(--white)' }}>{studentName}</strong> (<span style={{ fontFamily: 'monospace', color: 'var(--white-80)' }}>@{studentHandle}</span>). Your account does not hold an active enrollment license for this track. Dedicated Hanzo Visor microVM sandbox pods, AST autograder evaluations, and on-chain degree issuance are provisioned exclusively for enrolled students.
                 </Text>
               </YStack>
