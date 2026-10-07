@@ -18,6 +18,7 @@ import {
   ChevronRight,
   GraduationCap,
   Coins,
+  BookOpen,
   Terminal,
   User,
   Key,
@@ -445,44 +446,110 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                   {/* Included Benefits */}
                   <YStack gap={16}>
                     <Text fontSize={12} fontWeight="600" color="rgba(255, 255, 255, 0.45)" fontFamily="$mono" letterSpacing={1.2}>
-                      EVERY ENROLLMENT INCLUDES:
+                      {course.slug === 'membership' ? 'UNIVERSITY PRO MEMBERSHIP INCLUDES:' : 'EVERY ENROLLMENT INCLUDES:'}
                     </Text>
 
-                    <XStack items="flex-start" gap={12}>
-                      <Coins size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
-                      <YStack gap={2} flex={1} minW={0}>
-                        <Text fontSize="$2" fontWeight="600" color="var(--white)">
-                          + ${rebateCredits} usage credit for free
-                        </Text>
-                        <Text fontSize="$1" color="var(--muted-foreground)">
-                          Credited to your Hanzo Cloud wallet on Day 1 for model training &amp; API calls.
-                        </Text>
-                      </YStack>
-                    </XStack>
+                    {course.slug === 'membership' ? (
+                      <>
+                        <XStack items="flex-start" gap={12}>
+                          <Sparkles size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <YStack gap={2} flex={1} minW={0}>
+                            <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              Full Hanzo Pro Developer Account Included
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Unlimited Zen 6 and premium model access, 13 unified MCP tools, and cloud developer features.
+                            </Text>
+                          </YStack>
+                        </XStack>
 
-                    <XStack items="flex-start" gap={12}>
-                      <Cpu size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
-                      <YStack gap={2} flex={1} minW={0}>
-                        <Text fontSize="$2" fontWeight="600" color="var(--white)">
-                          Dedicated Hanzo Visor MicroVM Sandbox
-                        </Text>
-                        <Text fontSize="$1" color="var(--muted-foreground)">
-                          Isolated execution runtime with pre-configured SWE-bench and Zen 6 ZAP RPC.
-                        </Text>
-                      </YStack>
-                    </XStack>
+                        <XStack items="flex-start" gap={12}>
+                          <BookOpen size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <YStack gap={2} flex={1} minW={0}>
+                            <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              All 6 Accredited Degree Tracks &amp; Syllabi
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Universal access to ENG 100, RL 101, SYS 103, MKT 102, PRA 104, and ARC 105.
+                            </Text>
+                          </YStack>
+                        </XStack>
 
-                    <XStack items="flex-start" gap={12}>
-                      <GraduationCap size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
-                      <YStack gap={2} flex={1} minW={0}>
-                        <Text fontSize="$2" fontWeight="600" color="var(--white)">
-                          W3C Verifiable Credential on Lux Chain
-                        </Text>
-                        <Text fontSize="$1" color="var(--muted-foreground)">
-                          Tamper-proof cryptographic degree badge instantly verifiable by tech employers.
-                        </Text>
-                      </YStack>
-                    </XStack>
+                        <XStack items="flex-start" gap={12}>
+                          <Coins size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <YStack gap={2} flex={1} minW={0}>
+                            <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              + $50 compute credit for free every month
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Deposited monthly into your Hanzo Cloud wallet for model inference and container leases.
+                            </Text>
+                          </YStack>
+                        </XStack>
+
+                        <XStack items="flex-start" gap={12}>
+                          <Cpu size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <YStack gap={2} flex={1} minW={0}>
+                            <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              Dedicated Hanzo Visor GPU Sandboxes
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Isolated execution runtime with automated cleanroom autograders.
+                            </Text>
+                          </YStack>
+                        </XStack>
+
+                        <XStack items="flex-start" gap={12}>
+                          <GraduationCap size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <YStack gap={2} flex={1} minW={0}>
+                            <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              W3C Verifiable Credentials on Lux Chain
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Verifiable on-chain degree credentials and live GitHub telemetry badges.
+                            </Text>
+                          </YStack>
+                        </XStack>
+                      </>
+                    ) : (
+                      <>
+                        <XStack items="flex-start" gap={12}>
+                          <Coins size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <YStack gap={2} flex={1} minW={0}>
+                            <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              + ${rebateCredits} usage credit for free
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Credited to your Hanzo Cloud wallet on Day 1 for model training &amp; API calls.
+                            </Text>
+                          </YStack>
+                        </XStack>
+
+                        <XStack items="flex-start" gap={12}>
+                          <Cpu size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <YStack gap={2} flex={1} minW={0}>
+                            <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              Dedicated Hanzo Visor MicroVM Sandbox
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Isolated execution runtime with pre-configured SWE-bench and Zen 6 ZAP RPC.
+                            </Text>
+                          </YStack>
+                        </XStack>
+
+                        <XStack items="flex-start" gap={12}>
+                          <GraduationCap size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <YStack gap={2} flex={1} minW={0}>
+                            <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              W3C Verifiable Credential on Lux Chain
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Tamper-proof cryptographic degree badge instantly verifiable by tech employers.
+                            </Text>
+                          </YStack>
+                        </XStack>
+                      </>
+                    )}
                   </YStack>
 
                   <Box height={1} bg="var(--border)" />

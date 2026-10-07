@@ -627,13 +627,15 @@ export const MEMBERSHIP_COURSE: UniversityCourse = {
   level: 'All Levels',
   prerequisites: 'None',
   summary:
-    'Full access to all 6 accredited degree tracks, weekly live faculty labs, 50+ engineering guides, Hanzo Visor GPU sandboxes, and $50/mo in free Hanzo Cloud compute credits.',
+    'Full access to all 6 accredited degree tracks, complete Hanzo Pro developer platform access, weekly live faculty labs, Hanzo Visor GPU sandboxes, and $50/mo in free Hanzo Cloud compute credits.',
   capstone:
     'Complete any degree track capstone defense to receive your official W3C Verifiable Credential on Lux.',
   competencies: [
     'Unlimited access to all 6 degree tracks (ENG 100, RL 101, SYS 103, MKT 102, PRA 104, ARC 105)',
+    'Full Hanzo Pro developer platform membership included',
+    'Unlimited Zen 6 & premium model inference',
     'Dedicated Hanzo Visor GPU microVM sandbox leases',
-    '+$50 monthly usage credits deposited into your Hanzo Cloud account',
+    '+ $50 monthly usage credits deposited into your Hanzo Cloud account',
     'Weekly live faculty research seminars & office hours',
   ],
   planId: 'pro',

@@ -494,7 +494,7 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
             <Title quiet={false}>Go from AI-curious to AI builder.</Title>
             <Lede>
               Free live sessions and daily engineering guides from operators who build frontier AI every day.
-              Go Pro for every on-demand degree course, W3C certifications, and monthly $50 compute perk drops.
+              Go Pro to unlock every on-demand degree track, full Hanzo Pro developer platform access, W3C certifications, and monthly $50 compute perk drops.
             </Lede>
 
             {/* Primary CTAs */}
@@ -1018,7 +1018,7 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
                       Hanzo University Pro
                     </Text>
                     <Text fontSize={13} color="rgba(255, 255, 255, 0.75)" lineHeight={20}>
-                      Unlimited access to every degree track, weekly live faculty labs, and monthly compute grants.
+                      All degree tracks and full Hanzo Pro developer platform access in a single membership.
                     </Text>
                   </YStack>
 
@@ -1036,11 +1036,12 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
                   <YStack gap={10} pt={4} borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
                     {[
                       'All 6 accredited degree tracks & syllabi',
-                      'W3C Verifiable Credentials on Lux Chain',
+                      'Full Hanzo Pro developer account included',
+                      'Unlimited Zen 6 & premium model inference',
                       'Dedicated Hanzo Visor GPU sandboxes',
                       '+ $50 compute credit for free every month',
                       'Weekly live labs & private faculty office hours',
-                      '193+ production agent architecture guides',
+                      'W3C Verifiable Credentials on Lux Chain',
                       '24/7 private Discord community & alumni network',
                     ].map((benefit, i) => (
                       <XStack key={i} items="flex-start" gap={10}>
@@ -1779,7 +1780,7 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
             Ready to build systems that scale?
           </Title>
           <Lede>
-            Join Hanzo University Pro or enroll in a degree track today to claim your compute credits and gain instant access to browser-based Hanzo Dev sandboxes.
+            Join Hanzo University Pro or enroll in a degree track today to claim your compute credits, unlock Hanzo Pro, and gain instant access to browser-based Hanzo Dev sandboxes.
           </Lede>
           <XStack justify="center" gap={14} mt={10} flexWrap="wrap">
             <Action href="/checkout/membership" fill>
