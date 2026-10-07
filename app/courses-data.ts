@@ -623,11 +623,11 @@ export const MEMBERSHIP_COURSE: UniversityCourse = {
   units: 12,
   price: 29,
   rebateCredits: 50,
-  duration: 'Monthly All-Access Membership',
+  duration: '7-Day Free Trial · Then $29/mo',
   level: 'All Levels',
   prerequisites: 'None',
   summary:
-    'Full access to all 6 accredited degree tracks, complete Hanzo Pro developer platform access, weekly live faculty labs, Hanzo Visor GPU sandboxes, and $50/mo in free Hanzo Cloud compute credits.',
+    'Full access to all 6 accredited degree tracks, complete Hanzo Pro developer platform access, weekly live faculty labs, Hanzo Visor GPU sandboxes, and $50/mo in free Hanzo Cloud compute credits. 7-day free trial with card required upfront.',
   capstone:
     'Complete any degree track capstone defense to receive your official W3C Verifiable Credential on Lux.',
   competencies: [

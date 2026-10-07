@@ -35,7 +35,7 @@ export function Footer() {
             The systems engineering institute of the Hanzo AI ecosystem. Training engineers in frontier decision models, zero-regression AST code agents, and native reinforcement learning.
           </Text>
           <XStack items="center" gap={8} pt={8}>
-            <Award size={16} color="var(--emerald-400)" />
+            <Award size={16} color="var(--white-70)" />
             <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
               W3C Verifiable Credentials Standard
             </Text>
@@ -85,7 +85,7 @@ export function Footer() {
             STUDENT SERVICES
           </Text>
           <Link href="/portal" style={{ textDecoration: 'none' }}>
-            <Text fontSize="$2" color="var(--white)" hoverStyle={{ color: 'var(--emerald-400)' }}>
+            <Text fontSize="$2" color="var(--white)" hoverStyle={{ color: 'var(--white-70)' }}>
               Student Learning Portal
             </Text>
           </Link>

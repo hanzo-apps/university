@@ -177,6 +177,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
   // Phase 1: Complete Payment Handler (Pay for the class via Square Web Payments / Hanzo Treasury)
   const handleCompletePayment = () => {
+    const isMembership = course.slug === 'membership'
+
     if (paymentMethod === 'card') {
       const cleanNum = cardNumber.replace(/\D/g, '')
       if (!cardName.trim()) {
@@ -199,6 +201,9 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
         setPaymentError('Please enter your billing postal code.')
         return
       }
+    } else if (isMembership) {
+      setPaymentError('A valid credit or debit card is required upfront to activate the 7-day free trial.')
+      return
     }
 
     setPaymentError(null)
@@ -206,7 +211,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
     // Square Live Transaction ID format matching Hanzo Pay
     const squareTxn = `sq_live_${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 8)}`
     setTransactionId(squareTxn)
-    setPaidAmount(finalPrice)
+    setPaidAmount(isMembership ? 0 : finalPrice)
 
     setTimeout(() => {
       setIsProcessingPayment(false)
@@ -242,6 +247,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
       .toLowerCase()
       .replace(/[^a-z0-9_-]/g, '')
     const finalLegalName = legalName.trim() || finalHandle
+    const isMembership = course.slug === 'membership'
 
     try {
       localStorage.setItem('hanzo_portal_student_handle', finalHandle)
@@ -255,10 +261,19 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
     setAccountError(null)
     setStep('provisioning')
     setProvisionProgress(15)
-    setProvisionLogs([
-      `> [INIT] Square & Hanzo settlement verified: Txn #${transactionId} cleared ($${paidAmount} USD).`,
-      `> [AUTH] Protocol dispatching seat license for course: ${course.code} (${course.credential})...`,
-    ])
+    setProvisionLogs(
+      isMembership
+        ? [
+            `> [CARD VERIFIED] Square card authorization cleared: Auth #${transactionId} ($0.00 charged today).`,
+            `> [TRIAL] 7-Day All-Access Free Trial activated for Hanzo University Pro.`,
+            `> [PRO PLATFORM] Full Hanzo Pro Developer account activated (unlimited Zen 6, 13 MCP tools).`,
+            `> [BILLING] Recurring tuition scheduled for $29.00 USD on Day 8. Cancel anytime in 1-click.`,
+          ]
+        : [
+            `> [INIT] Square & Hanzo settlement verified: Txn #${transactionId} cleared ($${paidAmount} USD).`,
+            `> [AUTH] Protocol dispatching seat license for course: ${course.code} (${course.credential})...`,
+          ]
+    )
 
     setTimeout(() => {
       setProvisionProgress(40)
@@ -273,7 +288,9 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
       setProvisionProgress(70)
       setProvisionLogs((prev) => [
         ...prev,
-        `> [COMPUTE] Depositing 25% compute fellowship ($${rebateCredits}.00 USD) into Hanzo Cloud wallet.`,
+        isMembership
+          ? `> [COMPUTE] Depositing monthly compute allowance ($50.00 USD) into Hanzo Cloud wallet.`
+          : `> [COMPUTE] Depositing 25% compute fellowship ($${rebateCredits}.00 USD) into Hanzo Cloud wallet.`,
         `> [SANDBOX] Allocating isolated Hanzo Visor microVM container lease: pod-vsr-uswest2-${finalHandle}...`,
       ])
     }, 1200)
@@ -335,7 +352,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
             </Link>
             <Text color="var(--muted-foreground)">/</Text>
             <Text fontSize="$2" fontWeight="700" color="var(--white)" fontFamily="$mono">
-              TUITION CHECKOUT
+              {course.slug === 'membership' ? 'UNIVERSITY PRO · 7-DAY FREE TRIAL' : 'TUITION CHECKOUT'}
             </Text>
           </XStack>
 
@@ -356,9 +373,9 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                 fontFamily="$mono"
                 color={step === 'payment' ? 'var(--pure-black)' : 'var(--muted-foreground)'}
               >
-                1. PAYMENT
+                {course.slug === 'membership' ? '1. VERIFY CARD' : '1. PAYMENT'}
               </Text>
-              {step !== 'payment' && <Check size={12} color="var(--emerald-400)" />}
+              {step !== 'payment' && <Check size={12} color="var(--white)" />}
             </XStack>
 
             <ChevronRight size={14} color="var(--muted-foreground)" />
@@ -384,7 +401,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
               >
                 2. ACCOUNT
               </Text>
-              {step === 'complete' && <Check size={12} color="var(--emerald-400)" />}
+              {step === 'complete' && <Check size={12} color="var(--white)" />}
             </XStack>
 
             <ChevronRight size={14} color="var(--muted-foreground)" />
@@ -395,7 +412,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
               px="$2.5"
               py="$1"
               rounded="var(--radius-md)"
-              bg={step === 'complete' ? 'var(--emerald-400)' : 'var(--card)'}
+              bg={step === 'complete' ? 'var(--white)' : 'var(--card)'}
               borderWidth={0}
             >
               <Text
@@ -424,8 +441,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
               <Card p={28} borderWidth={0}>
                 <YStack gap="$4">
                   <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
-                    <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                      ENROLLMENT SEAT LEASE
+                    <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color="var(--white)">
+                      {course.slug === 'membership' ? '7-DAY FREE TRIAL · ALL-ACCESS' : 'ENROLLMENT SEAT LEASE'}
                     </Chip>
                     <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
                       TERM: FALL / IMMEDIATE ACCESS
@@ -554,186 +571,260 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
                   <Box height={1} bg="var(--border)" />
 
-                  {/* Coupon Code Input Section */}
-                  <YStack gap="$3">
-                    <XStack items="center" justify="space-between">
-                      <XStack items="center" gap="$2">
-                        <Tag size={14} color="var(--emerald-400)" />
-                        <Text fontSize="$2" fontWeight="600" color="var(--white)">
-                          Tuition Coupon or Fellowship Grant
-                        </Text>
-                      </XStack>
-                      {appliedCoupon?.valid && (
-                        <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                          COUPON APPLIED
-                        </Chip>
-                      )}
-                    </XStack>
-
-                    {!appliedCoupon?.valid ? (
-                      <XStack gap="$2" width="100%">
-                        <input
-                          type="text"
-                          style={{
-                            ...inputStyle,
-                            flex: 1,
-                            minWidth: 0,
-                            fontFamily: 'monospace',
-                            borderColor: couponError ? 'var(--red-500)' : 'var(--border)',
-                          }}
-                          placeholder="e.g. STUDENT50, DEVCOMMUNITY"
-                          value={couponCode}
-                          onChange={(e) => {
-                            setCouponCode(e.target.value)
-                            if (couponError) setCouponError(null)
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              handleApplyCoupon()
-                            }
-                          }}
-                        />
-                        <Action
-                          render="button"
-                          onClick={() => handleApplyCoupon()}
-                          px={16}
-                          py={8}
-                          $platform-web={{ fontSize: '13px' }}
-                        >
-                          Apply
-                        </Action>
-                      </XStack>
-                    ) : (
-                      <XStack
-                        items="center"
-                        justify="space-between"
-                        p="$3"
-                        rounded="var(--radius-md)"
-                        bg="var(--pure-black)"
-                        borderWidth={1}
-                        borderColor="var(--emerald-800)"
-                      >
-                        <XStack items="center" gap="$2" flex={1} minW={0}>
-                          <CheckCircle2 size={16} color="var(--emerald-400)" />
-                          <YStack flex={1} minW={0}>
-                            <Text fontSize="$2" fontWeight="600" color="var(--emerald-300)" fontFamily="$mono">
-                              {appliedCoupon.code} applied{KNOWN_COUPONS[appliedCoupon.code] ? ` · ${KNOWN_COUPONS[appliedCoupon.code].label}` : ''}
-                            </Text>
-                            <Text fontSize="$1" color="var(--muted-foreground)">
-                              Discount: -${appliedCoupon.discountAmount}.00 USD
-                            </Text>
-                          </YStack>
+                  {/* Coupon Code / Trial Status Section */}
+                  {course.slug === 'membership' ? (
+                    <Box
+                      p="$3.5"
+                      rounded="var(--radius-md)"
+                      bg="rgba(255, 255, 255, 0.04)"
+                      borderWidth={1}
+                      borderColor="rgba(255, 255, 255, 0.12)"
+                    >
+                      <XStack items="center" justify="space-between">
+                        <XStack items="center" gap="$2">
+                          <Sparkles size={14} color="var(--white)" />
+                          <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                            7-Day Free Trial Activated
+                          </Text>
                         </XStack>
-                        <Action
-                          render="button"
-                          onClick={handleRemoveCoupon}
-                          ml="$3"
-                          px={10}
-                          py={4}
-                          $platform-web={{ fontSize: '12px' }}
-                        >
-                          Remove
-                        </Action>
+                        <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--white)">
+                          $0.00 TODAY
+                        </Chip>
                       </XStack>
-                    )}
-
-                    {couponError && (
-                      <Text fontSize="$1" color="var(--red-400)">
-                        {couponError}
+                      <Text fontSize="$1" color="var(--muted-foreground)" pt="$1.5">
+                        First 7 days free. Credit or debit card verified upfront ($0.00). Billed $29.00/month starting on Day 8. Cancel anytime in 1-click in your portal.
                       </Text>
-                    )}
-
-                    {/* Quick Suggestion Chips */}
-                    {!appliedCoupon?.valid && (
-                      <XStack gap="$2" flexWrap="wrap" items="center">
-                        <Text fontSize="$1" color="var(--muted-foreground)">
-                          Available grants:
-                        </Text>
-                        <Box
-                          render="button"
-                          onClick={() => handleApplyCoupon('STUDENT50')}
-                          px={10}
-                          py={4}
-                          rounded={999}
-                          bg="rgba(255, 255, 255, 0.04)"
-                          borderWidth={1}
-                          borderColor="rgba(255, 255, 255, 0.1)"
-                          hoverStyle={{ background: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.2)' }}
-                          $platform-web={{ cursor: 'pointer' }}
-                        >
-                          <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.8)">
-                            STUDENT50 (50% Off)
+                    </Box>
+                  ) : (
+                    <YStack gap="$3">
+                      <XStack items="center" justify="space-between">
+                        <XStack items="center" gap="$2">
+                          <Tag size={14} color="var(--white)" />
+                          <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                            Tuition Coupon or Fellowship Grant
                           </Text>
-                        </Box>
-                        <Box
-                          render="button"
-                          onClick={() => handleApplyCoupon('DEVCOMMUNITY')}
-                          px={10}
-                          py={4}
-                          rounded={999}
-                          bg="rgba(255, 255, 255, 0.04)"
-                          borderWidth={1}
-                          borderColor="rgba(255, 255, 255, 0.1)"
-                          hoverStyle={{ background: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.2)' }}
-                          $platform-web={{ cursor: 'pointer' }}
-                        >
-                          <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.8)">
-                            DEVCOMMUNITY (30% Off)
-                          </Text>
-                        </Box>
+                        </XStack>
+                        {appliedCoupon?.valid && (
+                          <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--white)">
+                            COUPON APPLIED
+                          </Chip>
+                        )}
                       </XStack>
-                    )}
-                  </YStack>
+
+                      {!appliedCoupon?.valid ? (
+                        <XStack gap="$2" width="100%">
+                          <input
+                            type="text"
+                            style={{
+                              ...inputStyle,
+                              flex: 1,
+                              minWidth: 0,
+                              fontFamily: 'monospace',
+                              borderColor: couponError ? 'var(--red-500)' : 'var(--border)',
+                            }}
+                            placeholder="e.g. STUDENT50, DEVCOMMUNITY"
+                            value={couponCode}
+                            onChange={(e) => {
+                              setCouponCode(e.target.value)
+                              if (couponError) setCouponError(null)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                handleApplyCoupon()
+                              }
+                            }}
+                          />
+                          <Action
+                            render="button"
+                            onClick={() => handleApplyCoupon()}
+                            px={16}
+                            py={8}
+                            $platform-web={{ fontSize: '13px' }}
+                          >
+                            Apply
+                          </Action>
+                        </XStack>
+                      ) : (
+                        <XStack
+                          items="center"
+                          justify="space-between"
+                          p="$3"
+                          rounded="var(--radius-md)"
+                          bg="var(--pure-black)"
+                          borderWidth={1}
+                          borderColor="rgba(255, 255, 255, 0.2)"
+                        >
+                          <XStack items="center" gap="$2" flex={1} minW={0}>
+                            <CheckCircle2 size={16} color="var(--white)" />
+                            <YStack flex={1} minW={0}>
+                              <Text fontSize="$2" fontWeight="600" color="var(--white)" fontFamily="$mono">
+                                {appliedCoupon.code} applied{KNOWN_COUPONS[appliedCoupon.code] ? ` · ${KNOWN_COUPONS[appliedCoupon.code].label}` : ''}
+                              </Text>
+                              <Text fontSize="$1" color="var(--muted-foreground)">
+                                Discount: -${appliedCoupon.discountAmount}.00 USD
+                              </Text>
+                            </YStack>
+                          </XStack>
+                          <Action
+                            render="button"
+                            onClick={handleRemoveCoupon}
+                            ml="$3"
+                            px={10}
+                            py={4}
+                            $platform-web={{ fontSize: '12px' }}
+                          >
+                            Remove
+                          </Action>
+                        </XStack>
+                      )}
+
+                      {couponError && (
+                        <Text fontSize="$1" color="var(--red-400)">
+                          {couponError}
+                        </Text>
+                      )}
+
+                      {/* Quick Suggestion Chips */}
+                      {!appliedCoupon?.valid && (
+                        <XStack gap="$2" flexWrap="wrap" items="center">
+                          <Text fontSize="$1" color="var(--muted-foreground)">
+                            Available grants:
+                          </Text>
+                          <Box
+                            render="button"
+                            onClick={() => handleApplyCoupon('STUDENT50')}
+                            px={10}
+                            py={4}
+                            rounded={999}
+                            bg="rgba(255, 255, 255, 0.04)"
+                            borderWidth={1}
+                            borderColor="rgba(255, 255, 255, 0.1)"
+                            hoverStyle={{ background: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                            $platform-web={{ cursor: 'pointer' }}
+                          >
+                            <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.8)">
+                              STUDENT50 (50% Off)
+                            </Text>
+                          </Box>
+                          <Box
+                            render="button"
+                            onClick={() => handleApplyCoupon('DEVCOMMUNITY')}
+                            px={10}
+                            py={4}
+                            rounded={999}
+                            bg="rgba(255, 255, 255, 0.04)"
+                            borderWidth={1}
+                            borderColor="rgba(255, 255, 255, 0.1)"
+                            hoverStyle={{ background: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                            $platform-web={{ cursor: 'pointer' }}
+                          >
+                            <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.8)">
+                              DEVCOMMUNITY (30% Off)
+                            </Text>
+                          </Box>
+                        </XStack>
+                      )}
+                    </YStack>
+                  )}
 
                   <Box height={1} bg="var(--border)" />
 
                   {/* Itemized Price Breakdown */}
                   <YStack gap="$2">
-                    <XStack justify="space-between" items="center">
-                      <Text fontSize="$2" color="var(--muted-foreground)">
-                        Standard Course Tuition
-                      </Text>
-                      <Text fontSize="$2" color="var(--white)" fontFamily="$mono">
-                        ${originalPrice}.00 USD
-                      </Text>
-                    </XStack>
+                    {course.slug === 'membership' ? (
+                      <>
+                        <XStack justify="space-between" items="center">
+                          <Text fontSize="$2" color="var(--muted-foreground)">
+                            Standard University Pro Membership
+                          </Text>
+                          <Text fontSize="$2" color="var(--white)" fontFamily="$mono">
+                            $29.00 USD / mo
+                          </Text>
+                        </XStack>
 
-                    {discountAmount > 0 && (
-                      <XStack justify="space-between" items="center">
-                        <Text fontSize="$2" color="var(--emerald-400)">
-                          Coupon Discount ({appliedCoupon?.code})
-                        </Text>
-                        <Text fontSize="$2" color="var(--emerald-400)" fontFamily="$mono">
-                          -${discountAmount}.00 USD
-                        </Text>
-                      </XStack>
+                        <XStack justify="space-between" items="center">
+                          <Text fontSize="$2" color="var(--white)">
+                            7-Day Free Trial Discount
+                          </Text>
+                          <Text fontSize="$2" color="var(--white)" fontFamily="$mono">
+                            -$29.00 USD (First 7 days free)
+                          </Text>
+                        </XStack>
+
+                        <XStack justify="space-between" items="center">
+                          <Text fontSize="$2" color="var(--muted-foreground)">
+                            Hanzo Pro Developer Platform Access
+                          </Text>
+                          <Text fontSize="$2" color="var(--white)" fontFamily="$mono">
+                            Included
+                          </Text>
+                        </XStack>
+
+                        <Box height={1} bg="var(--border)" my="$1" />
+
+                        <XStack justify="space-between" items="baseline">
+                          <YStack flex={1} minW={0}>
+                            <Text fontSize="$3" fontWeight="700" color="var(--white)">
+                              Total Due Today
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              Card verified today ($0.00). Billed $29.00/mo starting on Day 8. Cancel anytime with 1-click in your portal.
+                            </Text>
+                          </YStack>
+                          <Text fontSize="$6" fontWeight="700" color="var(--white)" fontFamily="$mono" ml="$3" $platform-web={{ whiteSpace: 'nowrap' }}>
+                            $0.00 USD
+                          </Text>
+                        </XStack>
+                      </>
+                    ) : (
+                      <>
+                        <XStack justify="space-between" items="center">
+                          <Text fontSize="$2" color="var(--muted-foreground)">
+                            Standard Course Tuition
+                          </Text>
+                          <Text fontSize="$2" color="var(--white)" fontFamily="$mono">
+                            ${originalPrice}.00 USD
+                          </Text>
+                        </XStack>
+
+                        {discountAmount > 0 && (
+                          <XStack justify="space-between" items="center">
+                            <Text fontSize="$2" color="var(--white)">
+                              Coupon Discount ({appliedCoupon?.code})
+                            </Text>
+                            <Text fontSize="$2" color="var(--white)" fontFamily="$mono">
+                              -${discountAmount}.00 USD
+                            </Text>
+                          </XStack>
+                        )}
+
+                        <XStack justify="space-between" items="center">
+                          <Text fontSize="$2" color="var(--muted-foreground)">
+                            On-Chain Degree Issuance & CI Verification
+                          </Text>
+                          <Text fontSize="$2" color="rgba(255, 255, 255, 0.6)" fontFamily="$mono">
+                            $0.00 (Waived)
+                          </Text>
+                        </XStack>
+
+                        <Box height={1} bg="var(--border)" my="$1" />
+
+                        <XStack justify="space-between" items="baseline">
+                          <YStack flex={1} minW={0}>
+                            <Text fontSize="$3" fontWeight="700" color="var(--white)">
+                              Total Due Today
+                            </Text>
+                            <Text fontSize="$1" color="var(--muted-foreground)">
+                              One-time tuition fee. Never a recurring SaaS subscription.
+                            </Text>
+                          </YStack>
+                          <Text fontSize="$6" fontWeight="700" color="var(--white)" fontFamily="$mono" ml="$3" $platform-web={{ whiteSpace: 'nowrap' }}>
+                            ${finalPrice}.00 USD
+                          </Text>
+                        </XStack>
+                      </>
                     )}
-
-                    <XStack justify="space-between" items="center">
-                      <Text fontSize="$2" color="var(--muted-foreground)">
-                        On-Chain Degree Issuance & CI Verification
-                      </Text>
-                      <Text fontSize="$2" color="var(--emerald-400)" fontFamily="$mono">
-                        $0.00 (Waived)
-                      </Text>
-                    </XStack>
-
-                    <Box height={1} bg="var(--border)" my="$1" />
-
-                    <XStack justify="space-between" items="baseline">
-                      <YStack flex={1} minW={0}>
-                        <Text fontSize="$3" fontWeight="700" color="var(--white)">
-                          Total Due Today
-                        </Text>
-                        <Text fontSize="$1" color="var(--muted-foreground)">
-                          One-time tuition fee. Never a recurring SaaS subscription.
-                        </Text>
-                      </YStack>
-                      <Text fontSize="$6" fontWeight="700" color="var(--white)" fontFamily="$mono" ml="$3" $platform-web={{ whiteSpace: 'nowrap' }}>
-                        ${finalPrice}.00 USD
-                      </Text>
-                    </XStack>
                   </YStack>
                 </YStack>
               </Card>
@@ -745,10 +836,12 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                 <YStack gap="$5">
                   <YStack gap="$1">
                     <Text fontSize="$4" fontWeight="700" color="var(--white)">
-                      Payment Method
+                      {course.slug === 'membership' ? 'Card Verification' : 'Payment Method'}
                     </Text>
                     <Text fontSize="$2" color="var(--muted-foreground)">
-                      Secure one-time payment settled via Hanzo Treasury Layer.
+                      {course.slug === 'membership'
+                        ? 'Card details required upfront to activate your 7-day free trial. $0.00 charged today.'
+                        : 'Secure one-time payment settled via Hanzo Treasury Layer.'}
                     </Text>
                   </YStack>
 
@@ -1132,7 +1225,9 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                   >
                     <XStack items="center" justify="center">
                       <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ textAlign: 'center' }}>
-                        256-bit TLS encrypted. Backed by 14-day full money-back academic guarantee.
+                        {course.slug === 'membership'
+                          ? '256-bit TLS encrypted. Cancel anytime in 1-click before Day 8 to avoid charges.'
+                          : '256-bit TLS encrypted. Backed by 14-day full money-back academic guarantee.'}
                       </Text>
                     </XStack>
                   </Box>
@@ -1154,20 +1249,26 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       <XStack items="center" gap="$2">
                         <RefreshCw size={16} className="animate-spin" />
                         <Text fontSize="$2" fontWeight="600" color="inherit">
-                          Processing payment...
+                          {course.slug === 'membership'
+                            ? 'Verifying card & activating trial...'
+                            : 'Processing payment...'}
                         </Text>
                       </XStack>
                     ) : (
                       <XStack items="center" gap="$2">
                         <Text fontSize="$2" fontWeight="600" color="inherit">
-                          Pay ${finalPrice}.00 USD & Proceed to Hanzo ID →
+                          {course.slug === 'membership'
+                            ? 'Verify Card & Start 7-Day Free Trial →'
+                            : `Pay $${finalPrice}.00 USD & Proceed to Hanzo ID →`}
                         </Text>
                       </XStack>
                     )}
                   </Action>
 
                   <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ textAlign: 'center' }}>
-                    Step 1 of 2: Tuition payment is completed first, followed immediately by Hanzo ID creation.
+                    {course.slug === 'membership'
+                      ? 'Step 1 of 2: Card details verified ($0.00 today), followed immediately by Hanzo ID creation.'
+                      : 'Step 1 of 2: Tuition payment is completed first, followed immediately by Hanzo ID creation.'}
                   </Text>
                 </YStack>
               </Card>
@@ -1186,25 +1287,29 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
               rounded="var(--radius-lg)"
               bg="var(--pure-black)"
               borderWidth={1}
-              borderColor="var(--emerald-850)"
+              borderColor="rgba(255, 255, 255, 0.15)"
             >
               <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
                 <XStack items="center" gap="$3">
-                  <Box p="$2" rounded="var(--radius-md)" bg="var(--emerald-950)">
-                    <CheckCircle2 size={24} color="var(--emerald-400)" />
+                  <Box p="$2" rounded="var(--radius-md)" bg="rgba(255, 255, 255, 0.08)">
+                    <CheckCircle2 size={24} color="var(--white)" />
                   </Box>
                   <YStack>
                     <Text fontSize="$3" fontWeight="700" color="var(--white)">
-                      Tuition Cleared: ${paidAmount}.00 USD
+                      {course.slug === 'membership'
+                        ? 'Card Verified: 7-Day Free Trial Active ($0.00 Today)'
+                        : `Tuition Cleared: $${paidAmount}.00 USD`}
                     </Text>
-                    <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">
-                      Receipt ID: {transactionId}
+                    <Text fontSize="$1" color="rgba(255, 255, 255, 0.6)" fontFamily="$mono">
+                      {course.slug === 'membership'
+                        ? `Auth ID: ${transactionId} · Billed $29.00/mo on Day 8`
+                        : `Receipt ID: ${transactionId}`}
                     </Text>
                   </YStack>
                 </XStack>
 
-                <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  SEAT RESERVED · STEP 2 OF 2
+                <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color="var(--white)">
+                  {course.slug === 'membership' ? 'TRIAL RESERVED · STEP 2 OF 2' : 'SEAT RESERVED · STEP 2 OF 2'}
                 </Chip>
               </XStack>
             </Box>
@@ -1217,8 +1322,9 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                     Create or Link your Hanzo ID
                   </Text>
                   <Text fontSize="$2" color="var(--muted-foreground)">
-                    Your class payment is locked in. Now configure your decentralized Hanzo ID to claim your
-                    Student DID (`did:hanzo:student:...`), unlock your ${rebateCredits}.00 USD compute grant, and initialize your Hanzo Visor sandbox.
+                    {course.slug === 'membership'
+                      ? 'Your 7-day free trial is activated. Now configure your decentralized Hanzo ID to claim your Student DID (did:hanzo:student:...), unlock full Hanzo Pro developer tools, and initialize your Hanzo Visor sandbox.'
+                      : `Your class payment is locked in. Now configure your decentralized Hanzo ID to claim your Student DID (did:hanzo:student:...), unlock your $${rebateCredits}.00 USD compute grant, and initialize your Hanzo Visor sandbox.`}
                   </Text>
                 </YStack>
 
@@ -1326,7 +1432,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         <Text fontSize="$1" color="var(--muted-foreground)">
                           Hanzo ID Handle
                         </Text>
-                        <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                        <Text fontSize="$1" fontFamily="$mono" color="rgba(255, 255, 255, 0.7)">
                           did:hanzo:student:{handle || 'yourhandle'}
                         </Text>
                       </XStack>
@@ -1377,13 +1483,13 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           rounded="var(--radius-md)"
                           bg={authMethod === 'passkey' ? 'var(--card)' : 'var(--pure-black)'}
                           borderWidth={1}
-                          borderColor={authMethod === 'passkey' ? 'var(--emerald-400)' : 'var(--border)'}
+                          borderColor={authMethod === 'passkey' ? 'var(--white)' : 'var(--border)'}
                           $platform-web={{ cursor: 'pointer', outline: 'none' }}
                         >
                           <XStack items="center" gap="$2">
                             <Sparkles
                               size={14}
-                              color={authMethod === 'passkey' ? 'var(--emerald-400)' : 'var(--muted-foreground)'}
+                              color={authMethod === 'passkey' ? 'var(--white)' : 'var(--muted-foreground)'}
                             />
                             <YStack items="flex-start">
                               <Text fontSize="$1" fontWeight="600" color="var(--white)">
@@ -1405,13 +1511,13 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           rounded="var(--radius-md)"
                           bg={authMethod === 'password' ? 'var(--card)' : 'var(--pure-black)'}
                           borderWidth={1}
-                          borderColor={authMethod === 'password' ? 'var(--emerald-400)' : 'var(--border)'}
+                          borderColor={authMethod === 'password' ? 'var(--white)' : 'var(--border)'}
                           $platform-web={{ cursor: 'pointer', outline: 'none' }}
                         >
                           <XStack items="center" gap="$2">
                             <Lock
                               size={14}
-                              color={authMethod === 'password' ? 'var(--emerald-400)' : 'var(--muted-foreground)'}
+                              color={authMethod === 'password' ? 'var(--white)' : 'var(--muted-foreground)'}
                             />
                             <YStack items="flex-start">
                               <Text fontSize="$1" fontWeight="600" color="var(--white)">
@@ -1589,12 +1695,12 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
               <YStack gap="$4">
                 <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
                   <XStack items="center" gap="$2">
-                    <Terminal size={18} color="var(--emerald-400)" />
+                    <Terminal size={18} color="var(--white)" />
                     <Text fontSize="$3" fontWeight="700" color="var(--white)" fontFamily="$mono">
                       HANZO IDENTITY & SANDBOX PROVISIONER
                     </Text>
                   </XStack>
-                  <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                  <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--white)">
                     {provisionProgress}% COMPLETE
                   </Chip>
                 </XStack>
@@ -1604,7 +1710,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                   <Box
                     height="100%"
                     width={`${provisionProgress}%`}
-                    bg="var(--emerald-400)"
+                    bg="var(--white)"
                     transition="quick"
                   />
                 </Box>
@@ -1627,8 +1733,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         fontFamily="$mono"
                         color={
                           log.includes('[OK]') || log.includes('[SUCCESS]')
-                            ? 'var(--emerald-400)'
-                            : log.includes('[INIT]')
+                            ? 'var(--white)'
+                            : log.includes('[INIT]') || log.includes('[CARD VERIFIED]')
                             ? 'var(--white)'
                             : 'var(--white-70)'
                         }
@@ -1638,8 +1744,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                     ))}
                     {provisionProgress < 100 && (
                       <XStack items="center" gap="$2" pt="$2">
-                        <RefreshCw size={13} color="var(--emerald-400)" className="animate-spin" />
-                        <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">
+                        <RefreshCw size={13} color="var(--white-70)" className="animate-spin" />
+                        <Text fontSize="$1" color="var(--white-70)" fontFamily="$mono">
                           Provisioning microVM container lease...
                         </Text>
                       </XStack>
@@ -1650,8 +1756,8 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                 {/* Done Callout */}
                 {step === 'complete' && (
                   <YStack gap="$3" items="center" pt="$2">
-                    <Text fontSize="$2" color="var(--emerald-300)" fontWeight="600">
-                      ✅ Enrollment Complete! Forwarding to your student learning portal...
+                    <Text fontSize="$2" color="var(--white)" fontWeight="600">
+                      Enrollment Complete! Forwarding to your student learning portal...
                     </Text>
                     <Action
                       href={`/portal?enrolled=${encodeURIComponent(course.slug)}&student=${encodeURIComponent(handle)}&welcome=1`}

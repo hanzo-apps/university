@@ -500,7 +500,7 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
             {/* Primary CTAs */}
             <XStack justify="center" gap={14} mt={10} flexWrap="wrap">
               <Action href="/checkout/membership" fill>
-                Join University Pro — $29/mo →
+                Start 7-Day Free Trial — $0 today →
               </Action>
               <Action href="#curriculum">
                 Browse Degree Tracks
@@ -1006,7 +1006,7 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
                         letterSpacing: '0.5px',
                       }}
                     >
-                      ★ MOST POPULAR · ALL-ACCESS
+                      ★ 7-DAY FREE TRIAL · ALL-ACCESS
                     </span>
                     <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.6)">
                       CANCEL ANYTIME
@@ -1018,23 +1018,24 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
                       Hanzo University Pro
                     </Text>
                     <Text fontSize={13} color="rgba(255, 255, 255, 0.75)" lineHeight={20}>
-                      All degree tracks and full Hanzo Pro developer platform access in a single membership.
+                      All degree tracks and full Hanzo Pro developer platform access in a single membership. Card required upfront.
                     </Text>
                   </YStack>
 
                   {/* Price */}
                   <XStack items="baseline" gap={6}>
                     <Text fontSize={36} fontWeight="800" color="var(--white)" fontFamily="$mono">
-                      $29
+                      $0
                     </Text>
                     <Text fontSize={14} color="rgba(255, 255, 255, 0.65)">
-                      / month
+                      today · then $29 / month
                     </Text>
                   </XStack>
 
                   {/* Benefits Checklist */}
                   <YStack gap={10} pt={4} borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
                     {[
+                      '7-day free trial with card required upfront',
                       'All 6 accredited degree tracks & syllabi',
                       'Full Hanzo Pro developer account included',
                       'Unlimited Zen 6 & premium model inference',
@@ -1055,11 +1056,11 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
 
                   {/* Primary CTA */}
                   <Action href="/checkout/membership" fill width="100%">
-                    Go Pro for $29 / month →
+                    Start 7-Day Free Trial →
                   </Action>
 
                   <Text fontSize={12} color="rgba(255, 255, 255, 0.55)" style={{ textAlign: 'center' }} lineHeight={16}>
-                    Tax receipt provided for corporate L&amp;D reimbursement.
+                    Card verified today ($0 charge). Renews at $29/mo on Day 8.
                   </Text>
 
                   {/* Student Quote */}
@@ -1784,7 +1785,7 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
           </Lede>
           <XStack justify="center" gap={14} mt={10} flexWrap="wrap">
             <Action href="/checkout/membership" fill>
-              Join University Pro — $29/mo →
+              Start 7-Day Free Trial — $0 today →
             </Action>
             <Action href="#curriculum">
               Choose a Class
