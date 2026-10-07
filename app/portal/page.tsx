@@ -35,9 +35,21 @@ import {
   FileText,
   RotateCcw,
   Zap,
+  Lock,
+  LogIn,
+  LogOut,
+  User,
+  KeyRound,
 } from 'lucide-react'
 import { UNIVERSITY_COURSES, type UniversityCourse } from '../courses-data'
 import { COURSE_PORTAL_DATA } from './portal-data'
+import {
+  resolveStudentSession,
+  signOutStudent,
+  syncBackendClassEnrollment,
+  getHanzoLoginUrl,
+  type StudentSession,
+} from '@/lib/auth'
 
 interface ActiveLectureItem {
   title: string
@@ -50,11 +62,20 @@ interface ActiveLectureItem {
 }
 
 export default function StudentPortalPage() {
+  const [session, setSession] = useState<StudentSession | null>(null)
+  const [authLoaded, setAuthLoaded] = useState<boolean>(false)
+  const [showManualLogin, setShowManualLogin] = useState<boolean>(false)
+  const [manualTokenInput, setManualTokenInput] = useState<string>('')
+  const [manualNameInput, setManualNameInput] = useState<string>('')
+  const [manualHandleInput, setManualHandleInput] = useState<string>('')
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [backendSyncStatus, setBackendSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'offline'>('idle')
+
   const [selectedCourseSlug, setSelectedCourseSlug] = useState<string>('agentic-coding')
   const [activeTab, setActiveTab] = useState<'terminal' | 'ast' | 'grader' | 'metering'>('terminal')
   const [activeWeekIndex, setActiveWeekIndex] = useState<number>(0)
-  const [studentHandle, setStudentHandle] = useState<string>('alex')
-  const [studentName, setStudentName] = useState<string>('Alex Rivers')
+  const [studentHandle, setStudentHandle] = useState<string>('student')
+  const [studentName, setStudentName] = useState<string>('Student')
   const [welcomeBanner, setWelcomeBanner] = useState<boolean>(false)
 
   // Module completion map per course: slug -> list of completed week indices
@@ -91,10 +112,16 @@ export default function StudentPortalPage() {
   const workspaceData =
     COURSE_PORTAL_DATA[selectedCourseSlug] || COURSE_PORTAL_DATA['agentic-coding']
 
+  // Dynamic terminal prompt tailored to actual student username
+  const userTerminalPrompt = (workspaceData.terminalPrompt || 'student@hanzo-sandbox:~$').replace(
+    /^alex@/,
+    `${studentHandle}@`
+  )
+
   // Terminal history state
   const [terminalHistory, setTerminalHistory] = useState<string[]>(workspaceData.initialHistory)
 
-  // Hydrate from localStorage and handle URL query parameters
+  // Hydrate from localStorage, resolve authentic IAM student session, and configure backend class
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -106,77 +133,153 @@ export default function StudentPortalPage() {
         if (savedCapstones) {
           setCapstonePassed(JSON.parse(savedCapstones))
         }
-        const savedName = localStorage.getItem('hanzo_portal_student_name')
-        if (savedName) {
-          setStudentName(savedName)
-        }
-        const savedHandle = localStorage.getItem('hanzo_portal_student_handle')
-        if (savedHandle) {
-          setStudentHandle(savedHandle)
-          if (!savedName) {
-            setStudentName(savedHandle.charAt(0).toUpperCase() + savedHandle.slice(1))
-          }
-        }
         const savedWatched = localStorage.getItem('hanzo_portal_watched_lectures')
         if (savedWatched) {
           setWatchedLectures(JSON.parse(savedWatched))
         }
-        const savedCourse = localStorage.getItem('hanzo_portal_selected_course')
-        if (savedCourse && UNIVERSITY_COURSES.some((c) => c.slug === savedCourse)) {
-          setSelectedCourseSlug(savedCourse)
-        }
       } catch (e) {
-        console.error('Failed to parse portal storage', e)
+        console.error('Failed to parse portal saved state', e)
       }
 
-      const params = new URLSearchParams(window.location.search)
-      const enrolled = params.get('enrolled')
-      const student = params.get('student')
-      const name = params.get('name')
-      const welcome = params.get('welcome')
+      // Resolve active student session (OIDC / IAM token or local tuition checkout)
+      const activeSession = resolveStudentSession()
 
-      if (enrolled && UNIVERSITY_COURSES.some((c) => c.slug === enrolled)) {
-        setSelectedCourseSlug(enrolled)
-        try {
-          localStorage.setItem('hanzo_portal_selected_course', enrolled)
-        } catch (_) {}
+      if (activeSession && activeSession.isAuthenticated) {
+        setSession(activeSession)
+        setStudentName(activeSession.name)
+        setStudentHandle(activeSession.handle)
+
+        const params = new URLSearchParams(window.location.search)
+        const enrolledParam = params.get('enrolled') || params.get('course')
+        const welcome = params.get('welcome')
+
+        // Configure initial active class with backend enrollment
+        let targetClass: string | null = null
+        if (enrolledParam && UNIVERSITY_COURSES.some((c) => c.slug === enrolledParam)) {
+          targetClass = enrolledParam
+        } else if (activeSession.enrolledClasses.length > 0) {
+          const savedCourse = localStorage.getItem('hanzo_portal_selected_course')
+          if (savedCourse && activeSession.enrolledClasses.includes(savedCourse)) {
+            targetClass = savedCourse
+          } else {
+            targetClass = activeSession.enrolledClasses[0]
+          }
+        }
+
+        if (targetClass) {
+          setSelectedCourseSlug(targetClass)
+        }
+
+        if (welcome === '1') {
+          setWelcomeBanner(true)
+        }
+
+        // Synchronize with backend class limits / plan
+        setBackendSyncStatus('syncing')
+        syncBackendClassEnrollment(activeSession)
+          .then((syncRes) => {
+            if (syncRes.status === 'ok') {
+              setSession((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      enrolledClasses: syncRes.enrolledSlugs,
+                      backendPlan: syncRes.planName || prev.backendPlan,
+                    }
+                  : prev
+              )
+              setBackendSyncStatus('synced')
+            } else {
+              setBackendSyncStatus(syncRes.status === 'unauthorized' ? 'offline' : 'synced')
+            }
+          })
+          .catch(() => setBackendSyncStatus('offline'))
+      } else {
+        setSession(null)
       }
-      if (student) {
-        setStudentHandle(student)
-        try {
-          localStorage.setItem('hanzo_portal_student_handle', student)
-        } catch (_) {}
-      }
-      if (name) {
-        setStudentName(name)
-        try {
-          localStorage.setItem('hanzo_portal_student_name', name)
-        } catch (_) {}
-      } else if (student) {
-        setStudentName(student.charAt(0).toUpperCase() + student.slice(1))
-      }
-      if (welcome === '1') {
-        setWelcomeBanner(true)
-      }
+
+      setAuthLoaded(true)
     }
   }, [])
+
+  // Sign out student
+  const handleSignOut = () => {
+    signOutStudent()
+    setSession(null)
+    setFeedbackToast('Successfully signed out of Hanzo University.')
+    setTimeout(() => setFeedbackToast(null), 3000)
+  }
+
+  // Handle manual token / student handle submission
+  const handleManualTokenSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    setAuthError(null)
+
+    const trimmedToken = manualTokenInput.trim()
+    if (trimmedToken) {
+      try {
+        localStorage.setItem('hanzo_iam_access_token', trimmedToken)
+        const resolved = resolveStudentSession()
+        if (resolved && resolved.isAuthenticated) {
+          setSession(resolved)
+          setStudentName(resolved.name)
+          setStudentHandle(resolved.handle)
+          if (resolved.enrolledClasses.length > 0) {
+            setSelectedCourseSlug(resolved.enrolledClasses[0])
+          }
+          setShowManualLogin(false)
+          setFeedbackToast(`Welcome back, ${resolved.name}!`)
+          setTimeout(() => setFeedbackToast(null), 3500)
+          return
+        } else {
+          setAuthError('Could not verify JWT token. Please ensure it is a valid Hanzo token.')
+          return
+        }
+      } catch (err) {
+        setAuthError('Failed to parse token.')
+        return
+      }
+    }
+
+    if (manualNameInput.trim() || manualHandleInput.trim()) {
+      const handle = (manualHandleInput.trim() || manualNameInput.trim().toLowerCase().replace(/\s+/g, '-')).replace(/[^a-z0-9_-]/g, '')
+      const name = manualNameInput.trim() || manualHandleInput.trim()
+      localStorage.setItem('hanzo_portal_student_handle', handle)
+      localStorage.setItem('hanzo_portal_student_name', name)
+      const resolved = resolveStudentSession()
+      if (resolved && resolved.isAuthenticated) {
+        setSession(resolved)
+        setStudentName(resolved.name)
+        setStudentHandle(resolved.handle)
+        setShowManualLogin(false)
+        setFeedbackToast(`Signed in as ${resolved.name}!`)
+        setTimeout(() => setFeedbackToast(null), 3500)
+        return
+      }
+    }
+
+    setAuthError('Please enter a valid IAM token or student handle.')
+  }
 
   // Sync terminal and active week when course changes
   useEffect(() => {
     const data = COURSE_PORTAL_DATA[selectedCourseSlug] || COURSE_PORTAL_DATA['agentic-coding']
-    setTerminalHistory(data.initialHistory)
+    const personalizedHistory = (data.initialHistory || []).map((l) =>
+      l.replace(/^alex@/, `${studentHandle}@`)
+    )
+    setTerminalHistory(personalizedHistory)
     setActiveWeekIndex(0)
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('hanzo_portal_selected_course', selectedCourseSlug)
       } catch (_) {}
     }
-  }, [selectedCourseSlug])
+  }, [selectedCourseSlug, studentHandle])
 
   // Execute terminal command
   const executeCommand = (cmd: string) => {
     setIsRunningCommand(true)
-    const prompt = workspaceData.terminalPrompt
+    const prompt = userTerminalPrompt
     setTerminalHistory((prev) => [...prev, `${prompt} ${cmd}`])
 
     setTimeout(() => {
@@ -198,7 +301,7 @@ export default function StudentPortalPage() {
   const handleCompleteLab = (weekIdx: number) => {
     setIsRunningCommand(true)
     const week = activeCourse.syllabus[weekIdx]
-    const prompt = workspaceData.terminalPrompt
+    const prompt = userTerminalPrompt
     setTerminalHistory((prev) => [
       ...prev,
       `${prompt} hanzo autograder --submit ${week.code}`,
@@ -233,7 +336,7 @@ export default function StudentPortalPage() {
   const handleFastTrackAllLabs = () => {
     const totalCount = activeCourse.syllabus.length
     const allIndices = Array.from({ length: totalCount }, (_, i) => i)
-    const prompt = workspaceData.terminalPrompt
+    const prompt = userTerminalPrompt
 
     setTerminalHistory((prev) => [
       ...prev,
@@ -285,7 +388,7 @@ export default function StudentPortalPage() {
     })
 
     setActiveWeekIndex(0)
-    const prompt = workspaceData.terminalPrompt
+    const prompt = userTerminalPrompt
     setTerminalHistory((prev) => [
       ...prev,
       `${prompt} hanzo dev reset-progress --course ${activeCourse.code}`,
@@ -299,7 +402,7 @@ export default function StudentPortalPage() {
   // Defend Capstone and officially graduate
   const handleDefendCapstone = () => {
     setIsDefending(true)
-    const prompt = workspaceData.terminalPrompt
+    const prompt = userTerminalPrompt
     setTerminalHistory((prev) => [
       ...prev,
       `${prompt} hanzo defense --capstone ${activeCourse.code}`,
@@ -398,6 +501,334 @@ export default function StudentPortalPage() {
   const isDefenseUnlocked = currentCompleted.length >= totalWeeks || capstonePassed[selectedCourseSlug]
   const isDegreeAwarded = capstonePassed[selectedCourseSlug]
 
+  // ── Authentication & Session Gate ──
+  if (!authLoaded) {
+    return (
+      <Box
+        minH="100vh"
+        bg="$background"
+        $platform-web={{ color: 'var(--foreground)' }}
+        display="flex"
+        items="center"
+        justify="center"
+      >
+        <YStack items="center" gap="$3">
+          <Box
+            width={40}
+            height={40}
+            rounded="var(--radius-full)"
+            borderWidth={3}
+            borderColor="var(--emerald-500)"
+            $platform-web={{
+              borderTopColor: 'transparent',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <Text fontSize="$2" color="var(--white)" fontWeight="700" fontFamily="$mono">
+            VERIFYING HANZO CREDENTIALS...
+          </Text>
+          <Text fontSize="$1" color="var(--muted-foreground)">
+            Synchronizing student session with Hanzo IAM & Class Registry
+          </Text>
+        </YStack>
+      </Box>
+    )
+  }
+
+  if (!session || !session.isAuthenticated) {
+    return (
+      <Box minH="100vh" bg="$background" $platform-web={{ color: 'var(--foreground)' }}>
+        {/* Navigation Bar */}
+        <Box
+          borderBottomWidth={1}
+          borderColor="var(--border)"
+          bg="var(--pure-black)"
+          py="$3"
+          px="$6"
+        >
+          <XStack items="center" justify="space-between" flexWrap="wrap" gap="$4">
+            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <XStack items="center" gap="$2">
+                <Text fontSize="$2" fontWeight="700" color="var(--white)" fontFamily="$mono">
+                  hanzo.university
+                </Text>
+                <Chip px={6} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                  STUDENT PORTAL
+                </Chip>
+              </XStack>
+            </Link>
+            <Link
+              href="/"
+              style={{
+                fontSize: '13px',
+                color: 'var(--white-80)',
+                textDecoration: 'none',
+              }}
+            >
+              Explore Course Catalog ↗
+            </Link>
+          </XStack>
+        </Box>
+
+        {/* Authentication Gate Band */}
+        <Band pad={60} measure={840}>
+          <YStack items="center" gap="$6" $platform-web={{ textAlign: 'center' }}>
+            <Box
+              p="$4"
+              rounded="var(--radius-full)"
+              bg="var(--emerald-950)"
+              borderWidth={1}
+              borderColor="var(--emerald-500)"
+              $platform-web={{
+                boxShadow: '0 0 36px rgba(16, 185, 129, 0.35)',
+              }}
+            >
+              <Lock size={36} color="var(--emerald-400)" />
+            </Box>
+
+            <YStack gap="$2" $platform-web={{ maxWidth: '640px' }}>
+              <Chip px={10} py={4} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)" mx="auto">
+                AUTHENTICATION REQUIRED
+              </Chip>
+              <Text fontSize="$6" fontWeight="800" color="var(--white)" $platform-web={{ lineHeight: 1.2 }}>
+                Sign in to access your Learning Workstation
+              </Text>
+              <Text fontSize="$2" color="var(--muted-foreground)" $platform-web={{ lineHeight: 1.6 }}>
+                The Hanzo University learning workstation, live GPU microVM sandbox pod, and autograder evaluation systems require an active Hanzo IAM student account or enrolled class session.
+              </Text>
+            </YStack>
+
+            {/* Authentication Action Card */}
+            <Card
+              p="$6"
+              w="100%"
+              maxWidth={520}
+              bg="var(--pure-black)"
+              borderWidth={1}
+              borderColor="var(--border)"
+              rounded="var(--radius-lg)"
+            >
+              <YStack gap="$4">
+                <Action
+                  render="a"
+                  href={getHanzoLoginUrl('/portal')}
+                  fill
+                  py={12}
+                  $platform-web={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <LogIn size={18} />
+                  Sign In with Hanzo
+                  <ArrowRight size={16} />
+                </Action>
+
+                <Text fontSize="$1" color="var(--muted-foreground)">
+                  Single sign-on via Hanzo IAM across dev.chat, hanzo.ai, and hanzo.university
+                </Text>
+
+                {/* Divider */}
+                <Box borderBottomWidth={1} borderColor="var(--border)" my="$1" />
+
+                {/* Secondary Option: Manual Token or Handle */}
+                {!showManualLogin ? (
+                  <Box
+                    render="button"
+                    onClick={() => setShowManualLogin(true)}
+                    py="$2"
+                    $platform-web={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--white-70)',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <KeyRound size={14} />
+                    Or authenticate with IAM Token / Hanzo ID
+                  </Box>
+                ) : (
+                  <YStack gap="$3" pt="$2" $platform-web={{ textAlign: 'left' }}>
+                    <Text fontSize="$1" fontWeight="600" color="var(--white)">
+                      Manual IAM Token or Student Handle:
+                    </Text>
+
+                    {authError && (
+                      <Box
+                        p="$2"
+                        rounded="var(--radius-sm)"
+                        bg="rgba(239, 68, 68, 0.15)"
+                        borderWidth={1}
+                        borderColor="rgba(239, 68, 68, 0.4)"
+                      >
+                        <Text fontSize="$1" color="#f87171">
+                          {authError}
+                        </Text>
+                      </Box>
+                    )}
+
+                    <input
+                      type="text"
+                      placeholder="Paste Hanzo IAM JWT token (or student handle)"
+                      value={manualTokenInput}
+                      onChange={(e) => setManualTokenInput(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        background: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        color: 'white',
+                        fontFamily: 'monospace',
+                        fontSize: '12px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="Student Full Name (optional, e.g. James Burns)"
+                      value={manualNameInput}
+                      onChange={(e) => setManualNameInput(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        background: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        color: 'white',
+                        fontSize: '13px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+
+                    <XStack gap="$2" justify="flex-end" mt="$1">
+                      <Box
+                        render="button"
+                        onClick={() => setShowManualLogin(false)}
+                        px="$3"
+                        py="$2"
+                        $platform-web={{
+                          background: 'transparent',
+                          border: '1px solid var(--border)',
+                          borderRadius: '6px',
+                          color: 'var(--muted-foreground)',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                        }}
+                      >
+                        Cancel
+                      </Box>
+                      <Action
+                        render="button"
+                        onClick={handleManualTokenSubmit}
+                        px={16}
+                        py={8}
+                        $platform-web={{ fontSize: '13px', fontWeight: '600' }}
+                      >
+                        Verify & Enter Portal
+                      </Action>
+                    </XStack>
+                  </YStack>
+                )}
+              </YStack>
+            </Card>
+
+            {/* Not Enrolled Promo Link */}
+            <XStack items="center" gap="$2">
+              <Text fontSize="$1" color="var(--muted-foreground)">
+                Not enrolled in a course yet?
+              </Text>
+              <Link
+                href="/"
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--emerald-400)',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Browse Degree Tracks & Tuition Rebate →
+              </Link>
+            </XStack>
+
+            {/* Feature Grid */}
+            <Grid columns={{ min: 240, max: 3 }} gap={16} width="100%" $platform-web={{ maxWidth: '900px' }} mt="$4">
+              <Card
+                p="$4"
+                bg="var(--card)"
+                borderWidth={1}
+                borderColor="var(--border)"
+                rounded="var(--radius-md)"
+                textAlign="left"
+              >
+                <XStack items="center" gap="$2" mb="$2">
+                  <ShieldCheck size={18} color="var(--emerald-400)" />
+                  <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                    W3C On-Chain Diplomas
+                  </Text>
+                </XStack>
+                <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 1.5 }}>
+                  Sovereign cryptographic credentials issued directly to your Hanzo DID, registered on Lux.
+                </Text>
+              </Card>
+
+              <Card
+                p="$4"
+                bg="var(--card)"
+                borderWidth={1}
+                borderColor="var(--border)"
+                rounded="var(--radius-md)"
+                textAlign="left"
+              >
+                <XStack items="center" gap="$2" mb="$2">
+                  <Cpu size={18} color="var(--emerald-400)" />
+                  <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                    Hanzo Visor MicroVM
+                  </Text>
+                </XStack>
+                <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 1.5 }}>
+                  Pre-configured GPU workstation with PyTorch, CUDA, AST tree-sitter, and SWE-bench harness.
+                </Text>
+              </Card>
+
+              <Card
+                p="$4"
+                bg="var(--card)"
+                borderWidth={1}
+                borderColor="var(--border)"
+                rounded="var(--radius-md)"
+                textAlign="left"
+              >
+                <XStack items="center" gap="$2" mb="$2">
+                  <Coins size={18} color="var(--emerald-400)" />
+                  <Text fontSize="$2" fontWeight="700" color="var(--white)">
+                    100% Tuition Rebate
+                  </Text>
+                </XStack>
+                <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 1.5 }}>
+                  Every dollar in tuition is loaded as live LLM and compute credits into your Hanzo account.
+                </Text>
+              </Card>
+            </Grid>
+          </YStack>
+        </Band>
+      </Box>
+    )
+  }
+
   return (
     <Box minH="100vh" bg="$background" $platform-web={{ color: 'var(--foreground)' }}>
       {/* ── Top Enrolled Student Navigation Bar ── */}
@@ -460,14 +891,20 @@ export default function StudentPortalPage() {
               borderWidth={1}
               borderColor="var(--border)"
             >
-              <ShieldCheck size={14} color="var(--white)" />
-              <Text fontSize="$1" color="var(--muted-foreground)">
-                Student DID:
+              <User size={14} color="var(--emerald-400)" />
+              <Text fontSize="$1" fontWeight="600" color="var(--white)">
+                {studentName}
               </Text>
-              <Text fontSize="$1" fontWeight="600" color="var(--white)" fontFamily="$mono">
-                {studentHandle.startsWith('did:') ? studentHandle : `@${studentHandle}`}
+              <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
+                ({studentHandle.startsWith('did:') ? studentHandle : `@${studentHandle}`})
               </Text>
             </XStack>
+
+            {session?.backendPlan && (
+              <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                {session.backendPlan}
+              </Chip>
+            )}
 
             <Action
               render="button"
@@ -483,52 +920,97 @@ export default function StudentPortalPage() {
                 </Text>
               </XStack>
             </Action>
+
+            <Box
+              render="button"
+              onClick={handleSignOut}
+              px="$3"
+              py="$1"
+              rounded="var(--radius-md)"
+              borderWidth={1}
+              borderColor="var(--border)"
+              bg="transparent"
+              $platform-web={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: 'var(--muted-foreground)',
+                transition: 'color 0.2s, border-color 0.2s',
+              }}
+            >
+              <LogOut size={13} />
+              <Text fontSize="$1" color="inherit">
+                Sign Out
+              </Text>
+            </Box>
           </XStack>
         </XStack>
       </Box>
 
       {/* ── Active Course Selector Strip ── */}
       <Box borderBottomWidth={1} borderColor="var(--border)" bg="var(--card)" px="$6" py="$2">
-        <XStack items="center" gap="$2" overflow="scroll" flexWrap="nowrap">
-          <Text fontSize="$1" color="var(--muted-foreground)" pr="$2" fontFamily="$mono">
-            YOUR ENROLLED TRACKS:
-          </Text>
-          {UNIVERSITY_COURSES.map((c) => {
-            const isCompleted = capstonePassed[c.slug]
-            return (
-              <Box
-                key={c.slug}
-                render="button"
-                onClick={() => setSelectedCourseSlug(c.slug)}
-                px="$3"
-                py="$1"
-                rounded="var(--radius-md)"
-                bg={selectedCourseSlug === c.slug ? 'var(--white)' : 'transparent'}
-                borderWidth={1}
-                borderColor={selectedCourseSlug === c.slug ? 'var(--white)' : 'transparent'}
-                $platform-web={{
-                  cursor: 'pointer',
-                  border: 'none',
-                  outline: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <Text
-                  fontSize="$1"
-                  fontWeight="600"
-                  fontFamily="$mono"
-                  color={selectedCourseSlug === c.slug ? 'var(--pure-black)' : 'var(--muted-foreground)'}
+        <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
+          <XStack items="center" gap="$2" overflow="scroll" flexWrap="nowrap">
+            <Text fontSize="$1" color="var(--muted-foreground)" pr="$2" fontFamily="$mono">
+              YOUR ENROLLED TRACKS:
+            </Text>
+            {UNIVERSITY_COURSES.map((c) => {
+              const isCompleted = capstonePassed[c.slug]
+              const isEnrolledInCourse = session?.isFullAccess || session?.enrolledClasses.includes(c.slug)
+              return (
+                <Box
+                  key={c.slug}
+                  render="button"
+                  onClick={() => setSelectedCourseSlug(c.slug)}
+                  px="$3"
+                  py="$1"
+                  rounded="var(--radius-md)"
+                  bg={selectedCourseSlug === c.slug ? 'var(--white)' : 'transparent'}
+                  borderWidth={1}
+                  borderColor={selectedCourseSlug === c.slug ? 'var(--white)' : 'transparent'}
+                  $platform-web={{
+                    cursor: 'pointer',
+                    border: 'none',
+                    outline: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
                 >
-                  {c.code} · {c.credential}
-                </Text>
-                {isCompleted && (
-                  <Check size={12} color={selectedCourseSlug === c.slug ? 'var(--pure-black)' : 'var(--emerald-400)'} />
-                )}
-              </Box>
-            )
-          })}
+                  <Text
+                    fontSize="$1"
+                    fontWeight="600"
+                    fontFamily="$mono"
+                    color={selectedCourseSlug === c.slug ? 'var(--pure-black)' : 'var(--muted-foreground)'}
+                  >
+                    {c.code} · {c.credential}
+                  </Text>
+                  {isCompleted ? (
+                    <Check size={12} color={selectedCourseSlug === c.slug ? 'var(--pure-black)' : 'var(--emerald-400)'} />
+                  ) : isEnrolledInCourse ? (
+                    <Box
+                      width={6}
+                      height={6}
+                      rounded="var(--radius-full)"
+                      bg={selectedCourseSlug === c.slug ? 'var(--pure-black)' : 'var(--emerald-400)'}
+                    />
+                  ) : null}
+                </Box>
+              )
+            })}
+          </XStack>
+
+          {session && (
+            <XStack items="center" gap="$2">
+              <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
+                BACKEND CLASS:
+              </Text>
+              <Text fontSize="$1" fontWeight="700" color="var(--emerald-400)" fontFamily="$mono">
+                {activeCourse.code} ({session.backendPlan || 'Enrolled'})
+              </Text>
+            </XStack>
+          )}
         </XStack>
       </Box>
 
@@ -573,7 +1055,7 @@ export default function StudentPortalPage() {
                 </Box>
                 <YStack gap={2}>
                   <Text fontSize="$3" fontWeight="700" color="var(--white)">
-                    🎉 Welcome to Hanzo University, @{studentHandle}!
+                    🎉 Welcome to Hanzo University, {studentName}!
                   </Text>
                   <Text fontSize="$1" color="var(--white-70)">
                     Tuition payment cleared. Your Hanzo ID (`did:hanzo:student:{studentHandle}`) is verified, ${activeCourse.rebateCredits}.00 USD Day 1 compute tokens are loaded, and your Hanzo Visor sandbox container is provisioned.
@@ -618,11 +1100,11 @@ export default function StudentPortalPage() {
                     {isDegreeAwarded ? 'Graduated & Certified' : 'Enrolled & Active'}: {activeCourse.code} — {activeCourse.title}
                   </Text>
                   <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                    {isDegreeAwarded ? 'W3C DEGREE ISSUED' : 'DAY 1 DEPOSIT ACTIVE'}
+                    {isDegreeAwarded ? 'W3C DEGREE ISSUED' : (session?.backendPlan || 'ACTIVE CLASS')}
                   </Chip>
                 </XStack>
                 <Text fontSize="$1" color="var(--muted-foreground)">
-                  Coursework: {currentCompleted.length} of {totalWeeks} modules passed ({progressPercent}% completed).
+                  Student: {studentName} (@{studentHandle}) · Coursework: {currentCompleted.length} of {totalWeeks} modules passed ({progressPercent}% completed).
                   {isDegreeAwarded
                     ? ' Official verifiable credential signed by Hanzo Research Board.'
                     : ' Complete all assignments to defend your capstone.'}
@@ -750,7 +1232,7 @@ export default function StudentPortalPage() {
                         fontFamily="$mono"
                         fontSize="$1"
                         color={
-                          line.startsWith(workspaceData.terminalPrompt.slice(0, 5))
+                          line.startsWith(userTerminalPrompt.slice(0, 5)) || line.includes('@hanzo-sandbox:')
                             ? 'var(--emerald-400)'
                             : line.includes('PASSED') || line.includes('[PASS]') || line.includes('[CONGRATULATIONS]')
                             ? 'var(--emerald-300)'
