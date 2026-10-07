@@ -80,6 +80,76 @@ export function formatHumanName(raw: string): string {
     .join(' ')
 }
 
+/**
+ * Retrieve the list of courses explicitly enrolled / paid for by the student.
+ * Stored in localStorage under `hanzo_portal_enrolled_courses`.
+ */
+export function getStoredEnrolledCourses(): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem('hanzo_portal_enrolled_courses')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (slug): slug is string =>
+            typeof slug === 'string' && UNIVERSITY_COURSES.some((c) => c.slug === slug)
+        )
+      }
+    }
+    // Backward compatibility for existing checkout sessions where single course was set
+    const handle = localStorage.getItem('hanzo_portal_student_handle')
+    const legacy = localStorage.getItem('hanzo_portal_selected_course')
+    if (handle && legacy && UNIVERSITY_COURSES.some((c) => c.slug === legacy)) {
+      return [legacy]
+    }
+  } catch (_) {}
+  return []
+}
+
+/**
+ * Record a newly paid / enrolled course in persistent student storage.
+ */
+export function addEnrolledCourse(slug: string): string[] {
+  if (typeof window === 'undefined') return [slug]
+  try {
+    const current = getStoredEnrolledCourses()
+    if (UNIVERSITY_COURSES.some((c) => c.slug === slug)) {
+      const updated = current.includes(slug) ? current : [...current, slug]
+      localStorage.setItem('hanzo_portal_enrolled_courses', JSON.stringify(updated))
+      localStorage.setItem('hanzo_portal_selected_course', slug)
+      return updated
+    }
+    return current
+  } catch (_) {
+    return [slug]
+  }
+}
+
+/**
+ * Remove an enrolled course from persistent student storage.
+ */
+export function removeEnrolledCourse(slug: string): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const current = getStoredEnrolledCourses()
+    const updated = current.filter((s) => s !== slug)
+    localStorage.setItem('hanzo_portal_enrolled_courses', JSON.stringify(updated))
+    return updated
+  } catch (_) {
+    return []
+  }
+}
+
+/**
+ * Check if the student session has active paid enrollment for a specific course slug.
+ */
+export function isUserEnrolledInCourse(session: StudentSession | null | undefined, slug: string): boolean {
+  if (!session || !session.isAuthenticated) return false
+  if (session.isFullAccess) return true
+  return Array.isArray(session.enrolledClasses) && session.enrolledClasses.includes(slug)
+}
+
 /** Build the official Hanzo IAM login redirect URL */
 export function getHanzoLoginUrl(returnPath: string = '/portal'): string {
   if (typeof window === 'undefined') {
@@ -162,27 +232,47 @@ export function resolveStudentSession(): StudentSession | null {
           .toLowerCase()
           .replace(/[^a-z0-9_-]/g, '')
       const did = claims.did || (claims.sub ? `did:lux:${claims.sub}` : `did:hanzo:student:${handle}`)
-      const plan = claims.billing_plan || claims.plan || claims.tier || ''
-      const isFull = ['max-20x', 'max-5x', 'pro'].includes(plan.toLowerCase())
+      const plan = (claims.billing_plan || claims.plan || claims.tier || '').toLowerCase()
+      const isFull = ['max-20x', 'max-5x', 'pro'].includes(plan)
 
       // Resolve enrolled classes from claims or storage
       const enrolled: string[] = []
       if (isFull) {
         enrolled.push(...UNIVERSITY_COURSES.map((c) => c.slug))
-      } else if (plan && PLAN_TO_COURSE_SLUG[plan]) {
-        enrolled.push(PLAN_TO_COURSE_SLUG[plan])
-      }
-
-      // Merge previously enrolled local courses
-      try {
-        const savedCourse = localStorage.getItem('hanzo_portal_selected_course')
-        if (savedCourse && !enrolled.includes(savedCourse) && UNIVERSITY_COURSES.some((c) => c.slug === savedCourse)) {
-          enrolled.push(savedCourse)
+      } else {
+        // 1. Check explicit courses in JWT claims
+        if (claims.courses && Array.isArray(claims.courses)) {
+          for (const c of claims.courses) {
+            const slug = PLAN_TO_COURSE_SLUG[c] || c
+            if (UNIVERSITY_COURSES.some((uc) => uc.slug === slug) && !enrolled.includes(slug)) {
+              enrolled.push(slug)
+            }
+          }
         }
-      } catch (_) {}
+        // 2. Check explicit entitlements in JWT claims
+        if (claims.entitlements && Array.isArray(claims.entitlements)) {
+          for (const ent of claims.entitlements) {
+            const slug = PLAN_TO_COURSE_SLUG[ent] || ent
+            if (UNIVERSITY_COURSES.some((uc) => uc.slug === slug) && !enrolled.includes(slug)) {
+              enrolled.push(slug)
+            }
+          }
+        }
+        // 3. Check single plan mapping
+        if (plan && PLAN_TO_COURSE_SLUG[plan]) {
+          const slug = PLAN_TO_COURSE_SLUG[plan]
+          if (UNIVERSITY_COURSES.some((uc) => uc.slug === slug) && !enrolled.includes(slug)) {
+            enrolled.push(slug)
+          }
+        }
 
-      if (enrolled.length === 0) {
-        enrolled.push('agentic-coding')
+        // 4. Merge locally purchased courses
+        const stored = getStoredEnrolledCourses()
+        for (const s of stored) {
+          if (!enrolled.includes(s)) {
+            enrolled.push(s)
+          }
+        }
       }
 
       return {
@@ -194,7 +284,7 @@ export function resolveStudentSession(): StudentSession | null {
         email,
         did,
         enrolledClasses: enrolled,
-        backendPlan: plan || (isFull ? 'Max Membership' : 'Student License'),
+        backendPlan: plan || (isFull ? 'Max Membership' : enrolled.length > 0 ? 'Course License' : 'Registered Student'),
         isFullAccess: isFull,
         source: 'iam_token',
       }
@@ -206,21 +296,17 @@ export function resolveStudentSession(): StudentSession | null {
     const studentHandle = localStorage.getItem('hanzo_portal_student_handle')
     const studentName = localStorage.getItem('hanzo_portal_student_name')
     const studentEmail = localStorage.getItem('hanzo_portal_student_email') || ''
-    const enrolledCourse = localStorage.getItem('hanzo_portal_selected_course')
+    const stored = getStoredEnrolledCourses()
 
     if (studentHandle && studentName) {
-      const enrolled = enrolledCourse && UNIVERSITY_COURSES.some((c) => c.slug === enrolledCourse)
-        ? [enrolledCourse]
-        : ['agentic-coding']
-
       return {
         isAuthenticated: true,
         name: formatHumanName(studentName),
         handle: studentHandle.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
         email: studentEmail,
         did: `did:hanzo:student:${studentHandle}`,
-        enrolledClasses: enrolled,
-        backendPlan: 'Class Enrollment',
+        enrolledClasses: stored,
+        backendPlan: stored.length > 0 ? 'Class Enrollment' : 'Registered Student',
         isFullAccess: false,
         source: 'checkout',
       }
@@ -242,6 +328,8 @@ export function signOutStudent(): void {
     localStorage.removeItem('hanzo_portal_student_handle')
     localStorage.removeItem('hanzo_portal_student_name')
     localStorage.removeItem('hanzo_portal_student_email')
+    localStorage.removeItem('hanzo_portal_enrolled_courses')
+    localStorage.removeItem('hanzo_portal_selected_course')
   } catch (_) {}
 }
 
@@ -283,7 +371,7 @@ export async function syncBackendClassEnrollment(session: StudentSession): Promi
         : session.enrolledClasses
 
       return {
-        enrolledSlugs: slugs.length > 0 ? slugs : ['agentic-coding'],
+        enrolledSlugs: slugs,
         planName: data.plan,
         status: 'ok',
       }

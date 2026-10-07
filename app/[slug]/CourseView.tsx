@@ -16,10 +16,22 @@ import {
 } from 'lucide-react'
 import { UNIVERSITY_COURSES, type UniversityCourse } from '../courses-data'
 import { courseCheckoutUrl } from '@/lib/pay'
+import { resolveStudentSession } from '@/lib/auth'
 
 export function CourseView({ course }: { course: UniversityCourse }) {
   const defaultEnrollUrl = courseCheckoutUrl(course.slug)
+  const [isEnrolled, setIsEnrolled] = React.useState(false)
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const sess = resolveStudentSession()
+      if (sess && (sess.isFullAccess || sess.enrolledClasses.includes(course.slug))) {
+        setIsEnrolled(true)
+      }
+    }
+  }, [course.slug])
+
+  const portalCourseUrl = `/portal?course=${course.slug}`
 
   return (
     <Box minH="100vh" bg="$background" $platform-web={{ color: 'var(--foreground)' }}>
@@ -30,11 +42,17 @@ export function CourseView({ course }: { course: UniversityCourse }) {
         title={`${course.title}`}
         lede={<>{course.summary}</>}
       >
-        <Action href={defaultEnrollUrl} fill>
-          Enroll in {course.code} — ${course.price} USD (+${course.rebateCredits} Credit Rebate)
-        </Action>
-        <Action href="/portal">
-          Preview Enrolled Student Portal →
+        {isEnrolled ? (
+          <Action href={portalCourseUrl} fill>
+            Already Enrolled · Open Student Portal →
+          </Action>
+        ) : (
+          <Action href={defaultEnrollUrl} fill>
+            Enroll in {course.code} — ${course.price} USD (+${course.rebateCredits} Credit Rebate)
+          </Action>
+        )}
+        <Action href={portalCourseUrl}>
+          {isEnrolled ? 'Open Workstation Pod →' : 'Preview Student Portal →'}
         </Action>
       </Hero>
 
@@ -164,7 +182,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   TUITION & COMPUTE REBATE
                 </Text>
                 <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  OPEN ENROLLMENT
+                  {isEnrolled ? 'ENROLLED STUDENT ✓' : 'OPEN ENROLLMENT'}
                 </Chip>
               </XStack>
 
@@ -202,24 +220,41 @@ export function CourseView({ course }: { course: UniversityCourse }) {
 
               {/* Primary Enrollment CTA Button */}
               <YStack gap="$2">
-                <Action
-                  href={defaultEnrollUrl}
-                  fill
-                  $platform-web={{
-                    textAlign: 'center',
-                    padding: '16px 24px',
-                    fontWeight: 700,
-                    fontSize: '15px',
-                  }}
-                >
-                  Enroll in {course.code} — ${course.price} USD →
-                </Action>
+                {isEnrolled ? (
+                  <Action
+                    href={portalCourseUrl}
+                    fill
+                    $platform-web={{
+                      textAlign: 'center',
+                      padding: '16px 24px',
+                      fontWeight: 700,
+                      fontSize: '15px',
+                    }}
+                  >
+                    Enrolled in {course.code} · Open Student Portal →
+                  </Action>
+                ) : (
+                  <Action
+                    href={defaultEnrollUrl}
+                    fill
+                    $platform-web={{
+                      textAlign: 'center',
+                      padding: '16px 24px',
+                      fontWeight: 700,
+                      fontSize: '15px',
+                    }}
+                  >
+                    Enroll in {course.code} — ${course.price} USD →
+                  </Action>
+                )}
                 <Text
                   fontSize="$1"
                   color="var(--muted-foreground)"
                   $platform-web={{ textAlign: 'center' }}
                 >
-                  Have a coupon code or fellowship grant? Enter it during checkout.
+                  {isEnrolled
+                    ? 'Your student DID is bound to this track with full microVM access.'
+                    : 'Have a coupon code or fellowship grant? Enter it during checkout.'}
                 </Text>
               </YStack>
 

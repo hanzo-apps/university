@@ -179,4 +179,116 @@ body {
   color: var(--white) !important;
 }
 
+/* Student Portal Responsive Workspace */
+.portal-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.portal-workspace-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .portal-workspace-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+}
+
+.portal-stepper-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .portal-stepper-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.portal-terminal-box {
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .portal-terminal-box {
+    max-height: 300px;
+    font-size: 11px;
+  }
+}
+
+.portal-terminal-box::-webkit-scrollbar {
+  width: 6px;
+}
+.portal-terminal-box::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+}
+.portal-terminal-box::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+.portal-terminal-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.portal-step-card {
+  transition: all 0.15s ease;
+  border: none !important;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.portal-media-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none !important;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.portal-media-row:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+@media (min-width: 640px) {
+  .portal-media-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+
 

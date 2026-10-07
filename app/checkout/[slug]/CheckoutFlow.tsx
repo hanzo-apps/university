@@ -35,6 +35,7 @@ import {
   validateCoupon,
   type CouponResult,
 } from '../../courses-data'
+import { addEnrolledCourse } from '@/lib/auth'
 
 function SquareLogo({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
@@ -243,7 +244,10 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
     try {
       localStorage.setItem('hanzo_portal_student_handle', finalHandle)
       localStorage.setItem('hanzo_portal_student_name', finalLegalName)
-      localStorage.setItem('hanzo_portal_selected_course', course.slug)
+      if (studentEmail.trim()) {
+        localStorage.setItem('hanzo_portal_student_email', studentEmail.trim())
+      }
+      addEnrolledCourse(course.slug)
     } catch (_) {}
 
     setAccountError(null)
