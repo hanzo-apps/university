@@ -843,6 +843,7 @@ export function Header() {
             style={{
               borderRadius: '18px',
               display: 'flex',
+              flexDirection: 'row',
               alignItems: 'center',
               gap: '14px',
               marginTop: '4px',

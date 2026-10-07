@@ -337,11 +337,11 @@ export function CourseView({ course }: { course: UniversityCourse }) {
             <Card key={week.week} p={24} borderWidth={1} borderColor="var(--border)">
               <YStack gap="$4">
                 <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
-                  <XStack items="center" gap="$3">
+                  <XStack items="center" gap="$3" flex={1} minW={0}>
                     <Chip px={10} py={3} fontSize="$1" fontFamily="$mono">
                       {week.code}
                     </Chip>
-                    <Text fontSize="$4" fontWeight="700" color="var(--white)">
+                    <Text fontSize="$4" fontWeight="700" color="var(--white)" flex={1} minW={0}>
                       {week.title}
                     </Text>
                   </XStack>

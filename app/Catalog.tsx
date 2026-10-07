@@ -323,9 +323,9 @@ export default function Catalog() {
           gap={24}
         >
           <XStack items="center" justify="space-between" flexWrap="wrap" gap={16}>
-            <XStack items="center" gap={14}>
-              <Coins size={32} color="var(--white)" />
-              <YStack gap={4}>
+            <XStack items="center" gap={14} flex={1} minW={0}>
+              <Coins size={32} color="var(--white)" style={{ flexShrink: 0 }} />
+              <YStack gap={4} flex={1} minW={0}>
                 <Text fontSize={22} fontWeight="700" color="var(--white)">
                   Zero Lab Tax: 25% Usage Credit Rebate (Rounded Up)
                 </Text>

@@ -33,6 +33,7 @@ import {
 import {
   type UniversityCourse,
   validateCoupon,
+  KNOWN_COUPONS,
   type CouponResult,
 } from '../../courses-data'
 import { addEnrolledCourse } from '@/lib/auth'
@@ -338,7 +339,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
           </XStack>
 
           {/* Stepper Pill */}
-          <XStack items="center" gap="$2">
+          <XStack items="center" gap="$2" flexWrap="wrap" maxW="100%">
             <XStack
               items="center"
               gap="$2"
@@ -452,9 +453,9 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
                     <XStack items="flex-start" gap={12}>
                       <Coins size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
-                      <YStack gap={2}>
+                      <YStack gap={2} flex={1} minW={0}>
                         <Text fontSize="$2" fontWeight="600" color="var(--white)">
-                          + $50 usage credit for free
+                          + ${rebateCredits} usage credit for free
                         </Text>
                         <Text fontSize="$1" color="var(--muted-foreground)">
                           Credited to your Hanzo Cloud wallet on Day 1 for model training &amp; API calls.
@@ -464,7 +465,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
                     <XStack items="flex-start" gap={12}>
                       <Cpu size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
-                      <YStack gap={2}>
+                      <YStack gap={2} flex={1} minW={0}>
                         <Text fontSize="$2" fontWeight="600" color="var(--white)">
                           Dedicated Hanzo Visor MicroVM Sandbox
                         </Text>
@@ -476,7 +477,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
 
                     <XStack items="flex-start" gap={12}>
                       <GraduationCap size={16} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
-                      <YStack gap={2}>
+                      <YStack gap={2} flex={1} minW={0}>
                         <Text fontSize="$2" fontWeight="600" color="var(--white)">
                           W3C Verifiable Credential on Lux Chain
                         </Text>
@@ -547,11 +548,11 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         borderWidth={1}
                         borderColor="var(--emerald-800)"
                       >
-                        <XStack items="center" gap="$2">
+                        <XStack items="center" gap="$2" flex={1} minW={0}>
                           <CheckCircle2 size={16} color="var(--emerald-400)" />
-                          <YStack>
+                          <YStack flex={1} minW={0}>
                             <Text fontSize="$2" fontWeight="600" color="var(--emerald-300)" fontFamily="$mono">
-                              {appliedCoupon.code} ({appliedCoupon.message})
+                              {appliedCoupon.code} applied{KNOWN_COUPONS[appliedCoupon.code] ? ` · ${KNOWN_COUPONS[appliedCoupon.code].label}` : ''}
                             </Text>
                             <Text fontSize="$1" color="var(--muted-foreground)">
                               Discount: -${appliedCoupon.discountAmount}.00 USD
@@ -561,6 +562,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                         <Action
                           render="button"
                           onClick={handleRemoveCoupon}
+                          ml="$3"
                           px={10}
                           py={4}
                           $platform-web={{ fontSize: '12px' }}
@@ -654,7 +656,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                     <Box height={1} bg="var(--border)" my="$1" />
 
                     <XStack justify="space-between" items="baseline">
-                      <YStack>
+                      <YStack flex={1} minW={0}>
                         <Text fontSize="$3" fontWeight="700" color="var(--white)">
                           Total Due Today
                         </Text>
@@ -662,7 +664,7 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                           One-time tuition fee. Never a recurring SaaS subscription.
                         </Text>
                       </YStack>
-                      <Text fontSize="$6" fontWeight="700" color="var(--white)" fontFamily="$mono">
+                      <Text fontSize="$6" fontWeight="700" color="var(--white)" fontFamily="$mono" ml="$3" $platform-web={{ whiteSpace: 'nowrap' }}>
                         ${finalPrice}.00 USD
                       </Text>
                     </XStack>

@@ -40,7 +40,7 @@ export function Footer() {
         </YStack>
 
         {/* Degree Programs */}
-        <YStack gap={12}>
+        <YStack gap={12} minW={0} maxW="100%">
           <Text fontSize="$2" fontWeight="700" color="var(--white)" fontFamily="$mono">
             ACADEMIC PROGRAMS
           </Text>
@@ -77,7 +77,7 @@ export function Footer() {
         </YStack>
 
         {/* Student Resources */}
-        <YStack gap={12}>
+        <YStack gap={12} minW={0} maxW="100%">
           <Text fontSize="$2" fontWeight="700" color="var(--white)" fontFamily="$mono">
             STUDENT SERVICES
           </Text>
