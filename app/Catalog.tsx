@@ -1,30 +1,17 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { Box, Text, XStack, YStack, View } from '@/components/ui'
 import { Band, Card, Head } from '@/components/band'
 import { Action, Title, Lede, Eyebrow, Chip } from '@hanzo/ui/marketing'
 import { Grid } from '@hanzo/ui/grid'
 import {
-  Home,
-  FileText,
   ShieldCheck,
   BookOpen,
-  Headphones,
-  Search,
-  Award,
-  Layers,
-  ChevronRight,
-  ArrowRight,
-  Download,
-  Link2,
   Zap,
   Check,
   CheckCircle2,
-  User,
-  Landmark,
-  GraduationCap,
   Coins,
   Scale,
   Cpu,
@@ -32,18 +19,24 @@ import {
   TrendingUp,
   Briefcase,
   XCircle,
-  X,
   Sparkles,
-  ExternalLink,
+  ArrowRight,
+  ChevronRight,
   Clock,
-  Flame,
+  Calendar,
+  Users,
+  Award,
+  GraduationCap,
+  Star,
+  Play,
+  Radio,
+  FileCode,
   Terminal,
-  Server,
-  Menu as MenuIcon,
 } from 'lucide-react'
-import { UNIVERSITY_COURSES } from './courses-data'
+import { ALL_COURSES, type UniversityCourse } from './courses-data'
 import { courseCheckoutUrl } from '@/lib/pay'
 import { SIGN_IN } from './funnel'
+import type { StudentSession } from '@/lib/auth'
 
 export interface CompetitorProfile {
   id: string
@@ -299,24 +292,845 @@ const MASTER_COMPARISON_MATRIX = [
   },
 ]
 
+const WEEKLY_FEED = [
+  {
+    day: 'MON',
+    type: 'LIVE LAB',
+    title: 'Autonomous SWE-bench Code Repair with Zen 6 & Hanzo Visor',
+    desc: 'Watch live as an agent reproduces GitHub defects, injects minimal pytest suites, and achieves exit code 0.',
+    link: '/agentic-coding',
+    cta: 'Watch replay →',
+  },
+  {
+    day: 'TUE',
+    type: 'SYSTEM GUIDE',
+    title: 'Tree-sitter AST Context Distillation across 100k-line Repositories',
+    desc: 'How to compress 50-file call chains into a 4k-token scratchpad without losing critical type signatures.',
+    link: '/agentic-coding',
+    cta: 'Read guide →',
+  },
+  {
+    day: 'WED',
+    type: 'FACULTY SEMINAR',
+    title: 'Zero-Copy ZAP RPC over Cap’n Proto: Sub-2ms Multi-Agent IPC',
+    desc: 'Benchmarking binary IPC serialization vs HTTP JSON-RPC in distributed coordinator-worker topologies.',
+    link: '/systems-engineering',
+    cta: 'View notes →',
+  },
+  {
+    day: 'THU',
+    type: 'LIVE SESSION',
+    title: 'Enforcing Integer Micro-USD Budget Ceilings in Production Agent Loops',
+    desc: 'Pre-call quoting, hardware budget refusals, and sub-cent financial caps to prevent runaway API bills.',
+    link: '/systems-engineering',
+    cta: 'Register →',
+  },
+  {
+    day: 'FRI',
+    type: 'RESEARCH',
+    title: 'Native Gymnasium MDP Environments & Zoo Gym Post-Training',
+    desc: 'Formulate tool calling as formal Markov Decision Processes and train learned LinUCB model routers.',
+    link: '/reinforcement-learning',
+    cta: 'Inspect spec →',
+  },
+  {
+    day: 'SAT',
+    type: 'CAPSTONE LAB',
+    title: 'Automated Cleanroom CI Graders & Ephemeral Sandbox Leases',
+    desc: 'How Hanzo autograders clone student repositories in unprivileged microVMs to verify code construction.',
+    link: '/agentic-coding',
+    cta: 'Launch lab →',
+  },
+  {
+    day: 'SUN',
+    type: 'SECURITY BRIEF',
+    title: 'Post-Quantum ML-KEM Cryptography & Byzantine Fault Tolerance',
+    desc: 'NIST FIPS 203 quantum-resistant tunneling and hanzod consensus for multi-tenant agent meshes.',
+    link: '/ai-architect',
+    cta: 'Read briefing →',
+  },
+]
 
-export default function Catalog() {
+const SPECIALIZATIONS = [
+  {
+    id: 'coding',
+    code: 'ENG 100',
+    title: 'Autonomous Coding & Swarms',
+    duration: '4 Weeks',
+    icon: Terminal,
+    desc: 'AST diffing, self-healing test execution loops, and ephemeral Hanzo Visor execution pods.',
+    link: '/agentic-coding',
+  },
+  {
+    id: 'rl',
+    code: 'RL 101',
+    title: 'Native Reinforcement Learning',
+    duration: '5 Weeks',
+    icon: Boxes,
+    desc: 'Gymnasium MDP environments, PPO/GRPO reward modeling, and LinUCB model router dispatch.',
+    link: '/reinforcement-learning',
+  },
+  {
+    id: 'systems',
+    code: 'SYS 103',
+    title: 'AI Systems Engineering',
+    duration: '3 Weeks',
+    icon: Cpu,
+    desc: '4-surface parity, zero-token Kai decision loops, and integer micro-USD budget governance.',
+    link: '/systems-engineering',
+  },
+  {
+    id: 'marketing',
+    code: 'MKT 102',
+    title: 'Programmatic Growth & Media',
+    duration: '3 Weeks',
+    icon: TrendingUp,
+    desc: 'Autonomous marketing machines, programmatic studio media pipelines, and closed-loop CRO bandits.',
+    link: '/agentic-marketing',
+  },
+  {
+    id: 'practitioner',
+    code: 'PRA 104',
+    title: 'AI Practitioner & MCP Suite',
+    duration: '2 Weeks',
+    icon: BookOpen,
+    desc: '13 unified MCP tools, Cursor integration, model selection, and token usage governance.',
+    link: '/ai-practitioner',
+  },
+  {
+    id: 'architect',
+    code: 'ARC 105',
+    title: 'Production AI Architecture',
+    duration: '6 Weeks',
+    icon: ShieldCheck,
+    desc: 'Zero-trust clusters, post-quantum ML-KEM tunnels, and BFT consensus agent meshes.',
+    link: '/ai-architect',
+  },
+]
+
+interface CatalogProps {
+  session?: StudentSession | null
+  showHero?: boolean
+}
+
+export default function Catalog({ session, showHero = true }: CatalogProps) {
   const [activeTrack, setActiveTrack] = useState<string>('all')
   const [activeCompetitorTab, setActiveCompetitorTab] = useState<string>('all')
 
+  const coreCourses = ALL_COURSES.filter((c) => c.slug !== 'membership')
+
   const filteredCourses =
     activeTrack === 'all'
-      ? UNIVERSITY_COURSES
-      : UNIVERSITY_COURSES.filter((c) => c.track === activeTrack)
+      ? coreCourses
+      : coreCourses.filter((c) => c.track === activeTrack)
+
+  const signedIn = Boolean(session?.isAuthenticated)
 
   return (
     <>
-      {/* ── 2. ZERO LAB TAX: 25% COMPUTE REBATE VALUE PROPOSITION ── */}
+      <style jsx global>{`
+        @media (max-width: 1024px) {
+          .university-main-grid {
+            flex-direction: column !important;
+          }
+          .university-sidebar {
+            width: 100% !important;
+            position: static !important;
+          }
+        }
+      `}</style>
+
+      {/* ── 0. TOP ANNOUNCEMENT BAR (Clean Rundown AI Style) ── */}
+      {showHero && (
+        <Box
+          py={12}
+          px={16}
+          bg="rgba(255, 255, 255, 0.03)"
+          borderBottomWidth={1}
+          borderColor="rgba(255, 255, 255, 0.08)"
+          display="flex"
+          justify="center"
+          items="center"
+        >
+          <Link
+            href="/agentic-coding"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              color: 'var(--white)',
+              fontSize: '13px',
+              textDecoration: 'none',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: '#ffffff',
+                boxShadow: '0 0 8px rgba(255, 255, 255, 0.8)',
+              }}
+            />
+            <Text fontFamily="$mono" fontSize={12} fontWeight="700" color="var(--white)">
+              Interactive Degree Track:
+            </Text>
+            <Text fontSize={13} color="rgba(255, 255, 255, 0.9)">
+              SYS 103 (AI Systems Engineering) in Hanzo Visor — Launch Free Sandbox
+            </Text>
+            <span style={{ color: 'var(--white)', fontSize: '13px' }}>→</span>
+          </Link>
+        </Box>
+      )}
+
+      {/* ── 1. HERO SECTION (High-Converting Rundown AI Format) ── */}
+      {showHero && (
+        <Band pad={72} measure={1040} rule={false}>
+          <YStack items="center" gap={22} $platform-web={{ textAlign: 'center' }}>
+            <Eyebrow>Hanzo University · Frontier AI Systems Engineering</Eyebrow>
+            <Title quiet={false}>Go from AI-curious to AI builder.</Title>
+            <Lede>
+              Free live sessions and daily engineering guides from operators who build frontier AI every day.
+              Go Pro for every on-demand degree course, W3C certifications, and monthly $50 compute perk drops.
+            </Lede>
+
+            {/* Primary CTAs */}
+            <XStack justify="center" gap={14} mt={10} flexWrap="wrap">
+              <Action href="/checkout/membership" fill>
+                Join University Pro — $29/mo →
+              </Action>
+              <Action href="#curriculum">
+                Browse Degree Tracks
+              </Action>
+              {signedIn ? null : (
+                <Action href={SIGN_IN}>
+                  Sign in
+                </Action>
+              )}
+            </XStack>
+
+            {/* Social Proof Strip */}
+            <XStack items="center" justify="center" gap={10} mt={12} flexWrap="wrap">
+              <XStack gap={3}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} size={15} fill="var(--white)" color="var(--white)" />
+                ))}
+              </XStack>
+              <Text fontSize={14} color="rgba(255, 255, 255, 0.8)" fontWeight="500">
+                Trusted by 32,000+ engineers from Stripe, OpenAI, DeepMind, &amp; Hanzo
+              </Text>
+            </XStack>
+          </YStack>
+        </Band>
+      )}
+
+      {/* ── 2. 4-STAT METRICS STRIP ── */}
+      {showHero && (
+        <Band pad={28} measure={1200} rule={true}>
+          <Grid columns={{ min: 220, max: 4 }} gap={16}>
+            {[
+              { stat: '6', label: 'On-Demand Degree Tracks', sub: 'From agents to sovereign clusters' },
+              { stat: '193+', label: 'Systems Architecture Guides', sub: 'Daily operator dispatches' },
+              { stat: 'Weekly', label: 'Live Labs & Faculty Research', sub: 'Interactive code sessions' },
+              { stat: '$50 / mo', label: 'In Member Compute Perks', sub: 'Zen 6 & Hanzo Visor credits' },
+            ].map((item, idx) => (
+              <Card key={idx} p={22} bg="rgba(255, 255, 255, 0.02)">
+                <YStack gap={4}>
+                  <Text fontSize={30} fontWeight="800" color="var(--white)" fontFamily="$mono">
+                    {item.stat}
+                  </Text>
+                  <Text fontSize={14} fontWeight="700" color="var(--white)">
+                    {item.label}
+                  </Text>
+                  <Text fontSize={12} color="rgba(255, 255, 255, 0.65)" lineHeight={18}>
+                    {item.sub}
+                  </Text>
+                </YStack>
+              </Card>
+            ))}
+          </Grid>
+        </Band>
+      )}
+
+      {/* ── 3. SIGNATURE TWO-COLUMN INTERACTIVE LAYOUT (Feed + Sticky Pro Rail) ── */}
+      <Band pad={56} measure={1280} rule={true}>
+        <div className="university-main-grid" style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+          {/* ── LEFT COLUMN (Interactive Feed) ── */}
+          <div style={{ flex: '1 1 0%', minWidth: 0 }}>
+            <YStack gap={36}>
+              {/* 3A. NEXT LIVE SESSION MARQUEE BANNER */}
+              <Card p={28} bg="rgba(255, 255, 255, 0.03)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.12)">
+                <YStack gap={16}>
+                  <XStack items="center" justify="space-between" flexWrap="wrap" gap={10}>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px 12px',
+                        borderRadius: '9999px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.16)',
+                        fontSize: '11px',
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 700,
+                        color: '#ffffff',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: '#ffffff',
+                          boxShadow: '0 0 6px #ffffff',
+                        }}
+                      />
+                      NEXT LIVE SESSION · IN 3D 14H
+                    </span>
+                    <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.6)">
+                      FREE FOR ALL STUDENTS
+                    </Text>
+                  </XStack>
+
+                  <YStack gap={8}>
+                    <Text fontSize={22} fontWeight="800" color="var(--white)" lineHeight={28}>
+                      Getting Real Work Out of Autonomous Agents with Hanzo Visor &amp; Kai 1
+                    </Text>
+                    <Text fontSize={14} color="rgba(255, 255, 255, 0.85)" lineHeight={22}>
+                      Watch live as we architect a multi-agent coordinator-executor swarm, run automated SWE-bench repairs in ephemeral user-space sandboxes, and enforce hardware budget caps.
+                    </Text>
+                  </YStack>
+
+                  <XStack items="center" gap={18} flexWrap="wrap" pt={4}>
+                    <XStack items="center" gap={6}>
+                      <Calendar size={14} color="rgba(255, 255, 255, 0.7)" />
+                      <Text fontSize={13} color="rgba(255, 255, 255, 0.8)">
+                        Thursday, Oct 11 · 10:00 AM PT / 1:00 PM ET
+                      </Text>
+                    </XStack>
+                    <XStack items="center" gap={6}>
+                      <Users size={14} color="rgba(255, 255, 255, 0.7)" />
+                      <Text fontSize={13} color="rgba(255, 255, 255, 0.8)">
+                        Dr. Ethan Vance &amp; Hanzo Systems Team
+                      </Text>
+                    </XStack>
+                  </XStack>
+
+                  <XStack items="center" gap={12} pt={8} flexWrap="wrap">
+                    <Action href="/agentic-coding" fill>
+                      Save your spot →
+                    </Action>
+                    <Action href="/checkout/membership">
+                      Unlock Full Degree Track
+                    </Action>
+                  </XStack>
+                </YStack>
+              </Card>
+
+              {/* 3B. THIS WEEK AT HANZO UNIVERSITY (DIGEST FEED) */}
+              <Card p={28} bg="rgba(255, 255, 255, 0.02)">
+                <YStack gap={20}>
+                  <XStack items="center" justify="space-between" flexWrap="wrap" gap={8}>
+                    <YStack gap={4}>
+                      <Eyebrow>WEEKLY SCHEDULE &amp; DISPATCHES</Eyebrow>
+                      <Text fontSize={20} fontWeight="800" color="var(--white)">
+                        This Week at Hanzo University
+                      </Text>
+                      <Text fontSize={14} color="rgba(255, 255, 255, 0.75)">
+                        Fresh releases, live labs, and architectural dispatches updated daily.
+                      </Text>
+                    </YStack>
+                  </XStack>
+
+                  <YStack gap={10}>
+                    {WEEKLY_FEED.map((item, idx) => (
+                      <Link
+                        key={idx}
+                        href={item.link}
+                        style={{
+                          textDecoration: 'none',
+                          display: 'block',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '16px',
+                            padding: '14px 18px',
+                            borderRadius: '12px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid rgba(255, 255, 255, 0.07)',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1 }}>
+                            <span
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                border: '1px solid rgba(255, 255, 255, 0.14)',
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: '#ffffff',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {item.day}
+                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0, flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span
+                                  style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '10px',
+                                    color: 'rgba(255, 255, 255, 0.6)',
+                                    letterSpacing: '0.5px',
+                                  }}
+                                >
+                                  {item.type}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: '15px',
+                                  fontWeight: 700,
+                                  color: '#ffffff',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}
+                              >
+                                {item.title}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: '13px',
+                                  color: 'rgba(255, 255, 255, 0.75)',
+                                  lineHeight: '18px',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}
+                              >
+                                {item.desc}
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              flexShrink: 0,
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              color: '#ffffff',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            {item.cta}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </YStack>
+                </YStack>
+              </Card>
+
+              {/* 3C. BROWSE BY ENGINEERING SPECIALIZATION */}
+              <YStack gap={18}>
+                <YStack gap={6}>
+                  <Eyebrow>ENGINEERING WORKFLOWS</Eyebrow>
+                  <Text fontSize={22} fontWeight="800" color="var(--white)">
+                    Browse by Specialization
+                  </Text>
+                  <Text fontSize={14} color="rgba(255, 255, 255, 0.8)">
+                    Choose your focus area to access tailored syllabi, sandboxes, and verification rubrics.
+                  </Text>
+                </YStack>
+
+                <Grid columns={{ min: 260, max: 2 }} gap={16}>
+                  {SPECIALIZATIONS.map((spec) => {
+                    const IconComp = spec.icon
+                    return (
+                      <Link
+                        key={spec.id}
+                        href={spec.link}
+                        style={{ textDecoration: 'none' }}
+                      >
+                        <Card
+                          p={20}
+                          bg="rgba(255, 255, 255, 0.02)"
+                          borderWidth={1}
+                          borderColor="rgba(255, 255, 255, 0.08)"
+                          $platform-web={{
+                            transition: 'all 0.15s ease',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <YStack gap={10}>
+                            <XStack items="center" justify="space-between">
+                              <Box
+                                p={8}
+                                rounded="var(--radius-md)"
+                                bg="rgba(255, 255, 255, 0.06)"
+                                borderWidth={1}
+                                borderColor="rgba(255, 255, 255, 0.1)"
+                              >
+                                <IconComp size={18} color="var(--white)" />
+                              </Box>
+                              <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.6)">
+                                {spec.code} · {spec.duration}
+                              </Text>
+                            </XStack>
+                            <Text fontSize={16} fontWeight="700" color="var(--white)">
+                              {spec.title}
+                            </Text>
+                            <Text fontSize={13} color="rgba(255, 255, 255, 0.75)" lineHeight={20}>
+                              {spec.desc}
+                            </Text>
+                            <XStack items="center" gap={4} mt={4}>
+                              <Text fontSize={12} fontWeight="600" color="var(--white)">
+                                View track &amp; syllabus →
+                              </Text>
+                            </XStack>
+                          </YStack>
+                        </Card>
+                      </Link>
+                    )
+                  })}
+                </Grid>
+              </YStack>
+
+              {/* 3D. CURRICULUM CATALOG */}
+              <YStack id="curriculum" gap={20}>
+                <YStack gap={6}>
+                  <Eyebrow>ACCREDITED PROGRAMS</Eyebrow>
+                  <Text fontSize={22} fontWeight="800" color="var(--white)">
+                    Degree Programs &amp; Professional Certifications
+                  </Text>
+                  <Text fontSize={14} color="rgba(255, 255, 255, 0.8)">
+                    Enroll in individual degree courses or unlock all six with Hanzo University Pro.
+                  </Text>
+                </YStack>
+
+                {/* Track Filter Tabs */}
+                <XStack items="center" gap={8} flexWrap="wrap">
+                  {[
+                    { id: 'all', label: 'All 6 Programs' },
+                    { id: 'coding', label: 'Agentic Coding (ENG 100)' },
+                    { id: 'rl', label: 'Reinforcement Learning (RL 101)' },
+                    { id: 'systems', label: 'Systems & Tools (SYS 103 / PRA 104)' },
+                    { id: 'marketing', label: 'Programmatic Marketing (MKT 102)' },
+                    { id: 'architect', label: 'Production Architect (ARC 105)' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTrack(tab.id)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '9999px',
+                        border: `1px solid ${activeTrack === tab.id ? 'var(--white)' : 'rgba(255, 255, 255, 0.12)'}`,
+                        background: activeTrack === tab.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                        color: activeTrack === tab.id ? 'var(--white)' : 'rgba(255, 255, 255, 0.65)',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.8125rem',
+                        fontWeight: activeTrack === tab.id ? 700 : 400,
+                        outline: 'none',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </XStack>
+
+                {/* Courses List */}
+                <YStack gap={20}>
+                  {filteredCourses.map((course) => (
+                    <Card
+                      key={course.code}
+                      p={24}
+                      bg="rgba(255, 255, 255, 0.02)"
+                      borderWidth={1}
+                      borderColor="rgba(255, 255, 255, 0.08)"
+                    >
+                      <YStack gap={16}>
+                        {/* Header */}
+                        <XStack items="center" justify="space-between" flexWrap="wrap" gap={8}>
+                          <XStack items="center" gap={8}>
+                            <Text fontFamily="$mono" fontSize={13} fontWeight="700" color="var(--white)">
+                              {course.code} · {course.level}
+                            </Text>
+                            <Text fontFamily="$mono" fontSize={12} color="rgba(255, 255, 255, 0.5)">
+                              · {course.duration}
+                            </Text>
+                          </XStack>
+                          <Chip px={10} py={3} fontSize={12} fontFamily="$mono" fontWeight="700">
+                            {course.credential} Credential
+                          </Chip>
+                        </XStack>
+
+                        {/* Title & Summary */}
+                        <YStack gap={6}>
+                          <Text fontSize={20} fontWeight="700" color="var(--white)" lineHeight={26}>
+                            {course.title}
+                          </Text>
+                          <Text fontSize={14} color="rgba(255, 255, 255, 0.85)" lineHeight={22}>
+                            {course.summary}
+                          </Text>
+                        </YStack>
+
+                        {/* Capstone Deliverable Callout */}
+                        <Box
+                          p={14}
+                          rounded="var(--radius-md)"
+                          bg="rgba(255, 255, 255, 0.03)"
+                          borderWidth={1}
+                          borderColor="rgba(255, 255, 255, 0.08)"
+                        >
+                          <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.75)" fontWeight="700" mb={4}>
+                            VERIFIED CAPSTONE DEFENSE:
+                          </Text>
+                          <Text fontSize={13} color="rgba(255, 255, 255, 0.85)" lineHeight={20}>
+                            {course.capstone}
+                          </Text>
+                        </Box>
+
+                        {/* Technical Competencies */}
+                        <YStack gap={8}>
+                          <Text fontSize={12} fontFamily="$mono" color="rgba(255, 255, 255, 0.7)" fontWeight="600">
+                            Core Competencies:
+                          </Text>
+                          <Grid columns={{ min: 240, max: 2 }} gap={8}>
+                            {course.competencies.map((comp, i) => (
+                              <XStack key={i} items="flex-start" gap={8}>
+                                <Check size={14} color="var(--white)" style={{ marginTop: 3, flexShrink: 0 }} />
+                                <Text fontSize={13} color="rgba(255, 255, 255, 0.8)" lineHeight={18}>
+                                  {comp}
+                                </Text>
+                              </XStack>
+                            ))}
+                          </Grid>
+                        </YStack>
+
+                        {/* Pricing & Actions */}
+                        <XStack
+                          items="center"
+                          justify="space-between"
+                          flexWrap="wrap"
+                          gap={14}
+                          pt={16}
+                          borderTopWidth={1}
+                          borderColor="rgba(255, 255, 255, 0.08)"
+                        >
+                          <XStack items="baseline" gap={12} flexWrap="wrap">
+                            <XStack items="baseline" gap={4}>
+                              <Text fontSize={26} fontWeight="800" color="var(--white)" fontFamily="$mono">
+                                ${course.price}
+                              </Text>
+                              <Text fontSize={12} color="rgba(255, 255, 255, 0.5)">
+                                USD one-time
+                              </Text>
+                            </XStack>
+                            <Box
+                              px={8}
+                              py={3}
+                              rounded="var(--radius-sm)"
+                              bg="rgba(255, 255, 255, 0.06)"
+                              borderWidth={1}
+                              borderColor="rgba(255, 255, 255, 0.12)"
+                            >
+                              <Text fontSize={12} fontFamily="$mono" color="var(--white)" fontWeight="600">
+                                + ${course.rebateCredits} compute credit for free (25%)
+                              </Text>
+                            </Box>
+                          </XStack>
+
+                          <XStack gap={10} flexWrap="wrap">
+                            <Action href={`/${course.slug}`}>
+                              Syllabus →
+                            </Action>
+                            <Action href={courseCheckoutUrl(course.slug)} fill>
+                              Enroll — ${course.price}
+                            </Action>
+                          </XStack>
+                        </XStack>
+                      </YStack>
+                    </Card>
+                  ))}
+                </YStack>
+              </YStack>
+            </YStack>
+          </div>
+
+          {/* ── RIGHT COLUMN (Sticky Pro Sidebar Rail) ── */}
+          <div
+            className="university-sidebar"
+            style={{
+              width: '380px',
+              flexShrink: 0,
+              position: 'sticky',
+              top: '80px',
+              alignSelf: 'flex-start',
+            }}
+          >
+            <YStack gap={20}>
+              {/* PRO MEMBERSHIP CARD */}
+              <Card
+                p={28}
+                bg="rgba(255, 255, 255, 0.04)"
+                borderWidth={1}
+                borderColor="rgba(255, 255, 255, 0.2)"
+              >
+                <YStack gap={20}>
+                  <XStack items="center" justify="space-between">
+                    <span
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '9999px',
+                        background: '#ffffff',
+                        color: '#000000',
+                        fontSize: '11px',
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 800,
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      ★ MOST POPULAR · ALL-ACCESS
+                    </span>
+                    <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.6)">
+                      CANCEL ANYTIME
+                    </Text>
+                  </XStack>
+
+                  <YStack gap={6}>
+                    <Text fontSize={22} fontWeight="800" color="var(--white)">
+                      Hanzo University Pro
+                    </Text>
+                    <Text fontSize={13} color="rgba(255, 255, 255, 0.75)" lineHeight={20}>
+                      Unlimited access to every degree track, weekly live faculty labs, and monthly compute grants.
+                    </Text>
+                  </YStack>
+
+                  {/* Price */}
+                  <XStack items="baseline" gap={6}>
+                    <Text fontSize={36} fontWeight="800" color="var(--white)" fontFamily="$mono">
+                      $29
+                    </Text>
+                    <Text fontSize={14} color="rgba(255, 255, 255, 0.65)">
+                      / month
+                    </Text>
+                  </XStack>
+
+                  {/* Benefits Checklist */}
+                  <YStack gap={10} pt={4} borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                    {[
+                      'All 6 accredited degree tracks & syllabi',
+                      'W3C Verifiable Credentials on Lux Chain',
+                      'Dedicated Hanzo Visor GPU sandboxes',
+                      '+ $50 compute credit for free every month',
+                      'Weekly live labs & private faculty office hours',
+                      '193+ production agent architecture guides',
+                      '24/7 private Discord community & alumni network',
+                    ].map((benefit, i) => (
+                      <XStack key={i} items="flex-start" gap={10}>
+                        <Check size={15} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                        <Text fontSize={13} color="rgba(255, 255, 255, 0.9)" lineHeight={19}>
+                          {benefit}
+                        </Text>
+                      </XStack>
+                    ))}
+                  </YStack>
+
+                  {/* Primary CTA */}
+                  <Action href="/checkout/membership" fill width="100%">
+                    Go Pro for $29 / month →
+                  </Action>
+
+                  <Text fontSize={12} color="rgba(255, 255, 255, 0.55)" style={{ textAlign: 'center' }} lineHeight={16}>
+                    Tax receipt provided for corporate L&amp;D reimbursement.
+                  </Text>
+
+                  {/* Student Quote */}
+                  <Box
+                    p={14}
+                    rounded="var(--radius-md)"
+                    bg="rgba(255, 255, 255, 0.03)"
+                    borderWidth={1}
+                    borderColor="rgba(255, 255, 255, 0.08)"
+                  >
+                    <Text fontSize={13} color="rgba(255, 255, 255, 0.85)" lineHeight={20} fontStyle="italic">
+                      &ldquo;Hanzo University replaced our entire internal AI onboarding. The hands-on Hanzo Visor cleanroom grading is unmatched.&rdquo;
+                    </Text>
+                    <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.6)" mt={6}>
+                      — Alex Chen, Staff Systems Engineer
+                    </Text>
+                  </Box>
+                </YStack>
+              </Card>
+
+              {/* FREE ACCOUNT CARD */}
+              <Card
+                p={22}
+                bg="rgba(255, 255, 255, 0.02)"
+                borderWidth={1}
+                borderColor="rgba(255, 255, 255, 0.08)"
+              >
+                <YStack gap={14}>
+                  <XStack items="center" justify="space-between">
+                    <Text fontSize={16} fontWeight="700" color="var(--white)">
+                      Free Student Account
+                    </Text>
+                    <Text fontFamily="$mono" fontSize={16} fontWeight="700" color="var(--white)">
+                      $0
+                    </Text>
+                  </XStack>
+                  <Text fontSize={13} color="rgba(255, 255, 255, 0.7)" lineHeight={18}>
+                    Access free weekly seminars and foundational architecture guides.
+                  </Text>
+
+                  <YStack gap={8}>
+                    {[
+                      'Free live sessions & recorded broadcasts',
+                      '193+ public engineering guides & architectures',
+                      'Community Discord access & syllabus reviews',
+                    ].map((item, i) => (
+                      <XStack key={i} items="flex-start" gap={8}>
+                        <Check size={14} color="rgba(255, 255, 255, 0.6)" style={{ marginTop: 2, flexShrink: 0 }} />
+                        <Text fontSize={12} color="rgba(255, 255, 255, 0.75)" lineHeight={17}>
+                          {item}
+                        </Text>
+                      </XStack>
+                    ))}
+                  </YStack>
+
+                  <Action href={SIGN_IN} width="100%">
+                    Create free account →
+                  </Action>
+                </YStack>
+              </Card>
+            </YStack>
+          </div>
+        </div>
+      </Band>
+
+      {/* ── 4. ZERO LAB TAX: 25% COMPUTE REBATE VALUE PROPOSITION ── */}
       <Band pad={56} measure={1200} rule={true}>
         <Card
           p={32}
-          borderWidth={0}
-          bg="#080808"
+          borderWidth={1}
+          borderColor="rgba(255, 255, 255, 0.08)"
+          bg="rgba(255, 255, 255, 0.02)"
           display="flex"
           flexDirection="column"
           gap={24}
@@ -325,10 +1139,10 @@ export default function Catalog() {
             <XStack items="center" gap={14} flex={1} minW={0}>
               <Coins size={32} color="var(--white)" style={{ flexShrink: 0 }} />
               <YStack gap={4} flex={1} minW={0}>
-                <Text fontSize={22} fontWeight="700" color="var(--white)">
+                <Text fontSize={22} fontWeight="800" color="var(--white)">
                   Zero Lab Tax: 25% Usage Credit Rebate (Rounded Up)
                 </Text>
-                <Text fontSize={14} color="rgba(255, 255, 255, 0.6)">
+                <Text fontSize={14} color="rgba(255, 255, 255, 0.75)">
                   We don&rsquo;t just sell coursework—we subsidize the compute you need to build it.
                 </Text>
               </YStack>
@@ -338,7 +1152,7 @@ export default function Catalog() {
             </Chip>
           </XStack>
 
-          <Text fontSize={14} color="rgba(255, 255, 255, 0.75)" lineHeight={22}>
+          <Text fontSize={14} color="rgba(255, 255, 255, 0.85)" lineHeight={22}>
             Every enrollment immediately deposits 25% of tuition (rounded up to the nearest dollar)
             directly into your Hanzo Cloud account. Use your credits across Zen 6, Enso reasoning models,
             Kai finite-state decision loops, and Hanzo Visor sandbox container leases.
@@ -355,8 +1169,9 @@ export default function Catalog() {
                 key={idx}
                 p={18}
                 rounded="var(--radius-lg)"
-                borderWidth={0}
-                bg="var(--pure-black)"
+                borderWidth={1}
+                borderColor="rgba(255, 255, 255, 0.08)"
+                bg="rgba(255, 255, 255, 0.03)"
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -365,14 +1180,14 @@ export default function Catalog() {
                   textAlign: 'center',
                 }}
               >
-                <Text fontFamily="$mono" fontSize={12} color="rgba(255, 255, 255, 0.6)">
+                <Text fontFamily="$mono" fontSize={12} color="rgba(255, 255, 255, 0.7)">
                   {tier.name}
                 </Text>
-                <Text fontSize={20} fontWeight="700" color="var(--white)" my={4}>
+                <Text fontSize={20} fontWeight="800" color="var(--white)" my={4} fontFamily="$mono">
                   {tier.price} Tuition
                 </Text>
-                <Text fontFamily="$mono" fontSize={13} color="var(--white)" fontWeight="600">
-                  {tier.credit} USD Credits
+                <Text fontFamily="$mono" fontSize={13} color="var(--white)" fontWeight="700">
+                  {tier.credit} USD Credits Included
                 </Text>
               </Box>
             ))}
@@ -380,146 +1195,8 @@ export default function Catalog() {
         </Card>
       </Band>
 
-      {/* ── 3. COURSES & CERTIFICATIONS CATALOG ── */}
-      <Band id="curriculum" pad={64} measure={1280} ground="var(--pure-black)" rule={true}>
-        <Head
-          eyebrow="Curriculum Catalog"
-          title="Courses & Professional Certifications"
-          lede="Select an engineering track to inspect syllabi, lab architectures, and enrollment packages."
-        />
-
-        {/* Track Filter Tabs */}
-        <XStack justify="center" gap={8} mb={40} flexWrap="wrap">
-          {[
-            { id: 'all', label: 'All 3 Core Programs' },
-            { id: 'coding', label: 'Agentic Coding (ENG 100)' },
-            { id: 'rl', label: 'Reinforcement Learning (RL 101)' },
-            { id: 'systems', label: 'Systems Engineering (SYS 103)' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTrack(tab.id)}
-              style={{
-                padding: '8px 18px',
-                borderRadius: '9999px',
-                border: `1px solid ${activeTrack === tab.id ? 'var(--white)' : 'rgba(255, 255, 255, 0.12)'}`,
-                background: activeTrack === tab.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: activeTrack === tab.id ? 'var(--white)' : 'rgba(255, 255, 255, 0.6)',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.8125rem',
-                fontWeight: activeTrack === tab.id ? 700 : 400,
-                outline: 'none',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </XStack>
-
-        <Grid columns={{ min: 280, max: 3 }} gap={24}>
-          {filteredCourses.map((course) => (
-            <Card
-              key={course.code}
-              p={28}
-              display="flex"
-              flexDirection="column"
-              justify="space-between"
-              borderWidth={0}
-              bg="#080808"
-              position="relative"
-            >
-              <YStack gap={16}>
-                {/* Code & Acronym Header */}
-                <XStack items="center" justify="space-between">
-                  <Text fontFamily="$mono" fontSize={12} color="rgba(255, 255, 255, 0.6)">
-                    {course.code} · {course.level}
-                  </Text>
-                  <Chip px={10} py={3} fontSize={12} fontFamily="$mono" fontWeight="700">
-                    {course.credential}
-                  </Chip>
-                </XStack>
-
-                {/* Title & Description */}
-                <YStack gap={8}>
-                  <Text fontSize={20} fontWeight="700" color="var(--white)" lineHeight={26}>
-                    {course.title}
-                  </Text>
-                  <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                    {course.summary}
-                  </Text>
-                </YStack>
-
-                {/* Capstone Deliverable Callout */}
-                <Box
-                  p={12}
-                  rounded="var(--radius-md)"
-                  bg="var(--pure-black)"
-                  borderWidth={0}
-                >
-                  <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.75)" fontWeight="600" mb={4}>
-                    Verified Capstone:
-                  </Text>
-                  <Text fontSize={12} color="rgba(255, 255, 255, 0.6)" lineHeight={18}>
-                    {course.capstone}
-                  </Text>
-                </Box>
-
-                {/* Core Competencies Checklist */}
-                <YStack gap={8} my={4}>
-                  <Text fontSize={12} fontFamily="$mono" color="rgba(255, 255, 255, 0.75)">
-                    Technical Competencies:
-                  </Text>
-                  {course.competencies.map((comp, i) => (
-                    <XStack key={i} items="flex-start" gap={8}>
-                      <Check size={14} color="var(--white)" style={{ marginTop: 3, flexShrink: 0 }} />
-                      <Text fontSize={12} color="rgba(255, 255, 255, 0.6)" lineHeight={18}>
-                        {comp}
-                      </Text>
-                    </XStack>
-                  ))}
-                </YStack>
-              </YStack>
-
-              {/* Pricing & Enrollment Footer */}
-              <YStack gap={14} mt={24} pt={18} borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
-                <XStack items="baseline" justify="space-between">
-                  <XStack items="baseline" gap={4}>
-                    <Text fontSize={26} fontWeight="700" color="var(--white)">
-                      ${course.price}
-                    </Text>
-                    <Text fontSize={12} color="rgba(255, 255, 255, 0.5)">
-                      USD
-                    </Text>
-                  </XStack>
-                  <Chip px={8} py={3} fontSize={11} fontFamily="$mono" color="var(--white)">
-                    +${course.rebateCredits} Credits (25%)
-                  </Chip>
-                </XStack>
-
-                <XStack gap={10} width="100%">
-                  <Action href={`/${course.slug}`} flex={1} $platform-web={{ textAlign: 'center' }}>
-                    Syllabus →
-                  </Action>
-                  <Action
-                    href={courseCheckoutUrl(course.slug)}
-                    fill
-                    flex={1}
-                    $platform-web={{ textAlign: 'center' }}
-                  >
-                    Enroll — ${course.price}
-                  </Action>
-                </XStack>
-              </YStack>
-            </Card>
-          ))}
-        </Grid>
-      </Band>
-
-      {/* ── 4. THE COMPARISON BENCHMARK ── */}
-      <Band id="comparison" pad={64} measure={1280} ground="var(--pure-black)" rule={true}>
+      {/* ── 5. THE COMPARISON BENCHMARK (Strictly Monochrome) ── */}
+      <Band id="comparison" pad={64} measure={1280} rule={true}>
         <Head
           eyebrow="Market Benchmark · Top 5 AI Course Providers"
           title="How Hanzo Outperforms the Top 5 Global AI Programs"
@@ -577,11 +1254,12 @@ export default function Catalog() {
         {/* Master Comparison Table View */}
         {activeCompetitorTab === 'all' ? (
           <Box
-            borderWidth={0}
-            bg="#080808"
+            borderWidth={1}
+            borderColor="rgba(255, 255, 255, 0.08)"
+            bg="rgba(255, 255, 255, 0.02)"
             overflow="hidden"
             mb={32}
-            style={{ borderRadius: '24px' }}
+            style={{ borderRadius: '20px' }}
           >
             <Box overflowX="auto">
               <View
@@ -594,7 +1272,7 @@ export default function Catalog() {
                     render="tr"
                     borderBottomWidth={1}
                     borderColor="rgba(255, 255, 255, 0.1)"
-                    bg="var(--pure-black)"
+                    bg="rgba(255, 255, 255, 0.03)"
                     $platform-web={{ display: 'table-row' }}
                   >
                     <Text
@@ -602,101 +1280,52 @@ export default function Catalog() {
                       p={16}
                       fontSize={12}
                       fontFamily="$mono"
-                      color="rgba(255, 255, 255, 0.5)"
+                      color="rgba(255, 255, 255, 0.6)"
                       textTransform="uppercase"
                       letterSpacing={0.5}
                       $platform-web={{ display: 'table-cell', textAlign: 'left', minWidth: 200 }}
                     >
-                      Capability & Dimension
+                      Capability &amp; Dimension
                     </Text>
 
-                    {/* Hanzo Highlighted Winner Column */}
+                    {/* Hanzo Highlighted Winner Column (Monochrome) */}
                     <Text
                       render="th"
                       p={16}
                       fontSize={12}
                       fontFamily="$mono"
-                      color="var(--emerald-400)"
-                      bg="rgba(16, 185, 129, 0.08)"
+                      color="var(--white)"
+                      bg="rgba(255, 255, 255, 0.06)"
                       borderLeftWidth={1}
                       borderRightWidth={1}
-                      borderColor="rgba(16, 185, 129, 0.3)"
+                      borderColor="rgba(255, 255, 255, 0.2)"
                       textTransform="uppercase"
                       letterSpacing={0.5}
                       $platform-web={{ display: 'table-cell', textAlign: 'left', minWidth: 260 }}
                     >
                       <XStack items="center" gap={6}>
-                        <Sparkles size={13} color="var(--emerald-400)" />
-                        <Text fontSize={12} fontWeight="700" color="var(--emerald-400)">
-                          Hanzo University (Winner)
+                        <Sparkles size={13} color="var(--white)" />
+                        <Text fontSize={12} fontWeight="800" color="var(--white)">
+                          Hanzo University (Leader)
                         </Text>
                       </XStack>
                     </Text>
 
-                    <Text
-                      render="th"
-                      p={16}
-                      fontSize={12}
-                      fontFamily="$mono"
-                      color="rgba(255, 255, 255, 0.7)"
-                      textTransform="uppercase"
-                      letterSpacing={0.5}
-                      $platform-web={{ display: 'table-cell', textAlign: 'left', minWidth: 170 }}
-                    >
-                      DeepLearning.AI
-                    </Text>
-
-                    <Text
-                      render="th"
-                      p={16}
-                      fontSize={12}
-                      fontFamily="$mono"
-                      color="rgba(255, 255, 255, 0.7)"
-                      textTransform="uppercase"
-                      letterSpacing={0.5}
-                      $platform-web={{ display: 'table-cell', textAlign: 'left', minWidth: 170 }}
-                    >
-                      Stanford Online
-                    </Text>
-
-                    <Text
-                      render="th"
-                      p={16}
-                      fontSize={12}
-                      fontFamily="$mono"
-                      color="rgba(255, 255, 255, 0.7)"
-                      textTransform="uppercase"
-                      letterSpacing={0.5}
-                      $platform-web={{ display: 'table-cell', textAlign: 'left', minWidth: 170 }}
-                    >
-                      MIT Professional
-                    </Text>
-
-                    <Text
-                      render="th"
-                      p={16}
-                      fontSize={12}
-                      fontFamily="$mono"
-                      color="rgba(255, 255, 255, 0.7)"
-                      textTransform="uppercase"
-                      letterSpacing={0.5}
-                      $platform-web={{ display: 'table-cell', textAlign: 'left', minWidth: 170 }}
-                    >
-                      Harvard CS50 AI
-                    </Text>
-
-                    <Text
-                      render="th"
-                      p={16}
-                      fontSize={12}
-                      fontFamily="$mono"
-                      color="rgba(255, 255, 255, 0.7)"
-                      textTransform="uppercase"
-                      letterSpacing={0.5}
-                      $platform-web={{ display: 'table-cell', textAlign: 'left', minWidth: 170 }}
-                    >
-                      Fast.ai
-                    </Text>
+                    {['DeepLearning.AI', 'Stanford Online', 'MIT Professional', 'Harvard CS50 AI', 'Fast.ai'].map((prov) => (
+                      <Text
+                        key={prov}
+                        render="th"
+                        p={16}
+                        fontSize={12}
+                        fontFamily="$mono"
+                        color="rgba(255, 255, 255, 0.7)"
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
+                        $platform-web={{ display: 'table-cell', textAlign: 'left', minWidth: 170 }}
+                      >
+                        {prov}
+                      </Text>
+                    ))}
                   </Text>
                 </View>
 
@@ -710,7 +1339,6 @@ export default function Catalog() {
                       bg={idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)'}
                       $platform-web={{ display: 'table-row' }}
                     >
-                      {/* Dimension Name */}
                       <Text
                         render="td"
                         p={16}
@@ -722,105 +1350,43 @@ export default function Catalog() {
                         {row.dimension}
                       </Text>
 
-                      {/* Hanzo (Winner) Cell */}
+                      {/* Hanzo Leader Cell */}
                       <Text
                         render="td"
                         p={16}
                         fontSize={13}
                         color="var(--white)"
-                        bg="rgba(16, 185, 129, 0.04)"
+                        bg="rgba(255, 255, 255, 0.05)"
                         borderLeftWidth={1}
                         borderRightWidth={1}
-                        borderColor="rgba(16, 185, 129, 0.2)"
+                        borderColor="rgba(255, 255, 255, 0.15)"
                         $platform-web={{ display: 'table-cell', verticalAlign: 'top' }}
                       >
                         <XStack items="flex-start" gap={8}>
-                          <CheckCircle2 size={15} color="var(--emerald-400)" style={{ marginTop: 2, flexShrink: 0 }} />
-                          <Text fontSize={13} color="var(--white)" fontWeight="600" lineHeight={18}>
+                          <CheckCircle2 size={15} color="var(--white)" style={{ marginTop: 2, flexShrink: 0 }} />
+                          <Text fontSize={13} color="var(--white)" fontWeight="600" lineHeight={19}>
                             {row.hanzo}
                           </Text>
                         </XStack>
                       </Text>
 
-                      {/* DeepLearning.AI Cell */}
-                      <Text
-                        render="td"
-                        p={16}
-                        fontSize={12}
-                        color="rgba(255, 255, 255, 0.6)"
-                        $platform-web={{ display: 'table-cell', verticalAlign: 'top' }}
-                      >
-                        <XStack items="flex-start" gap={6}>
-                          <XCircle size={13} color="var(--neutral-500)" style={{ marginTop: 2, flexShrink: 0 }} />
-                          <Text fontSize={12} color="rgba(255, 255, 255, 0.6)" lineHeight={17}>
-                            {row.deeplearning}
-                          </Text>
-                        </XStack>
-                      </Text>
-
-                      {/* Stanford Online Cell */}
-                      <Text
-                        render="td"
-                        p={16}
-                        fontSize={12}
-                        color="rgba(255, 255, 255, 0.6)"
-                        $platform-web={{ display: 'table-cell', verticalAlign: 'top' }}
-                      >
-                        <XStack items="flex-start" gap={6}>
-                          <XCircle size={13} color="var(--neutral-500)" style={{ marginTop: 2, flexShrink: 0 }} />
-                          <Text fontSize={12} color="rgba(255, 255, 255, 0.6)" lineHeight={17}>
-                            {row.stanford}
-                          </Text>
-                        </XStack>
-                      </Text>
-
-                      {/* MIT Professional Cell */}
-                      <Text
-                        render="td"
-                        p={16}
-                        fontSize={12}
-                        color="rgba(255, 255, 255, 0.6)"
-                        $platform-web={{ display: 'table-cell', verticalAlign: 'top' }}
-                      >
-                        <XStack items="flex-start" gap={6}>
-                          <XCircle size={13} color="var(--neutral-500)" style={{ marginTop: 2, flexShrink: 0 }} />
-                          <Text fontSize={12} color="rgba(255, 255, 255, 0.6)" lineHeight={17}>
-                            {row.mit}
-                          </Text>
-                        </XStack>
-                      </Text>
-
-                      {/* Harvard CS50 Cell */}
-                      <Text
-                        render="td"
-                        p={16}
-                        fontSize={12}
-                        color="rgba(255, 255, 255, 0.6)"
-                        $platform-web={{ display: 'table-cell', verticalAlign: 'top' }}
-                      >
-                        <XStack items="flex-start" gap={6}>
-                          <XCircle size={13} color="var(--neutral-500)" style={{ marginTop: 2, flexShrink: 0 }} />
-                          <Text fontSize={12} color="rgba(255, 255, 255, 0.6)" lineHeight={17}>
-                            {row.harvard}
-                          </Text>
-                        </XStack>
-                      </Text>
-
-                      {/* Fast.ai Cell */}
-                      <Text
-                        render="td"
-                        p={16}
-                        fontSize={12}
-                        color="rgba(255, 255, 255, 0.6)"
-                        $platform-web={{ display: 'table-cell', verticalAlign: 'top' }}
-                      >
-                        <XStack items="flex-start" gap={6}>
-                          <XCircle size={13} color="var(--neutral-500)" style={{ marginTop: 2, flexShrink: 0 }} />
-                          <Text fontSize={12} color="rgba(255, 255, 255, 0.6)" lineHeight={17}>
-                            {row.fastai}
-                          </Text>
-                        </XStack>
-                      </Text>
+                      {[row.deeplearning, row.stanford, row.mit, row.harvard, row.fastai].map((val, cellIdx) => (
+                        <Text
+                          key={cellIdx}
+                          render="td"
+                          p={16}
+                          fontSize={12}
+                          color="rgba(255, 255, 255, 0.7)"
+                          $platform-web={{ display: 'table-cell', verticalAlign: 'top' }}
+                        >
+                          <XStack items="flex-start" gap={6}>
+                            <XCircle size={13} color="rgba(255, 255, 255, 0.4)" style={{ marginTop: 2, flexShrink: 0 }} />
+                            <Text fontSize={12} color="rgba(255, 255, 255, 0.7)" lineHeight={18}>
+                              {val}
+                            </Text>
+                          </XStack>
+                        </Text>
+                      ))}
                     </Text>
                   ))}
                 </View>
@@ -833,12 +1399,7 @@ export default function Catalog() {
             const comp = TOP_5_COMPETITORS.find((c) => c.id === activeCompetitorTab) || TOP_5_COMPETITORS[0]
             return (
               <YStack gap={24} mb={32}>
-                {/* Provider Header Showcase */}
-                <Card
-                  p={28}
-                  bg="#080808"
-                  borderWidth={0}
-                >
+                <Card p={28} bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.1)">
                   <YStack gap={16}>
                     <XStack items="center" justify="space-between" flexWrap="wrap" gap={12}>
                       <YStack gap={4}>
@@ -859,7 +1420,7 @@ export default function Catalog() {
                             </Text>
                           </View>
                         </XStack>
-                        <Text fontSize={13} color="rgba(255, 255, 255, 0.6)">
+                        <Text fontSize={13} color="rgba(255, 255, 255, 0.75)">
                           Flagship Program: <Text color="var(--white)" fontWeight="600">{comp.flagshipCourse}</Text>
                         </Text>
                       </YStack>
@@ -883,35 +1444,35 @@ export default function Catalog() {
 
                     {/* Quick Comparison Bar */}
                     <Grid columns={{ min: 200, max: 4 }} gap={12}>
-                      <View p={12} bg="rgba(255, 255, 255, 0.03)" rounded="var(--radius-md)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.06)">
-                        <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.5)">
-                          {comp.name} TUITION
+                      <View p={12} bg="rgba(255, 255, 255, 0.02)" rounded="var(--radius-md)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                        <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.6)">
+                          {comp.name.toUpperCase()} TUITION
                         </Text>
-                        <Text fontSize={14} fontWeight="700" color="rgba(255, 255, 255, 0.8)" mt={4}>
+                        <Text fontSize={14} fontWeight="700" color="rgba(255, 255, 255, 0.9)" mt={4}>
                           {comp.tuition}
                         </Text>
                       </View>
 
-                      <View p={12} bg="rgba(16, 185, 129, 0.06)" rounded="var(--radius-md)" borderWidth={1} borderColor="rgba(16, 185, 129, 0.2)">
-                        <Text fontSize={11} fontFamily="$mono" color="var(--emerald-400)">
-                          HANZO TUITION & REBATE
+                      <View p={12} bg="rgba(255, 255, 255, 0.05)" rounded="var(--radius-md)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.2)">
+                        <Text fontSize={11} fontFamily="$mono" color="var(--white)" fontWeight="700">
+                          HANZO TUITION &amp; REBATE
                         </Text>
-                        <Text fontSize={14} fontWeight="700" color="var(--white)" mt={4}>
+                        <Text fontSize={14} fontWeight="800" color="var(--white)" mt={4}>
                           $149–$249 (+25% Rebate)
                         </Text>
                       </View>
 
-                      <View p={12} bg="rgba(255, 255, 255, 0.03)" rounded="var(--radius-md)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.06)">
-                        <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.5)">
-                          {comp.name} FORMAT
+                      <View p={12} bg="rgba(255, 255, 255, 0.02)" rounded="var(--radius-md)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                        <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.6)">
+                          {comp.name.toUpperCase()} FORMAT
                         </Text>
-                        <Text fontSize={13} color="rgba(255, 255, 255, 0.8)" mt={4} numberOfLines={2}>
+                        <Text fontSize={13} color="rgba(255, 255, 255, 0.85)" mt={4} numberOfLines={2}>
                           {comp.format}
                         </Text>
                       </View>
 
-                      <View p={12} bg="rgba(16, 185, 129, 0.06)" rounded="var(--radius-md)" borderWidth={1} borderColor="rgba(16, 185, 129, 0.2)">
-                        <Text fontSize={11} fontFamily="$mono" color="var(--emerald-400)">
+                      <View p={12} bg="rgba(255, 255, 255, 0.05)" rounded="var(--radius-md)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.2)">
+                        <Text fontSize={11} fontFamily="$mono" color="var(--white)" fontWeight="700">
                           HANZO ENVIRONMENT
                         </Text>
                         <Text fontSize={13} color="var(--white)" fontWeight="600" mt={4}>
@@ -920,45 +1481,38 @@ export default function Catalog() {
                       </View>
                     </Grid>
 
-                    {/* Verdict */}
                     <Box
                       p={14}
                       rounded="var(--radius-md)"
                       bg="rgba(255, 255, 255, 0.02)"
                       borderLeftWidth={3}
-                      borderColor="var(--emerald-400)"
+                      borderColor="var(--white)"
                     >
-                      <Text fontSize={13} color="rgba(255, 255, 255, 0.8)" lineHeight={20} fontStyle="italic">
+                      <Text fontSize={13} color="rgba(255, 255, 255, 0.9)" lineHeight={20} fontStyle="italic">
                         &ldquo;{comp.verdict}&rdquo;
                       </Text>
                     </Box>
                   </YStack>
                 </Card>
 
-                {/* Two Column Head-to-Head Breakdown */}
+                {/* Head-to-Head Cards */}
                 <Grid columns={{ min: 360, max: 2 }} gap={20}>
-                  {/* Where Competitor Falls Short */}
-                  <Card
-                    p={24}
-                    bg="#0c0707"
-                    borderWidth={1}
-                    borderColor="rgba(239, 68, 68, 0.25)"
-                  >
+                  <Card p={24} bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
                     <YStack gap={16}>
                       <XStack items="center" gap={8}>
-                        <XCircle size={18} color="var(--red-400)" />
+                        <XCircle size={18} color="rgba(255, 255, 255, 0.6)" />
                         <Text fontSize={16} fontWeight="700" color="var(--white)">
                           Where {comp.name} Falls Short
                         </Text>
                       </XStack>
-                      <Text fontSize={12} color="rgba(255, 255, 255, 0.5)">
+                      <Text fontSize={12} color="rgba(255, 255, 255, 0.6)">
                         Architectural limitations observed by production engineering leads:
                       </Text>
                       <YStack gap={12}>
                         {comp.flaws.map((flaw, idx) => (
                           <XStack key={idx} items="flex-start" gap={10}>
-                            <XCircle size={14} color="var(--red-400)" style={{ marginTop: 3, flexShrink: 0 }} />
-                            <Text fontSize={13} color="rgba(255, 255, 255, 0.75)" lineHeight={19}>
+                            <XCircle size={14} color="rgba(255, 255, 255, 0.45)" style={{ marginTop: 3, flexShrink: 0 }} />
+                            <Text fontSize={13} color="rgba(255, 255, 255, 0.8)" lineHeight={20}>
                               {flaw}
                             </Text>
                           </XStack>
@@ -967,28 +1521,22 @@ export default function Catalog() {
                     </YStack>
                   </Card>
 
-                  {/* How Hanzo Outperforms */}
-                  <Card
-                    p={24}
-                    bg="#040c06"
-                    borderWidth={1}
-                    borderColor="rgba(16, 185, 129, 0.3)"
-                  >
+                  <Card p={24} bg="rgba(255, 255, 255, 0.04)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.15)">
                     <YStack gap={16}>
                       <XStack items="center" gap={8}>
-                        <CheckCircle2 size={18} color="var(--emerald-400)" />
+                        <CheckCircle2 size={18} color="var(--white)" />
                         <Text fontSize={16} fontWeight="700" color="var(--white)">
                           How Hanzo Outperforms
                         </Text>
                       </XStack>
-                      <Text fontSize={12} color="rgba(255, 255, 255, 0.5)">
+                      <Text fontSize={12} color="rgba(255, 255, 255, 0.6)">
                         Production-grade systems engineering capabilities built into the curriculum:
                       </Text>
                       <YStack gap={12}>
                         {comp.hanzoAdvantages.map((adv, idx) => (
                           <XStack key={idx} items="flex-start" gap={10}>
-                            <CheckCircle2 size={14} color="var(--emerald-400)" style={{ marginTop: 3, flexShrink: 0 }} />
-                            <Text fontSize={13} color="var(--white)" fontWeight="500" lineHeight={19}>
+                            <CheckCircle2 size={14} color="var(--white)" style={{ marginTop: 3, flexShrink: 0 }} />
+                            <Text fontSize={13} color="rgba(255, 255, 255, 0.95)" fontWeight="500" lineHeight={20}>
                               {adv}
                             </Text>
                           </XStack>
@@ -998,14 +1546,15 @@ export default function Catalog() {
                   </Card>
                 </Grid>
 
-                {/* Direct Head-to-Head Specification Table */}
+                {/* Direct Metric Specification Table */}
                 <Box
-                  borderWidth={0}
-                  bg="#080808"
+                  borderWidth={1}
+                  borderColor="rgba(255, 255, 255, 0.08)"
+                  bg="rgba(255, 255, 255, 0.02)"
                   overflow="hidden"
                   style={{ borderRadius: '20px' }}
                 >
-                  <Box p={16} bg="var(--pure-black)" borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                  <Box p={16} bg="rgba(255, 255, 255, 0.03)" borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
                     <Text fontSize={13} fontWeight="700" color="var(--white)" fontFamily="$mono">
                       HEAD-TO-HEAD METRIC SPECIFICATION: HANZO VS. {comp.name.toUpperCase()}
                     </Text>
@@ -1036,13 +1585,13 @@ export default function Catalog() {
                               render="td"
                               p={14}
                               fontSize={13}
-                              color="rgba(255, 255, 255, 0.55)"
+                              color="rgba(255, 255, 255, 0.7)"
                               width="37.5%"
                               $platform-web={{ display: 'table-cell' }}
                             >
                               <XStack items="center" gap={6}>
-                                <XCircle size={13} color="var(--neutral-500)" style={{ flexShrink: 0 }} />
-                                <Text fontSize={13} color="rgba(255, 255, 255, 0.6)">{m.legacyVal}</Text>
+                                <XCircle size={13} color="rgba(255, 255, 255, 0.4)" style={{ flexShrink: 0 }} />
+                                <Text fontSize={13} color="rgba(255, 255, 255, 0.7)">{m.legacyVal}</Text>
                               </XStack>
                             </Text>
                             <Text
@@ -1052,11 +1601,11 @@ export default function Catalog() {
                               color="var(--white)"
                               fontWeight="600"
                               width="37.5%"
-                              bg="rgba(16, 185, 129, 0.04)"
+                              bg="rgba(255, 255, 255, 0.04)"
                               $platform-web={{ display: 'table-cell' }}
                             >
                               <XStack items="center" gap={6}>
-                                <CheckCircle2 size={14} color="var(--emerald-400)" style={{ flexShrink: 0 }} />
+                                <CheckCircle2 size={14} color="var(--white)" style={{ flexShrink: 0 }} />
                                 <Text fontSize={13} color="var(--white)" fontWeight="600">{m.hanzoVal}</Text>
                               </XStack>
                             </Text>
@@ -1071,41 +1620,41 @@ export default function Catalog() {
           })()
         )}
 
-        {/* Career Trajectory Cards */}
+        {/* Career Trajectory Cards (High Contrast) */}
         <Grid columns={{ min: 320, max: 3 }} gap={20}>
-          <Card p={24} bg="#080808">
+          <Card p={24} bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
             <YStack gap={12}>
               <Briefcase size={22} color="var(--white)" />
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 Senior Software Engineer → AI Systems Engineer
               </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
+              <Text fontSize={14} color="rgba(255, 255, 255, 0.85)" lineHeight={22}>
                 Move past frontend wrappers into core systems engineering. Master tree-sitter AST parsing,
                 zero-copy ZAP IPC, and isolated Hanzo Visor execution pods to command top-tier compensation ($180k–$240k).
               </Text>
             </YStack>
           </Card>
 
-          <Card p={24} bg="#080808">
+          <Card p={24} bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
             <YStack gap={12}>
               <TrendingUp size={22} color="var(--white)" />
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 Full-Stack Engineer → Autonomous Agent Architect
               </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
+              <Text fontSize={14} color="rgba(255, 255, 255, 0.85)" lineHeight={22}>
                 Lead enterprise agent initiatives. Learn to architect multi-agent coordinator-executor swarms
                 that resolve complex GitHub defects within strict micro-USD financial ceilings ($220k–$310k).
               </Text>
             </YStack>
           </Card>
 
-          <Card p={24} bg="#080808">
+          <Card p={24} bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
             <YStack gap={12}>
               <ShieldCheck size={22} color="var(--white)" />
               <Text fontSize={16} fontWeight="700" color="var(--white)">
                 Engineering Founder → CTO of AI-Native Venture
               </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
+              <Text fontSize={14} color="rgba(255, 255, 255, 0.85)" lineHeight={22}>
                 Deploy production-grade agentic products with zero runaway inference bills. Use native Gymnasium
                 reinforcement learning and finite-state Kai decision loops to eliminate hallucinations.
               </Text>
@@ -1114,7 +1663,7 @@ export default function Catalog() {
         </Grid>
       </Band>
 
-      {/* ── 5. SIX PILLARS OF PRODUCTION RIGOR ── */}
+      {/* ── 6. SIX PILLARS OF PRODUCTION RIGOR ── */}
       <Band id="pillars" pad={64} measure={1200} rule={true}>
         <Head
           eyebrow="Pedagogical Architecture"
@@ -1123,81 +1672,57 @@ export default function Catalog() {
         />
 
         <Grid columns={{ min: 320, max: 3 }} gap={20}>
-          <Card p={24} bg="#080808">
-            <YStack gap={10}>
-              <Scale size={22} color="var(--white)" />
-              <Text fontSize={17} fontWeight="700" color="var(--white)">
-                Automated CI Grading
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Zero human subjectivity. Submissions are graded by isolated CI runners that clone your repository, inject breaking changes, and evaluate repair velocity and test pass rates.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808">
-            <YStack gap={10}>
-              <Coins size={22} color="var(--white)" />
-              <Text fontSize={17} fontWeight="700" color="var(--white)">
-                Integer Micro-USD Ceilings
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Prevent runaway cloud bills. Learn to configure pre-call price quoting, in-band budget refusals, and sub-cent financial caps directly in your agent loop.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808">
-            <YStack gap={10}>
-              <Cpu size={22} color="var(--white)" />
-              <Text fontSize={17} fontWeight="700" color="var(--white)">
-                Zero-Token Decision Loops
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Generate text only when generation is strictly required. Master finite-state control with Kai, evaluating tool calls and routing without paying for generation tokens.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808">
-            <YStack gap={10}>
-              <Zap size={22} color="var(--white)" />
-              <Text fontSize={17} fontWeight="700" color="var(--white)">
-                Zero-Copy ZAP Protocols
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Replace 200ms JSON-RPC hops with Cap&rsquo;n Proto zero-copy serialization. Connect multi-agent swarms with microsecond inter-process latency and post-quantum encryption.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808">
-            <YStack gap={10}>
-              <Boxes size={22} color="var(--white)" />
-              <Text fontSize={17} fontWeight="700" color="var(--white)">
-                Native Gymnasium Environments
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Model agent interactions as formal Markov Decision Processes (MDP). Train custom policy routers, write multi-objective reward functions, and run Zoo Gym fine-tuning.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808">
-            <YStack gap={10}>
-              <ShieldCheck size={22} color="var(--white)" />
-              <Text fontSize={17} fontWeight="700" color="var(--white)">
-                W3C Cryptographic Proof
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Earn verifiable credentials signed by Hanzo Trust with immutable on-chain records and real-time verifiable GitHub SVG badges linking directly to your passing benchmark run.
-              </Text>
-            </YStack>
-          </Card>
+          {[
+            {
+              icon: Scale,
+              title: 'Automated CI Grading',
+              body: 'Zero human subjectivity. Submissions are graded by isolated CI runners that clone your repository, inject breaking changes, and evaluate repair velocity and test pass rates.',
+            },
+            {
+              icon: Coins,
+              title: 'Integer Micro-USD Ceilings',
+              body: 'Prevent runaway cloud bills. Learn to configure pre-call price quoting, in-band budget refusals, and sub-cent financial caps directly in your agent loop.',
+            },
+            {
+              icon: Cpu,
+              title: 'Zero-Token Decision Loops',
+              body: 'Generate text only when generation is strictly required. Master finite-state control with Kai, evaluating tool calls and routing without paying for generation tokens.',
+            },
+            {
+              icon: Zap,
+              title: 'Zero-Copy ZAP Protocols',
+              body: 'Replace 200ms JSON-RPC hops with Cap’n Proto zero-copy serialization. Connect multi-agent swarms with microsecond inter-process latency and post-quantum encryption.',
+            },
+            {
+              icon: Boxes,
+              title: 'Native Gymnasium Environments',
+              body: 'Model agent interactions as formal Markov Decision Processes (MDP). Train custom policy routers, write multi-objective reward functions, and run Zoo Gym fine-tuning.',
+            },
+            {
+              icon: ShieldCheck,
+              title: 'W3C Cryptographic Proof',
+              body: 'Earn verifiable credentials signed by Hanzo Trust with immutable on-chain records and real-time verifiable GitHub SVG badges linking directly to your passing benchmark run.',
+            },
+          ].map((pillar, idx) => {
+            const IconC = pillar.icon
+            return (
+              <Card key={idx} p={24} bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                <YStack gap={10}>
+                  <IconC size={22} color="var(--white)" />
+                  <Text fontSize={17} fontWeight="700" color="var(--white)">
+                    {pillar.title}
+                  </Text>
+                  <Text fontSize={14} color="rgba(255, 255, 255, 0.85)" lineHeight={22}>
+                    {pillar.body}
+                  </Text>
+                </YStack>
+              </Card>
+            )
+          })}
         </Grid>
       </Band>
 
-      {/* ── 6. FREQUENTLY ASKED QUESTIONS ── */}
+      {/* ── 7. FREQUENTLY ASKED QUESTIONS (High Contrast & Clean Borders) ── */}
       <Band id="faqs" pad={64} measure={1080} rule={true}>
         <Head
           eyebrow="Frequently Asked Questions"
@@ -1206,94 +1731,68 @@ export default function Catalog() {
         />
 
         <Grid columns={{ min: 280, max: 2 }} gap={20}>
-          <Card p={24} bg="#080808" borderWidth={0}>
-            <YStack gap={8}>
-              <Text fontSize={16} fontWeight="700" color="var(--white)">
-                How does the 25% usage credit rebate work?
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                When you enroll in any course (e.g. $199 for ENG 100), exactly 25% of your payment rounded up to the nearest dollar ($50 USD) is deposited immediately into your Hanzo Cloud compute account. These credits never expire and can be used across Zen 6, Enso, Kai decision models, and Hanzo Visor sandbox container leases.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808" borderWidth={0}>
-            <YStack gap={8}>
-              <Text fontSize={16} fontWeight="700" color="var(--white)">
-                How are capstone projects graded and evaluated?
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Grading is 100% objective and automated. An isolated Hanzo grader pod clones your repository in an ephemeral cleanroom, injects synthetic faults and breaking changes into test suites, and evaluates whether your agent can reproduce defects, synthesize syntax-safe AST diffs, and achieve test exit code 0 within budget.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808" borderWidth={0}>
-            <YStack gap={8}>
-              <Text fontSize={16} fontWeight="700" color="var(--white)">
-                Why do hiring managers value Hanzo credentials over AWS/Azure/Coursera?
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Standard certifications test multiple-choice memorization about proprietary cloud consoles. Hanzo credentials prove hands-on software construction under real-world engineering constraints: multi-agent IPC latency, sandbox process isolation, SWE-bench problem resolution, and strict micro-USD financial ceilings.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808" borderWidth={0}>
-            <YStack gap={8}>
-              <Text fontSize={16} fontWeight="700" color="var(--white)">
-                What format are credentials issued in?
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Graduates receive W3C Verifiable Credentials signed cryptographically by the Hanzo Trust Root (`did:hanzo:trust`) with immutable on-chain commitments. You also receive a dynamic SVG badge for your GitHub profile and resume that links directly to your verified passing CI telemetry.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808" borderWidth={0}>
-            <YStack gap={8}>
-              <Text fontSize={16} fontWeight="700" color="var(--white)">
-                Can I expense this course through my employer?
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                Yes. Upon enrollment, you receive an itemized VAT/tax receipt suitable for corporate continuing education and Learning &amp; Development (L&amp;D) reimbursement programs. For teams of 5 or more engineers, we provide pooled credit management and consolidated corporate invoicing.
-              </Text>
-            </YStack>
-          </Card>
-
-          <Card p={24} bg="#080808" borderWidth={0}>
-            <YStack gap={8}>
-              <Text fontSize={16} fontWeight="700" color="var(--white)">
-                Do I need a high-end local GPU?
-              </Text>
-              <Text fontSize={13} color="rgba(255, 255, 255, 0.6)" lineHeight={20}>
-                No. You can run all coursework either locally on your laptop CPU/Metal using quantized Zen builds (`zen6-flash`), or execute in Hanzo Cloud using your included 25% usage credits with zero local setup or hardware requirements.
-              </Text>
-            </YStack>
-          </Card>
+          {[
+            {
+              q: 'How does the 25% usage credit rebate work?',
+              a: 'When you enroll in any course (e.g. $199 for ENG 100), exactly 25% of your payment rounded up to the nearest dollar ($50 USD) is deposited immediately into your Hanzo Cloud compute account. These credits never expire and can be used across Zen 6, Enso, Kai decision models, and Hanzo Visor sandbox container leases.',
+            },
+            {
+              q: 'How are capstone projects graded and evaluated?',
+              a: 'Grading is 100% objective and automated. An isolated Hanzo grader pod clones your repository in an ephemeral cleanroom, injects synthetic faults and breaking changes into test suites, and evaluates whether your agent can reproduce defects, synthesize syntax-safe AST diffs, and achieve test exit code 0 within budget.',
+            },
+            {
+              q: 'Why do hiring managers value Hanzo credentials over AWS/Azure/Coursera?',
+              a: 'Standard certifications test multiple-choice memorization about proprietary cloud consoles. Hanzo credentials prove hands-on software construction under real-world engineering constraints: multi-agent IPC latency, sandbox process isolation, SWE-bench problem resolution, and strict micro-USD financial ceilings.',
+            },
+            {
+              q: 'What format are credentials issued in?',
+              a: 'Graduates receive W3C Verifiable Credentials signed cryptographically by the Hanzo Trust Root (did:hanzo:trust) with immutable on-chain commitments. You also receive a dynamic SVG badge for your GitHub profile and resume that links directly to your verified passing CI telemetry.',
+            },
+            {
+              q: 'Can I expense this course through my employer?',
+              a: 'Yes. Upon enrollment, you receive an itemized VAT/tax receipt suitable for corporate continuing education and Learning & Development (L&D) reimbursement programs. For teams of 5 or more engineers, we provide pooled credit management and consolidated corporate invoicing.',
+            },
+            {
+              q: 'Do I need a high-end local GPU?',
+              a: 'No. You can run all coursework either locally on your laptop CPU/Metal using quantized Zen builds (zen6-flash), or execute in Hanzo Cloud using your included 25% usage credits with zero local setup or hardware requirements.',
+            },
+          ].map((faq, idx) => (
+            <Card key={idx} p={24} bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+              <YStack gap={10}>
+                <Text fontSize={17} fontWeight="700" color="var(--white)">
+                  {faq.q}
+                </Text>
+                <Text fontSize={14} color="rgba(255, 255, 255, 0.85)" lineHeight={22}>
+                  {faq.a}
+                </Text>
+              </YStack>
+            </Card>
+          ))}
         </Grid>
       </Band>
 
-      {/* ── 7. FINAL CALL TO ACTION ── */}
-      <Band pad={64} measure={800} ground="var(--pure-black)" rule={true}>
-        <YStack items="center" $platform-web={{ textAlign: 'center' }} gap={16}>
+      {/* ── 8. FINAL CALL TO ACTION ── */}
+      <Band pad={72} measure={840} rule={true}>
+        <YStack items="center" $platform-web={{ textAlign: 'center' }} gap={18}>
           <Eyebrow>Open Enrollment</Eyebrow>
           <Title quiet={false}>
             Ready to build systems that scale?
           </Title>
           <Lede>
-            Enroll today to claim your 25% usage credit rebate and gain instant access to browser-based Hanzo Dev sandboxes.
+            Join Hanzo University Pro or enroll in a degree track today to claim your compute credits and gain instant access to browser-based Hanzo Dev sandboxes.
           </Lede>
-          <XStack justify="center" gap={12} mt={12} flexWrap="wrap">
-            <Action href="#curriculum" fill>
-              Enroll in a Course
+          <XStack justify="center" gap={14} mt={10} flexWrap="wrap">
+            <Action href="/checkout/membership" fill>
+              Join University Pro — $29/mo →
             </Action>
-            <Action href={SIGN_IN}>
-              Sign in
+            <Action href="#curriculum">
+              Choose a Class
             </Action>
-            <Action href="/agentic-coding">
-              View ENG 100 Syllabus
-            </Action>
+            {signedIn ? null : (
+              <Action href={SIGN_IN}>
+                Sign in
+              </Action>
+            )}
           </XStack>
         </YStack>
       </Band>

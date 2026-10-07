@@ -43,6 +43,7 @@ export const PLAN_TO_COURSE_SLUG: Record<string, string> = {
   'max-20x': 'agentic-coding',
   'max-5x': 'agentic-coding',
   'pro': 'agentic-coding',
+  'membership': 'agentic-coding',
 }
 
 /** Parse and validate JWT token claims without external dependencies */
@@ -233,7 +234,7 @@ export function resolveStudentSession(): StudentSession | null {
           .replace(/[^a-z0-9_-]/g, '')
       const did = claims.did || (claims.sub ? `did:lux:${claims.sub}` : `did:hanzo:student:${handle}`)
       const plan = (claims.billing_plan || claims.plan || claims.tier || '').toLowerCase()
-      const isFull = ['max-20x', 'max-5x', 'pro'].includes(plan)
+      const isFull = ['max-20x', 'max-5x', 'pro', 'membership'].includes(plan)
 
       // Resolve enrolled classes from claims or storage
       const enrolled: string[] = []
@@ -306,8 +307,8 @@ export function resolveStudentSession(): StudentSession | null {
         email: studentEmail,
         did: `did:hanzo:student:${studentHandle}`,
         enrolledClasses: stored,
-        backendPlan: stored.length > 0 ? 'Class Enrollment' : 'Registered Student',
-        isFullAccess: false,
+        backendPlan: stored.includes('membership') ? 'University Pro All-Access' : stored.length > 0 ? 'Class Enrollment' : 'Registered Student',
+        isFullAccess: stored.includes('membership') || stored.includes('pro'),
         source: 'checkout',
       }
     }

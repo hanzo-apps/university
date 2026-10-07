@@ -51,20 +51,24 @@ export function Band({
 export function Card({
   p = 24,
   children,
-  borderWidth = 0,
+  borderWidth = 1,
+  borderColor = 'rgba(255, 255, 255, 0.08)',
+  bg = 'rgba(255, 255, 255, 0.03)',
   ...props
 }: {
   p?: number | string
   children: ReactNode
   borderWidth?: number | string
+  borderColor?: string
+  bg?: string
   [key: string]: any
 }) {
   return (
     <Box
       rounded="var(--radius-xl)"
       borderWidth={borderWidth as any}
-      borderColor="transparent"
-      bg="var(--card)"
+      borderColor={borderColor as any}
+      bg={bg as any}
       p={p as any}
       {...props}
     >

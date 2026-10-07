@@ -613,9 +613,56 @@ export const ADDITIONAL_COURSES: UniversityCourse[] = [
   },
 ]
 
+export const MEMBERSHIP_COURSE: UniversityCourse = {
+  slug: 'membership',
+  code: 'PRO',
+  title: 'Hanzo University Pro Membership',
+  credential: 'HCPA',
+  credentialFull: 'Hanzo Certified Professional (All-Access)',
+  track: 'systems',
+  units: 12,
+  price: 29,
+  rebateCredits: 50,
+  duration: 'Monthly All-Access Membership',
+  level: 'All Levels',
+  prerequisites: 'None',
+  summary:
+    'Full access to all 6 accredited degree tracks, weekly live faculty labs, 50+ engineering guides, Hanzo Visor GPU sandboxes, and $50/mo in free Hanzo Cloud compute credits.',
+  capstone:
+    'Complete any degree track capstone defense to receive your official W3C Verifiable Credential on Lux.',
+  competencies: [
+    'Unlimited access to all 6 degree tracks (ENG 100, RL 101, SYS 103, MKT 102, PRA 104, ARC 105)',
+    'Dedicated Hanzo Visor GPU microVM sandbox leases',
+    '+$50 monthly usage credits deposited into your Hanzo Cloud account',
+    'Weekly live faculty research seminars & office hours',
+  ],
+  planId: 'pro',
+  featured: true,
+  instructor: {
+    name: 'Hanzo Faculty & Systems Team',
+    role: 'Frontier AI Engineering Institute',
+  },
+  syllabus: [
+    {
+      week: 'All-Access',
+      code: 'PRO.1',
+      title: 'Full Curriculum & Live Sandboxes',
+      summary: 'Unlock all 6 degree tracks, live CI autograders, and dedicated GPU sandboxes.',
+      lectures: [
+        'Weekly live faculty engineering labs & office hours',
+        'Direct access to 50+ production agent guides and templates',
+        'Private Discord community with Hanzo core systems engineers',
+      ],
+      readings: ['Hanzo Systems Whitepaper & Enterprise Architecture Guide'],
+      lab: 'All laboratory modules across ENG 100, RL 101, MKT 102, SYS 103, PRA 104, and ARC 105.',
+    },
+  ],
+}
+
 export const ALL_COURSES: UniversityCourse[] = [
   ...UNIVERSITY_COURSES,
   ...ADDITIONAL_COURSES,
+  MEMBERSHIP_COURSE,
 ]
 
 export function findCourse(slug: string): UniversityCourse | undefined {
