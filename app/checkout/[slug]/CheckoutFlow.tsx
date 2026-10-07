@@ -1050,27 +1050,18 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                     </Box>
                   )}
 
-                  {/* Square Guarantees Box */}
+                  {/* Security Guarantees */}
                   <Box
                     p="$3"
                     rounded="var(--radius-md)"
-                    bg="var(--pure-black)"
+                    bg="rgba(255, 255, 255, 0.03)"
                     borderWidth={1}
-                    borderColor="var(--border)"
+                    borderColor="rgba(255, 255, 255, 0.08)"
                   >
-                    <XStack items="center" justify="space-between">
-                      <XStack items="center" gap="$3">
-                        <SquareLogo size={18} color="var(--emerald-400)" />
-                        <YStack>
-                          <Text fontSize="$1" fontWeight="600" color="var(--white)">
-                            Square Web Payments & Hanzo Treasury
-                          </Text>
-                          <Text fontSize="$1" color="var(--muted-foreground)">
-                            256-bit TLS encrypted · PCI-DSS Level 1 · 14-day academic guarantee
-                          </Text>
-                        </YStack>
-                      </XStack>
-                      <ShieldCheck size={18} color="var(--emerald-400)" />
+                    <XStack items="center" justify="center">
+                      <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ textAlign: 'center' }}>
+                        256-bit TLS encrypted. Backed by 14-day full money-back academic guarantee.
+                      </Text>
                     </XStack>
                   </Box>
 
@@ -1091,20 +1082,20 @@ export function CheckoutFlow({ course }: { course: UniversityCourse }) {
                       <XStack items="center" gap="$2">
                         <RefreshCw size={16} className="animate-spin" />
                         <Text fontSize="$2" fontWeight="600" color="inherit">
-                          Authorizing via Square...
+                          Processing payment...
                         </Text>
                       </XStack>
                     ) : (
                       <XStack items="center" gap="$2">
                         <Text fontSize="$2" fontWeight="600" color="inherit">
-                          Pay ${finalPrice}.00 USD with Square & Proceed to Hanzo ID →
+                          Pay ${finalPrice}.00 USD & Proceed to Hanzo ID →
                         </Text>
                       </XStack>
                     )}
                   </Action>
 
                   <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ textAlign: 'center' }}>
-                    Step 1 of 2: Tuition payment is processed securely via Square, followed immediately by Hanzo ID creation.
+                    Step 1 of 2: Tuition payment is completed first, followed immediately by Hanzo ID creation.
                   </Text>
                 </YStack>
               </Card>

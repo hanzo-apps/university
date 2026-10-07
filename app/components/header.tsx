@@ -384,21 +384,10 @@ export function Header() {
             </Text>
           </Link>
 
-          <Link
-            href="/portal"
-            style={{
-              textDecoration: 'none',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '999px',
-              padding: '6px 14px',
-            }}
-          >
-            <XStack items="center" gap={6}>
-              <Text fontSize="$2" color="var(--white)" fontWeight="500">
-                Student Portal
-              </Text>
-            </XStack>
+          <Link href="/portal" style={{ textDecoration: 'none' }}>
+            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
+              Student Portal
+            </Text>
           </Link>
 
           <a
