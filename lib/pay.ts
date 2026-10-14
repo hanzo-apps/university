@@ -1,5 +1,10 @@
 export const BILLING_URL = 'https://hanzo.ai/pay'
 
+/** Hanzo Pro on hanzo.ai's checkout, reached the way its pricing page reaches it: sign in, the plan picker, then the card. */
+export const PRO_CHECKOUT = `https://hanzo.ai/login?next=${encodeURIComponent(
+  `/onboarding?next=${encodeURIComponent(`/pay/confirm/card?plan=dev&returnUrl=${encodeURIComponent('https://hanzo.ai/')}`)}`,
+)}`
+
 /**
  * Returns dedicated University course tuition checkout URL.
  */

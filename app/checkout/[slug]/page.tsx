@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { ALL_COURSES, findCourse } from '../../courses-data'
-import { CheckoutFlow } from './CheckoutFlow'
+import { Moved } from './Moved'
 
 export function generateStaticParams() {
   return ALL_COURSES.map((c) => ({
@@ -20,10 +20,10 @@ export async function generateMetadata({
   const title = `Enroll in ${course.code}: ${course.title} — Hanzo University Checkout`
   return {
     title,
-    description: `Complete enrollment for ${course.code}. Pay one-time class tuition, then create or link your Hanzo ID to receive your student credentials, Hanzo Visor sandbox, and 25% compute credit deposit.`,
+    description: `Enroll in ${course.code}: ${course.title} through Hanzo checkout.`,
     openGraph: {
       title,
-      description: `Enroll in ${course.code}: ${course.title}. One-time class tuition, W3C verifiable credential, and 25% compute credit rebate.`,
+      description: `Enroll in ${course.code}: ${course.title} through Hanzo checkout.`,
     },
   }
 }
@@ -36,5 +36,5 @@ export default async function Page({
   const { slug } = await params
   const course = findCourse(slug)
   if (!course) notFound()
-  return <CheckoutFlow course={course} />
+  return <Moved />
 }
