@@ -48,6 +48,10 @@ export interface CouponResult {
 export const KNOWN_COUPONS: Record<string, { percent?: number; amount?: number; label: string }> = {
   HANZO20: { percent: 20, label: '20% Off Hanzo University' },
   STUDENT50: { percent: 50, label: '50% Off Academic / Student Grant' },
+  STUDENTS50: { percent: 50, label: '50% Off Academic / Student Grant' },
+  STUDENT: { percent: 50, label: '50% Off Academic / Student Grant' },
+  STUDENTS: { percent: 50, label: '50% Off Academic / Student Grant' },
+  '50OFF': { percent: 50, label: '50% Off Promotion' },
   EARLYBIRD: { amount: 50, label: '$50 Off Early Enrollment' },
   LAUNCH25: { percent: 25, label: '25% Off Launch Promotion' },
   DEVCOMMUNITY: { percent: 30, label: '30% Off Developer Community' },
