@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Box, Text, XStack, YStack } from '@/components/ui'
+import { Box, Text, XStack, YStack } from '@hanzo/ui'
 import { Action, Chip } from '@hanzo/ui/marketing'
 import { Tag, Check, X } from 'lucide-react'
 import { courseCheckoutUrl } from '@/lib/pay'

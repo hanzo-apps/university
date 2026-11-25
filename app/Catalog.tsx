@@ -2,13 +2,12 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Box, Text, XStack, YStack } from '@/components/ui'
+import { Box, Text, XStack, YStack } from '@hanzo/ui'
 import { Band, Card, Head } from '@/components/band'
 import { Action, Title, Lede, Eyebrow, Chip } from '@hanzo/ui/marketing'
 import { Grid } from '@hanzo/ui/grid'
 import {
   ShieldCheck,
-  BookOpen,
   Check,
   CheckCircle2,
   Cpu,
@@ -17,11 +16,7 @@ import {
   Compass,
   Sparkles,
   Bot,
-  Layers,
-  Award,
-  Terminal,
   Search,
-  Rocket,
   FlaskConical,
   Briefcase,
   Lock,
@@ -39,8 +34,7 @@ import {
   type UniversityCourse,
 } from './courses-data'
 import { courseCheckoutUrl } from '@/lib/pay'
-import { SIGN_IN } from './funnel'
-import type { StudentSession } from '@/lib/auth'
+import { SIGN_IN_URL, type StudentSession } from '@/lib/auth'
 
 const ECOSYSTEM_LAYERS = [
   {
@@ -87,7 +81,7 @@ const SCHOOL_ICONS: Record<SchoolId, React.ComponentType<{ size?: number; color?
 
 interface CatalogProps {
   session?: StudentSession | null
-  showHero?: boolean
+  onSignOut?: () => void
 }
 
 function CourseCard({ course }: { course: UniversityCourse }) {
@@ -280,7 +274,7 @@ function CourseCard({ course }: { course: UniversityCourse }) {
   )
 }
 
-export default function Catalog({ session, showHero = true }: CatalogProps) {
+export default function Catalog({ session, onSignOut }: CatalogProps) {
   const [selectedAdventureId, setSelectedAdventureId] = useState<string>(ADVENTURE_PATHS[0].id)
   const [activeSchool, setActiveSchool] = useState<'all' | SchoolId>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -308,8 +302,72 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
 
   return (
     <>
-      {/* ── 0. TOP ANNOUNCEMENT BAR ── */}
-      {showHero && (
+      {/* ── 0. TOP BAR (SIGNED-IN WORKSPACE BANNER OR FREE AUTO 101 ANNOUNCEMENT) ── */}
+      {signedIn && session ? (
+        <Box
+          py={11}
+          px={16}
+          bg="rgba(16, 185, 129, 0.08)"
+          borderBottomWidth={1}
+          borderColor="rgba(16, 185, 129, 0.25)"
+          display="flex"
+          justify="center"
+          items="center"
+        >
+          <XStack items="center" justify="center" gap={12} flexWrap="wrap">
+            <XStack items="center" gap={8}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  backgroundColor: '#34d399',
+                  boxShadow: '0 0 8px rgba(52, 211, 153, 0.8)',
+                }}
+              />
+              <Text fontSize={13} color="rgba(255, 255, 255, 0.9)">
+                Signed in as <strong style={{ color: '#ffffff' }}>{session.name}</strong>
+                {session.handle ? ` (@${session.handle})` : ''}
+              </Text>
+            </XStack>
+            <a
+              href="https://hanzo.app/learn"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: 'var(--emerald-400)',
+                fontSize: '13px',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              <span>→ Open Learning Workspace on hanzo.app/learn</span>
+              <ExternalLink size={12} />
+            </a>
+            {onSignOut && (
+              <button
+                type="button"
+                onClick={onSignOut}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  borderRadius: '999px',
+                  padding: '3px 10px',
+                  color: 'rgba(255, 255, 255, 0.72)',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                }}
+              >
+                Sign out
+              </button>
+            )}
+          </XStack>
+        </Box>
+      ) : (
         <Box
           py={11}
           px={16}
@@ -355,56 +413,54 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
       )}
 
       {/* ── 1. HERO SECTION ── */}
-      {showHero && (
-        <Band pad={72} measure={1080} rule={false}>
-          <YStack items="center" gap={22} $platform-web={{ textAlign: 'center' }}>
-            <Eyebrow>HANZO UNIVERSITY — THE SCHOOL OF INTELLIGENCE ENGINEERING</Eyebrow>
-            <Title quiet={false}>Don&rsquo;t just learn AI. Build intelligence.</Title>
-            <Lede maxW={780}>
-              Learn to train models, engineer autonomous agents, conduct scientific research, secure infrastructure and build your own AI company.
-            </Lede>
+      <Band pad={72} measure={1080} rule={false}>
+        <YStack items="center" gap={22} $platform-web={{ textAlign: 'center' }}>
+          <Eyebrow>HANZO UNIVERSITY — THE SCHOOL OF INTELLIGENCE ENGINEERING</Eyebrow>
+          <Title quiet={false}>Don&rsquo;t just learn AI. Build intelligence.</Title>
+          <Lede maxW={780}>
+            Learn to train models, engineer autonomous agents, conduct scientific research, secure infrastructure and build your own AI company.
+          </Lede>
 
-            {/* Primary CTAs */}
-            <XStack justify="center" gap={12} mt={8} flexWrap="wrap">
-              <Action href="#schools" fill>
-                Explore courses
+          {/* Primary CTAs */}
+          <XStack justify="center" gap={12} mt={8} flexWrap="wrap">
+            <Action href="#schools" fill>
+              Explore courses
+            </Action>
+            <Action href="/continuous-improvement">
+              Start learning free →
+            </Action>
+            <Action href="https://hanzo.app/learn">
+              Open Learning Workspace ↗
+            </Action>
+            {signedIn ? null : (
+              <Action href={SIGN_IN_URL}>
+                Sign in
               </Action>
-              <Action href="/continuous-improvement">
-                Start learning free →
-              </Action>
-              <Action href="https://hanzo.app/learn">
-                Open Learning Workspace ↗
-              </Action>
-              {signedIn ? null : (
-                <Action href={SIGN_IN}>
-                  Sign in
-                </Action>
-              )}
-            </XStack>
+            )}
+          </XStack>
 
-            {/* 6 Discipline Chips */}
-            <XStack justify="center" gap={8} mt={12} flexWrap="wrap" maxW={900}>
-              {DISCIPLINE_CHIPS.map((chip) => (
-                <Chip key={chip} px={12} py={5} fontSize={12} fontFamily="$mono">
-                  {chip}
-                </Chip>
-              ))}
-            </XStack>
+          {/* 6 Discipline Chips */}
+          <XStack justify="center" gap={8} mt={12} flexWrap="wrap" maxW={900}>
+            {DISCIPLINE_CHIPS.map((chip) => (
+              <Chip key={chip} px={12} py={5} fontSize={12} fontFamily="$mono">
+                {chip}
+              </Chip>
+            ))}
+          </XStack>
 
-            {/* Tagline */}
-            <Text
-              fontFamily="$mono"
-              fontSize={13}
-              fontWeight="600"
-              color="rgba(255, 255, 255, 0.72)"
-              letterSpacing={0.4}
-              mt={4}
-            >
-              Real models. Real compute. Real experiments. Real skills.
-            </Text>
-          </YStack>
-        </Band>
-      )}
+          {/* Tagline */}
+          <Text
+            fontFamily="$mono"
+            fontSize={13}
+            fontWeight="600"
+            color="rgba(255, 255, 255, 0.72)"
+            letterSpacing={0.4}
+            mt={4}
+          >
+            Real models. Real compute. Real experiments. Real skills.
+          </Text>
+        </YStack>
+      </Band>
 
       {/* ── 2. FOUR INTERCONNECTED LAYERS BANNER ── */}
       <Band pad={32} measure={1240} rule={true}>
@@ -1081,8 +1137,8 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
               <Action href="/verify" fill>
                 Verify a Credential →
               </Action>
-              <Action href="/portal">
-                Open Student Portal
+              <Action href="https://hanzo.app/learn">
+                Open Learning Workspace ↗
               </Action>
             </YStack>
           </XStack>
@@ -1157,7 +1213,7 @@ export default function Catalog({ session, showHero = true }: CatalogProps) {
               Explore all 25 courses
             </Action>
             {signedIn ? null : (
-              <Action href={SIGN_IN}>
+              <Action href={SIGN_IN_URL}>
                 Sign in
               </Action>
             )}

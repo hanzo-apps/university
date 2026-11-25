@@ -21,8 +21,11 @@ export interface StudentSession {
   source: 'iam_token' | 'checkout' | 'manual'
 }
 
+/** Where a student signs in: Hanzo IAM through hanzo.ai, returning to hanzo.university. */
+export const SIGN_IN_URL = `https://hanzo.ai/login?next=${encodeURIComponent('https://hanzo.university/')}`
+
 /** Mapping of Hanzo billing plan IDs to University course slugs (or arrays of slugs for tracks) */
-export const PLAN_TO_COURSE_SLUGS: Record<string, string[]> = {
+const PLAN_TO_COURSE_SLUGS: Record<string, string[]> = {
   // Free foundation
   'course-auto-101': ['continuous-improvement'],
   // Intelligence Engineering
@@ -63,13 +66,8 @@ export const PLAN_TO_COURSE_SLUGS: Record<string, string[]> = {
   ...Object.fromEntries(CERTIFICATION_TRACKS.map((t) => [t.slug, t.courseSlugs])),
 }
 
-/** Legacy single-slug map preserved for backward compatibility */
-export const PLAN_TO_COURSE_SLUG: Record<string, string> = Object.fromEntries(
-  Object.entries(PLAN_TO_COURSE_SLUGS).map(([k, v]) => [k, v[0]])
-)
-
 /** Parse and validate JWT token claims without external dependencies */
-export function parseJwt(token: string): Record<string, any> | null {
+function parseJwt(token: string): Record<string, any> | null {
   try {
     const parts = token.trim().split('.')
     if (parts.length < 2) return null
@@ -88,7 +86,7 @@ export function parseJwt(token: string): Record<string, any> | null {
 }
 
 /** Format raw name or email username into human-readable Display Name */
-export function formatHumanName(raw: string): string {
+function formatHumanName(raw: string): string {
   if (!raw) return 'Student'
   const clean = raw.includes('@') ? raw.split('@')[0] : raw
   const spaced = clean.replace(/[._-]+/g, ' ').trim()
@@ -104,7 +102,7 @@ export function formatHumanName(raw: string): string {
  * Retrieve the list of courses explicitly enrolled / paid for by the student.
  * Stored in localStorage under `hanzo_portal_enrolled_courses`.
  */
-export function getStoredEnrolledCourses(): string[] {
+function getStoredEnrolledCourses(): string[] {
   if (typeof window === 'undefined') return []
   try {
     const raw = localStorage.getItem('hanzo_portal_enrolled_courses')
@@ -125,57 +123,6 @@ export function getStoredEnrolledCourses(): string[] {
     }
   } catch (_) {}
   return []
-}
-
-/** Record a newly paid / enrolled course in persistent student storage. */
-export function addEnrolledCourse(slug: string): string[] {
-  if (typeof window === 'undefined') return [slug]
-  try {
-    const current = getStoredEnrolledCourses()
-    if (UNIVERSITY_COURSES.some((c) => c.slug === slug)) {
-      const updated = current.includes(slug) ? current : [...current, slug]
-      localStorage.setItem('hanzo_portal_enrolled_courses', JSON.stringify(updated))
-      localStorage.setItem('hanzo_portal_selected_course', slug)
-      return updated
-    }
-    return current
-  } catch (_) {
-    return [slug]
-  }
-}
-
-/** Remove an enrolled course from persistent student storage. */
-export function removeEnrolledCourse(slug: string): string[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const current = getStoredEnrolledCourses()
-    const updated = current.filter((s) => s !== slug)
-    localStorage.setItem('hanzo_portal_enrolled_courses', JSON.stringify(updated))
-    return updated
-  } catch (_) {
-    return []
-  }
-}
-
-/**
- * Check if the student session has access to a specific course slug.
- * Free courses (e.g. AUTO 101 `continuous-improvement`) are unlocked for all authenticated students.
- */
-export function isUserEnrolledInCourse(session: StudentSession | null | undefined, slug: string): boolean {
-  const course = UNIVERSITY_COURSES.find((c) => c.slug === slug)
-  if (!session || !session.isAuthenticated) return false
-  if (course?.isFree) return true
-  if (session.isFullAccess) return true
-  return Array.isArray(session.enrolledClasses) && session.enrolledClasses.includes(slug)
-}
-
-/** Build the official Hanzo IAM login redirect URL */
-export function getHanzoLoginUrl(returnPath: string = '/portal'): string {
-  if (typeof window === 'undefined') {
-    return `https://hanzo.ai/login?next=${encodeURIComponent('https://hanzo.university' + returnPath)}`
-  }
-  const currentUrl = new URL(returnPath, window.location.origin).toString()
-  return `https://hanzo.ai/login?next=${encodeURIComponent(currentUrl)}`
 }
 
 /** Check and extract active student session from localStorage, URL params, or hash */

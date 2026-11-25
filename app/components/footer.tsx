@@ -108,11 +108,6 @@ export function Footer() {
               Master &amp; Ship · hanzo.app/learn ↗
             </Text>
           </a>
-          <Link href="/portal" style={{ textDecoration: 'none' }}>
-            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              Student Portal
-            </Text>
-          </Link>
           <Link href="/verify" style={{ textDecoration: 'none' }}>
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
               Verify W3C Credentials

@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Hero, Band, Card, Head } from '@/components/band'
-import { Box, Text, XStack, YStack } from '@/components/ui'
+import { Box, Text, XStack, YStack } from '@hanzo/ui'
 import { Action, Title, Lede, Eyebrow, Chip } from '@hanzo/ui/marketing'
 import { Grid } from '@hanzo/ui/grid'
 import {
@@ -17,7 +17,6 @@ import {
   Cpu,
   Bot,
   FileText,
-  Sparkles,
   Rocket,
 } from 'lucide-react'
 import {
@@ -46,7 +45,6 @@ export function CourseView({ course }: { course: UniversityCourse }) {
     }
   }, [course.slug, course.isFree])
 
-  const portalCourseUrl = `/portal?course=${course.slug}`
   const schoolPeers = UNIVERSITY_COURSES.filter((c) => c.school === course.school && c.slug !== course.slug).slice(0, 6)
   const relatedCourses =
     schoolPeers.length > 0
@@ -65,13 +63,9 @@ export function CourseView({ course }: { course: UniversityCourse }) {
         <Action href={course.learnWorkspaceUrl} fill>
           Launch Interactive Lab Workspace ↗
         </Action>
-        {course.isFree ? (
-          <Action href={portalCourseUrl}>
-            Open Free Course in Portal →
-          </Action>
-        ) : isEnrolled ? (
-          <Action href={portalCourseUrl}>
-            Already Enrolled · Open Student Portal →
+        {course.isFree || isEnrolled ? (
+          <Action href="#syllabus">
+            Explore Syllabus &amp; Labs ↓
           </Action>
         ) : (
           <Action href="#enroll">
@@ -272,15 +266,12 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                   </XStack>
 
                   <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={20}>
-                    Start immediately in the interactive learning workspace on hanzo.app/learn or open the course inside the Student Portal.
+                    Start immediately in the interactive learning workspace on hanzo.app/learn with live labs and AI Faculty mentors.
                   </Text>
 
                   <YStack gap="$2">
                     <Action href={course.learnWorkspaceUrl} fill>
                       Start Learning Free on hanzo.app/learn ↗
-                    </Action>
-                    <Action href={portalCourseUrl}>
-                      Open in Student Portal →
                     </Action>
                   </YStack>
                 </YStack>
@@ -293,14 +284,11 @@ export function CourseView({ course }: { course: UniversityCourse }) {
                     </Text>
                   </XStack>
                   <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={20}>
-                    Your Hanzo account has active access to {course.code}. Launch the interactive lab workspace or open your Student Portal workstation.
+                    Your Hanzo account has active access to {course.code}. Launch the interactive lab workspace directly on hanzo.app/learn.
                   </Text>
                   <YStack gap="$2">
                     <Action href={course.learnWorkspaceUrl} fill>
                       Launch Interactive Lab Workspace ↗
-                    </Action>
-                    <Action href={portalCourseUrl}>
-                      Open Student Portal →
                     </Action>
                   </YStack>
                 </YStack>
@@ -453,9 +441,6 @@ export function CourseView({ course }: { course: UniversityCourse }) {
               <Action href={course.learnWorkspaceUrl} fill>
                 Run {course.detailedLab.code} in Learning Workspace ↗
               </Action>
-              <Action href={portalCourseUrl}>
-                Preview in Student Portal →
-              </Action>
             </XStack>
           </YStack>
         </Band>
@@ -491,7 +476,7 @@ export function CourseView({ course }: { course: UniversityCourse }) {
       </Band>
 
       {/* ── Complete Module-by-Module Syllabus ── */}
-      <Band pad={48} measure={1180} rule={true}>
+      <Band id="syllabus" pad={48} measure={1180} rule={true}>
         <Head
           eyebrow="Curriculum Modules"
           title="Syllabus & Hands-On Labs"
@@ -593,9 +578,9 @@ export function CourseView({ course }: { course: UniversityCourse }) {
               <Action href={course.learnWorkspaceUrl} fill>
                 Launch Lab Workspace ↗
               </Action>
-              {course.isFree ? (
-                <Action href={portalCourseUrl}>
-                  Open Free in Portal →
+              {course.isFree || isEnrolled ? (
+                <Action href={`/verify?id=${course.credential}-2026-9821`}>
+                  Verify Credential Format →
                 </Action>
               ) : (
                 <Action href="#enroll">

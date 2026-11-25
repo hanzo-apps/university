@@ -5,11 +5,12 @@
 **Deployment:** Hanzo Forge Sites (`site.slug: university`, `out/` via `hanzo.yml`) & GitHub Pages (`CNAME: hanzo.university`)
 
 ## Key Routes
-- `/`: School of Intelligence Engineering home — hero, 4 interconnected layers banner, interactive "Choose Your Adventure / Which intelligence should you use?" selector, free `AUTO 101` spotlight, 25-course catalog across 4 schools + free foundation, 6 flagship certification tracks, transparent self-serve pricing, AI Faculty bots (`@Edu`, `@Sci`, `@Dev`, `@Cyber`, `@Data`, `@Doc`, `@QA`, `@Lang`), and honest W3C practical credential overview.
+- `/`: School of Intelligence Engineering catalog — signed-in workspace banner (`hanzo.app/learn`), hero, 4 interconnected layers banner, interactive "Choose Your Adventure / Which intelligence should you use?" selector, free `AUTO 101` spotlight, 25-course catalog across 4 schools + free foundation, 6 flagship certification tracks, transparent self-serve pricing, AI Faculty bots (`@Edu`, `@Sci`, `@Dev`, `@Cyber`, `@Data`, `@Doc`, `@QA`, `@Lang`), and honest W3C practical credential overview.
 - `/[slug]`: Dedicated static syllabus & enrollment pages for all 25 courses (including `KAI 301` 9-step Lab 01 on `POST /v1/capabilities/{name}/train`) with `CouponInput`, AI Faculty bots, canonical `docs.hanzo.ai` links, and `https://hanzo.app/learn/<slug>` workspace launch buttons.
-- `/checkout/[slug]`: Static checkout handoff pages to `hanzo.ai/pay` for all 25 courses, 6 certification tracks, and `membership` (University Pro bundled with Hanzo Pro).
-- `/portal`: Student Learning Workstation with Hanzo IAM session resolution, 25-course selector, sandbox shell, verification logs, and W3C credential export.
+- `/checkout/[slug]`: Static checkout handoff pages to `hanzo.ai/pay` (returning to `https://hanzo.app/learn/<slug>`) for all 25 courses, 6 certification tracks, and `membership` (University Pro bundled with Hanzo Pro).
+- `/portal`: Legacy redirect bridge to `https://hanzo.app/learn` (and `/portal?course=<slug>` → `https://hanzo.app/learn/<slug>`), keeping old bookmarks working with zero competing LMS layer.
 - `/verify`: Public W3C Verifiable Credential inspection & JSON-LD/SVG export (cryptographic proof of completed practical capstones & live artifacts; non-accredited professional certifications).
+- `/catalog.json`: Machine-readable canonical catalog (25 courses, 4 schools + foundation, 6 tracks, 7 adventure paths, 8 AI Faculty bots) generated at build time by `scripts/export-catalog.mjs` from `app/courses-data.ts`.
 
 ## Design & UI Tokens
 - Substrate: `@hanzo/ui` on `@hanzo/gui` primitives.
