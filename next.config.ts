@@ -8,6 +8,7 @@ const web = [".web.tsx", ".web.ts", ".web.jsx", ".web.js"];
 
 const nextConfig: NextConfig = {
   output: "export",
+  trailingSlash: true,
   transpilePackages: ["@hanzo/gui", "@hanzo/ui", "@hanzogui/shell", "react-native-web"],
   images: {
     unoptimized: true,

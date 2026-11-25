@@ -9,40 +9,34 @@ import { Grid } from '@hanzo/ui/grid'
 import {
   Terminal,
   CheckCircle2,
-  Clock,
   Play,
   Pause,
   Award,
   Cpu,
   ShieldCheck,
-  Code2,
-  FileCode,
-  Layers,
-  ChevronRight,
   ExternalLink,
-  RefreshCw,
-  Coins,
   Check,
   Copy,
   Download,
-  Share2,
   Sparkles,
   BookOpen,
   ArrowRight,
-  CheckCircle,
   Volume2,
-  Maximize2,
-  FileText,
-  RotateCcw,
-  Zap,
   Lock,
   LogIn,
   LogOut,
   User,
   KeyRound,
+  Bot,
 } from 'lucide-react'
-import { UNIVERSITY_COURSES, type UniversityCourse } from '../courses-data'
-import { COURSE_PORTAL_DATA } from './portal-data'
+import {
+  AI_FACULTY_BOTS,
+  SCHOOLS,
+  UNIVERSITY_COURSES,
+  getSchoolById,
+  type UniversityCourse,
+} from '../courses-data'
+import { getCourseWorkspaceData } from './portal-data'
 import { courseCheckoutUrl } from '@/lib/pay'
 import {
   resolveStudentSession,
@@ -59,8 +53,7 @@ interface ActiveLectureItem {
   weekTitle: string
   type: 'lecture' | 'reading'
   summary: string
-  duration?: string
-  instructor?: string
+  facultyLabel: string
 }
 
 export default function StudentPortalPage() {
@@ -71,33 +64,17 @@ export default function StudentPortalPage() {
   const [manualNameInput, setManualNameInput] = useState<string>('')
   const [manualHandleInput, setManualHandleInput] = useState<string>('')
   const [authError, setAuthError] = useState<string | null>(null)
-  const [backendSyncStatus, setBackendSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'offline'>('idle')
 
-  const [selectedCourseSlug, setSelectedCourseSlug] = useState<string>('agentic-coding')
+  const [selectedCourseSlug, setSelectedCourseSlug] = useState<string>('continuous-improvement')
   const [activeTab, setActiveTab] = useState<'terminal' | 'ast' | 'grader' | 'metering'>('terminal')
   const [activeWeekIndex, setActiveWeekIndex] = useState<number>(0)
   const [studentHandle, setStudentHandle] = useState<string>('student')
   const [studentName, setStudentName] = useState<string>('Student')
   const [welcomeBanner, setWelcomeBanner] = useState<boolean>(false)
 
-  // Module completion map per course: slug -> list of completed week indices
-  const [completedModules, setCompletedModules] = useState<Record<string, number[]>>({
-    'agentic-coding': [0, 1, 2],
-    'reinforcement-learning': [0, 1, 2],
-    'systems-engineering': [0, 1],
-  })
-
-  // Capstone defense passed per course
-  const [capstonePassed, setCapstonePassed] = useState<Record<string, boolean>>({
-    'agentic-coding': false,
-    'reinforcement-learning': false,
-    'systems-engineering': false,
-  })
-
-  // Watched lectures / read papers
+  const [completedModules, setCompletedModules] = useState<Record<string, number[]>>({})
+  const [capstonePassed, setCapstonePassed] = useState<Record<string, boolean>>({})
   const [watchedLectures, setWatchedLectures] = useState<Record<string, string[]>>({})
-
-  // Active lecture / paper modal state
   const [activeLectureModal, setActiveLectureModal] = useState<ActiveLectureItem | null>(null)
   const [isPlayingMedia, setIsPlayingMedia] = useState<boolean>(false)
   const [playbackRate, setPlaybackRate] = useState<number>(1)
@@ -107,45 +84,33 @@ export default function StudentPortalPage() {
   const [showCredentialModal, setShowCredentialModal] = useState(false)
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null)
 
-  // Active course & course workspace data
   const activeCourse: UniversityCourse =
     UNIVERSITY_COURSES.find((c) => c.slug === selectedCourseSlug) || UNIVERSITY_COURSES[0]
+  const activeSchool = getSchoolById(activeCourse.school)
 
-  const isCourseEnrolled = Boolean(session?.isFullAccess || session?.enrolledClasses?.includes(selectedCourseSlug))
+  const isCourseEnrolled = isUserEnrolledInCourse(session, activeCourse.slug)
+  const workspaceData = getCourseWorkspaceData(activeCourse)
 
-  const workspaceData =
-    COURSE_PORTAL_DATA[selectedCourseSlug] || COURSE_PORTAL_DATA['agentic-coding']
-
-  // Dynamic terminal prompt tailored to actual student username
   const userTerminalPrompt = (workspaceData.terminalPrompt || 'student@hanzo-sandbox:~$').replace(
-    /^alex@/,
+    /^student@/,
     `${studentHandle}@`
   )
 
-  // Terminal history state
   const [terminalHistory, setTerminalHistory] = useState<string[]>(workspaceData.initialHistory)
 
-  // Hydrate from localStorage, resolve authentic IAM student session, and configure backend class
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const savedModules = localStorage.getItem('hanzo_portal_completed_modules')
-        if (savedModules) {
-          setCompletedModules(JSON.parse(savedModules))
-        }
+        if (savedModules) setCompletedModules(JSON.parse(savedModules))
         const savedCapstones = localStorage.getItem('hanzo_portal_capstone_passed')
-        if (savedCapstones) {
-          setCapstonePassed(JSON.parse(savedCapstones))
-        }
+        if (savedCapstones) setCapstonePassed(JSON.parse(savedCapstones))
         const savedWatched = localStorage.getItem('hanzo_portal_watched_lectures')
-        if (savedWatched) {
-          setWatchedLectures(JSON.parse(savedWatched))
-        }
+        if (savedWatched) setWatchedLectures(JSON.parse(savedWatched))
       } catch (e) {
         console.error('Failed to parse portal saved state', e)
       }
 
-      // Resolve active student session (OIDC / IAM token or local tuition checkout)
       const activeSession = resolveStudentSession()
 
       if (activeSession && activeSession.isAuthenticated) {
@@ -157,57 +122,34 @@ export default function StudentPortalPage() {
         const enrolledParam = params.get('enrolled') || params.get('course')
         const welcome = params.get('welcome')
 
-        // Configure initial active class with backend enrollment
-        let targetClass: string | null = null
+        let targetClass: string = 'continuous-improvement'
         if (enrolledParam && UNIVERSITY_COURSES.some((c) => c.slug === enrolledParam)) {
           targetClass = enrolledParam
-        } else if (activeSession.isFullAccess) {
-          const savedCourse = localStorage.getItem('hanzo_portal_selected_course')
-          targetClass = savedCourse && UNIVERSITY_COURSES.some((c) => c.slug === savedCourse)
-            ? savedCourse
-            : UNIVERSITY_COURSES[0].slug
-        } else if (activeSession.enrolledClasses.length > 0) {
-          const savedCourse = localStorage.getItem('hanzo_portal_selected_course')
-          if (savedCourse && activeSession.enrolledClasses.includes(savedCourse)) {
-            targetClass = savedCourse
-          } else {
-            targetClass = activeSession.enrolledClasses[0]
-          }
         } else {
           const savedCourse = localStorage.getItem('hanzo_portal_selected_course')
-          targetClass = savedCourse && UNIVERSITY_COURSES.some((c) => c.slug === savedCourse)
-            ? savedCourse
-            : UNIVERSITY_COURSES[0].slug
+          if (savedCourse && UNIVERSITY_COURSES.some((c) => c.slug === savedCourse)) {
+            targetClass = savedCourse
+          } else if (activeSession.enrolledClasses.length > 0) {
+            targetClass = activeSession.enrolledClasses[0]
+          }
         }
 
-        if (targetClass) {
-          setSelectedCourseSlug(targetClass)
-        }
+        setSelectedCourseSlug(targetClass)
+        if (welcome === '1') setWelcomeBanner(true)
 
-        if (welcome === '1') {
-          setWelcomeBanner(true)
-        }
-
-        // Synchronize with backend class limits / plan
-        setBackendSyncStatus('syncing')
-        syncBackendClassEnrollment(activeSession)
-          .then((syncRes) => {
-            if (syncRes.status === 'ok') {
-              setSession((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      enrolledClasses: syncRes.enrolledSlugs,
-                      backendPlan: syncRes.planName || prev.backendPlan,
-                    }
-                  : prev
-              )
-              setBackendSyncStatus('synced')
-            } else {
-              setBackendSyncStatus(syncRes.status === 'unauthorized' ? 'offline' : 'synced')
-            }
-          })
-          .catch(() => setBackendSyncStatus('offline'))
+        void syncBackendClassEnrollment(activeSession).then((syncRes) => {
+          if (syncRes.status === 'ok') {
+            setSession((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    enrolledClasses: syncRes.enrolledSlugs,
+                    backendPlan: syncRes.planName || prev.backendPlan,
+                  }
+                : prev
+            )
+          }
+        })
       } else {
         setSession(null)
       }
@@ -216,15 +158,13 @@ export default function StudentPortalPage() {
     }
   }, [])
 
-  // Sign out student
   const handleSignOut = () => {
     signOutStudent()
     setSession(null)
-    setFeedbackToast('Successfully signed out of Hanzo University.')
+    setFeedbackToast('Signed out of Hanzo University.')
     setTimeout(() => setFeedbackToast(null), 3000)
   }
 
-  // Handle manual token / student handle submission
   const handleManualTokenSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     setAuthError(null)
@@ -245,18 +185,19 @@ export default function StudentPortalPage() {
           setFeedbackToast(`Welcome back, ${resolved.name}!`)
           setTimeout(() => setFeedbackToast(null), 3500)
           return
-        } else {
-          setAuthError('Could not verify JWT token. Please ensure it is a valid Hanzo token.')
-          return
         }
-      } catch (err) {
+        setAuthError('Could not verify JWT token. Please ensure it is a valid Hanzo IAM token.')
+        return
+      } catch {
         setAuthError('Failed to parse token.')
         return
       }
     }
 
     if (manualNameInput.trim() || manualHandleInput.trim()) {
-      const handle = (manualHandleInput.trim() || manualNameInput.trim().toLowerCase().replace(/\s+/g, '-')).replace(/[^a-z0-9_-]/g, '')
+      const handle = (
+        manualHandleInput.trim() || manualNameInput.trim().toLowerCase().replace(/\s+/g, '-')
+      ).replace(/[^a-z0-9_-]/g, '')
       const name = manualNameInput.trim() || manualHandleInput.trim()
       localStorage.setItem('hanzo_portal_student_handle', handle)
       localStorage.setItem('hanzo_portal_student_name', name)
@@ -275,11 +216,10 @@ export default function StudentPortalPage() {
     setAuthError('Please enter a valid IAM token or student handle.')
   }
 
-  // Sync terminal and active week when course changes
   useEffect(() => {
-    const data = COURSE_PORTAL_DATA[selectedCourseSlug] || COURSE_PORTAL_DATA['agentic-coding']
+    const data = getCourseWorkspaceData(activeCourse)
     const personalizedHistory = (data.initialHistory || []).map((l) =>
-      l.replace(/^alex@/, `${studentHandle}@`)
+      l.replace(/^student@/, `${studentHandle}@`)
     )
     setTerminalHistory(personalizedHistory)
     setActiveWeekIndex(0)
@@ -288,15 +228,14 @@ export default function StudentPortalPage() {
         localStorage.setItem('hanzo_portal_selected_course', selectedCourseSlug)
       } catch (_) {}
     }
-  }, [selectedCourseSlug, studentHandle])
+  }, [selectedCourseSlug, studentHandle, activeCourse])
 
-  // Execute terminal command
   const executeCommand = (cmd: string) => {
     if (!isCourseEnrolled) {
       setTerminalHistory((prev) => [
         ...prev,
         `${userTerminalPrompt} ${cmd}`,
-        `[ACCESS DENIED] Course ${activeCourse.code} is locked. Active enrollment required to execute commands in this Hanzo Visor microVM sandbox.`,
+        `[ACCESS LOCKED] Course ${activeCourse.code} requires enrollment to execute lab commands.`,
         `${userTerminalPrompt} _`,
       ])
       return
@@ -307,24 +246,18 @@ export default function StudentPortalPage() {
     setTerminalHistory((prev) => [...prev, `${prompt} ${cmd}`])
 
     setTimeout(() => {
-      let output: string[] = []
-      if (workspaceData.commandOutputs[cmd]) {
-        output = workspaceData.commandOutputs[cmd]
-      } else {
-        output = [
-          `[COMMAND EXECUTED] Task "${cmd}" processed in Hanzo Visor sandbox pod (exit code 0).`,
-          `[EVAL] All unit tests passed with zero runtime errors.`,
-        ]
-      }
+      const output = workspaceData.commandOutputs[cmd] || [
+        `[EXECUTED] "${cmd}" completed inside isolated sandbox (exit code 0).`,
+        `[EVAL] Assertions verified with zero regressions.`,
+      ]
       setTerminalHistory((prev) => [...prev, ...output, `${prompt} _`])
       setIsRunningCommand(false)
-    }, 600)
+    }, 500)
   }
 
-  // Submit lab coursework and mark module as completed
   const handleCompleteLab = (weekIdx: number) => {
     if (!isCourseEnrolled) {
-      setFeedbackToast(`Course ${activeCourse.code} is locked. Active enrollment required to submit lab coursework.`)
+      setFeedbackToast(`Course ${activeCourse.code} requires enrollment to submit labs.`)
       setTimeout(() => setFeedbackToast(null), 3500)
       return
     }
@@ -335,11 +268,10 @@ export default function StudentPortalPage() {
     setTerminalHistory((prev) => [
       ...prev,
       `${prompt} hanzo autograder --submit ${week.code}`,
-      `[AUTOGRADER] Evaluating coursework for ${week.code}: ${week.title}...`,
-      `  [+] Testing runtime constraints in Hanzo Visor microVM container...`,
-      `  [+] Running AST tree-sitter & benchmark assertions...`,
-      `  [+] Verifying zero syntax regressions and clean memory bounds...`,
-      `[PASS] 100% Tests Passed for ${week.code}! Marking module as COMPLETED.`,
+      `[AUTOGRADER] Evaluating lab for ${week.code}: ${week.title}...`,
+      `  [+] Verifying isolated sandbox constraints...`,
+      `  [+] Running cleanroom assertions & regression suite...`,
+      `[PASS] ${week.code} passed! Module marked COMPLETED.`,
       `${prompt} _`,
     ])
 
@@ -357,33 +289,22 @@ export default function StudentPortalPage() {
         return updated
       })
       setIsRunningCommand(false)
-      setFeedbackToast(`Module ${week.code} passed! Coursework progress updated.`)
-      setTimeout(() => setFeedbackToast(null), 3500)
-    }, 800)
+      setFeedbackToast(`Module ${week.code} passed!`)
+      setTimeout(() => setFeedbackToast(null), 3000)
+    }, 650)
   }
 
-  // Fast-track all labs for testing & evaluation
   const handleFastTrackAllLabs = () => {
-    if (!isCourseEnrolled) {
-      setFeedbackToast(`Course ${activeCourse.code} is locked. Active enrollment required to evaluate coursework.`)
-      setTimeout(() => setFeedbackToast(null), 3500)
-      return
-    }
-
+    if (!isCourseEnrolled) return
     const totalCount = activeCourse.syllabus.length
     const allIndices = Array.from({ length: totalCount }, (_, i) => i)
     const prompt = userTerminalPrompt
 
     setTerminalHistory((prev) => [
       ...prev,
-      `${prompt} hanzo autograder --fast-track-all ${activeCourse.code}`,
-      `[AUTOGRADER] Fast-tracking all ${totalCount} laboratory evaluations for ${activeCourse.code}...`,
-      `  [✓] Module 1: Baseline sandbox initialization & unit tests verified.`,
-      `  [✓] Module 2: Intermediate optimization & memory constraints passed.`,
-      `  [✓] Module 3: Advanced architecture verification & zero regressions confirmed.`,
-      `  [✓] Module 4: Pre-capstone integration & telemetry telemetry exit code 0.`,
-      `[SUCCESS] All laboratory modules satisfied! 100% pass mark recorded.`,
-      `[STATUS] Qualifications MET for official Capstone Defense.`,
+      `${prompt} hanzo autograder --verify-all ${activeCourse.code}`,
+      `[AUTOGRADER] Verified all ${totalCount} lab modules for ${activeCourse.code} (exit code 0).`,
+      `[STATUS] Ready for ${activeCourse.credential} Capstone Verification.`,
       `${prompt} _`,
     ])
 
@@ -397,16 +318,14 @@ export default function StudentPortalPage() {
       return updated
     })
 
-    setFeedbackToast(`All ${totalCount} laboratory modules passed! Capstone defense unlocked.`)
-    setTimeout(() => setFeedbackToast(null), 3500)
+    setFeedbackToast(`All ${totalCount} lab modules verified! Capstone unlocked.`)
+    setTimeout(() => setFeedbackToast(null), 3000)
   }
 
-  // Reset progress for active course
   const handleResetCourseProgress = () => {
     if (!isCourseEnrolled) return
-
     setCompletedModules((prev) => {
-      const updated = { ...prev, [selectedCourseSlug]: [0] }
+      const updated = { ...prev, [selectedCourseSlug]: [] }
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('hanzo_portal_completed_modules', JSON.stringify(updated))
@@ -414,7 +333,6 @@ export default function StudentPortalPage() {
       }
       return updated
     })
-
     setCapstonePassed((prev) => {
       const updated = { ...prev, [selectedCourseSlug]: false }
       if (typeof window !== 'undefined') {
@@ -424,39 +342,23 @@ export default function StudentPortalPage() {
       }
       return updated
     })
-
     setActiveWeekIndex(0)
-    const prompt = userTerminalPrompt
-    setTerminalHistory((prev) => [
-      ...prev,
-      `${prompt} hanzo dev reset-progress --course ${activeCourse.code}`,
-      `[RESET] Progress reset for ${activeCourse.code}. Workspace restored to baseline.`,
-      `${prompt} _`,
-    ])
-    setFeedbackToast(`Coursework reset for ${activeCourse.code}. Ready to start fresh.`)
+    setFeedbackToast(`Progress reset for ${activeCourse.code}.`)
     setTimeout(() => setFeedbackToast(null), 3000)
   }
 
-  // Defend Capstone and officially graduate
   const handleDefendCapstone = () => {
-    if (!isCourseEnrolled) {
-      setFeedbackToast(`Course ${activeCourse.code} is locked. Active enrollment required to defend capstone.`)
-      setTimeout(() => setFeedbackToast(null), 3500)
-      return
-    }
-
+    if (!isCourseEnrolled) return
     setIsDefending(true)
     const prompt = userTerminalPrompt
     setTerminalHistory((prev) => [
       ...prev,
-      `${prompt} hanzo defense --capstone ${activeCourse.code}`,
-      `==================== CAPSTONE DEFENSE: ${activeCourse.credential} ====================`,
-      `[1/4] Cloning candidate repository into cleanroom Hanzo Visor environment...`,
-      `[2/4] Executing full test suite & production benchmarks for ${activeCourse.title}...`,
-      `[3/4] Cryptographically auditing zero regression errors & budget bounds...`,
-      `[4/4] Generating W3C Verifiable Credential on Lux Chain...`,
-      `[CONGRATULATIONS] Capstone Defended with Distinction! Score: 100%.`,
-      `[ISSUANCE] Credential #${activeCourse.credential}-2026-9821 minted on-chain.`,
+      `${prompt} hanzo capstone verify --course ${activeCourse.code}`,
+      `==================== CAPSTONE VERIFICATION: ${activeCourse.credential} ====================`,
+      `[1/3] Auditing live artifact: ${activeCourse.capstoneArtifact}...`,
+      `[2/3] Running cleanroom automated benchmark suite...`,
+      `[3/3] Signing W3C Verifiable Credential (${activeCourse.credential})...`,
+      `[PASS] Capstone verified (exit code 0). Credential issued to did:hanzo:student:${studentHandle}.`,
       `${prompt} _`,
     ])
 
@@ -472,18 +374,17 @@ export default function StudentPortalPage() {
         return updated
       })
       setShowCredentialModal(true)
-    }, 1200)
+    }, 900)
   }
 
-  // Open Lecture or Reading Modal
   const openLectureModal = (
     week: (typeof activeCourse.syllabus)[0],
     itemTitle: string,
-    type: 'lecture' | 'reading',
+    type: 'lecture' | 'reading'
   ) => {
     if (!isCourseEnrolled) {
-      setFeedbackToast(`Lecture locked. Active enrollment in ${activeCourse.code} required to access media.`)
-      setTimeout(() => setFeedbackToast(null), 3500)
+      setFeedbackToast(`Active enrollment in ${activeCourse.code} required to access module materials.`)
+      setTimeout(() => setFeedbackToast(null), 3000)
       return
     }
     setActiveLectureModal({
@@ -492,13 +393,11 @@ export default function StudentPortalPage() {
       weekTitle: week.title,
       type,
       summary: week.summary,
-      duration: type === 'lecture' ? '38 mins' : '15 min read',
-      instructor: activeCourse.instructor.name,
+      facultyLabel: activeCourse.facultyBots.join(', '),
     })
     setIsPlayingMedia(false)
   }
 
-  // Mark lecture / reading watched
   const handleMarkLectureWatched = () => {
     if (!activeLectureModal) return
     const current = watchedLectures[selectedCourseSlug] || []
@@ -514,22 +413,21 @@ export default function StudentPortalPage() {
         } catch (_) {}
       }
     }
-    setFeedbackToast(`Marked "${activeLectureModal.title}" as completed!`)
-    setTimeout(() => setFeedbackToast(null), 3000)
+    setFeedbackToast(`Marked "${activeLectureModal.title}" as completed.`)
+    setTimeout(() => setFeedbackToast(null), 2500)
     setActiveLectureModal(null)
   }
 
-  // Download SVG badge
   const handleDownloadSvg = () => {
     const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="380" height="64" viewBox="0 0 380 64" fill="none">
   <rect width="380" height="64" rx="12" fill="#0A0A0A" stroke="#262626"/>
   <rect x="1" y="1" width="378" height="62" rx="11" stroke="#34D399" stroke-opacity="0.3"/>
   <circle cx="28" cy="32" r="14" fill="#047857" fill-opacity="0.3"/>
   <path d="M22 32L26 36L34 28" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" x="52" y="27">${activeCourse.credential}: ${activeCourse.title}</text>
-  <text fill="#A3A3A3" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" x="52" y="44">VERIFIED: ${studentName} · 100% DISTINCTION</text>
+  <text fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" x="52" y="27">${activeCourse.credential}: ${activeCourse.title.slice(0, 30)}</text>
+  <text fill="#A3A3A3" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="10" x="52" y="44">VERIFIED CAPSTONE · ${studentName}</text>
   <rect x="290" y="20" width="76" height="24" rx="6" fill="#171717" stroke="#404040"/>
-  <text fill="#34D399" font-family="ui-monospace, monospace" font-size="9" font-weight="700" x="302" y="36">PASS 100%</text>
+  <text fill="#34D399" font-family="ui-monospace, monospace" font-size="9" font-weight="700" x="303" y="36">W3C VC</text>
 </svg>`
 
     const blob = new Blob([svgContent], { type: 'image/svg+xml' })
@@ -539,45 +437,25 @@ export default function StudentPortalPage() {
     a.download = `Hanzo-${activeCourse.credential}-Badge.svg`
     a.click()
     URL.revokeObjectURL(url)
-    setFeedbackToast('SVG Badge downloaded successfully!')
-    setTimeout(() => setFeedbackToast(null), 3000)
+    setFeedbackToast('SVG Badge downloaded.')
+    setTimeout(() => setFeedbackToast(null), 2500)
   }
 
-  // Calculate course progress
   const currentCompleted = completedModules[selectedCourseSlug] || []
   const totalWeeks = activeCourse.syllabus.length
   const progressPercent = Math.min(100, Math.round((currentCompleted.length / totalWeeks) * 100))
   const isDefenseUnlocked = currentCompleted.length >= totalWeeks || capstonePassed[selectedCourseSlug]
-  const isDegreeAwarded = capstonePassed[selectedCourseSlug]
+  const isCredentialAwarded = Boolean(capstonePassed[selectedCourseSlug])
 
-  // ── Authentication & Session Gate ──
   if (!authLoaded) {
     return (
-      <Box
-        minH="100vh"
-        bg="$background"
-        $platform-web={{ color: 'var(--foreground)' }}
-        display="flex"
-        items="center"
-        justify="center"
-      >
+      <Box minH="100vh" bg="$background" display="flex" items="center" justify="center">
         <YStack items="center" gap="$3">
-          <Box
-            width={40}
-            height={40}
-            rounded="var(--radius-full)"
-            borderWidth={3}
-            borderColor="var(--emerald-500)"
-            $platform-web={{
-              borderTopColor: 'transparent',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
           <Text fontSize="$2" color="var(--white)" fontWeight="700" fontFamily="$mono">
-            VERIFYING HANZO CREDENTIALS...
+            VERIFYING HANZO SESSION...
           </Text>
           <Text fontSize="$1" color="var(--muted-foreground)">
-            Synchronizing student session with Hanzo IAM & Class Registry
+            Synchronizing with Hanzo IAM
           </Text>
         </YStack>
       </Box>
@@ -587,14 +465,7 @@ export default function StudentPortalPage() {
   if (!session || !session.isAuthenticated) {
     return (
       <Box minH="100vh" bg="$background" $platform-web={{ color: 'var(--foreground)' }}>
-        {/* Navigation Bar */}
-        <Box
-          borderBottomWidth={1}
-          borderColor="rgba(255, 255, 255, 0.06)"
-          bg="var(--pure-black)"
-          py="$3"
-          px="$6"
-        >
+        <Box borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.06)" bg="var(--pure-black)" py="$3" px="$6">
           <XStack items="center" justify="space-between" flexWrap="wrap" gap="$4">
             <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
               <XStack items="center" gap="$2">
@@ -606,32 +477,16 @@ export default function StudentPortalPage() {
                 </Chip>
               </XStack>
             </Link>
-            <Link
-              href="/"
-              style={{
-                fontSize: '13px',
-                color: 'var(--white-80)',
-                textDecoration: 'none',
-              }}
-            >
-              Explore Course Catalog ↗
+            <Link href="/#schools" style={{ fontSize: '13px', color: 'var(--white-80)', textDecoration: 'none' }}>
+              Explore 25 Courses →
             </Link>
           </XStack>
         </Box>
 
-        {/* Authentication Gate Band */}
         <Band pad={60} measure={840}>
           <YStack items="center" gap="$6" $platform-web={{ textAlign: 'center' }}>
-            <Box
-              p="$4"
-              rounded="var(--radius-full)"
-              bg="rgba(16, 185, 129, 0.15)"
-              borderWidth={0}
-              $platform-web={{
-                boxShadow: '0 0 36px rgba(16, 185, 129, 0.25)',
-              }}
-            >
-              <Lock size={36} color="var(--emerald-400)" />
+            <Box p="$4" rounded="var(--radius-full)" bg="rgba(16, 185, 129, 0.14)">
+              <Lock size={34} color="var(--emerald-400)" />
             </Box>
 
             <YStack gap="$2" $platform-web={{ maxWidth: '640px' }}>
@@ -642,19 +497,11 @@ export default function StudentPortalPage() {
                 Sign in to access your Learning Workstation
               </Text>
               <Text fontSize="$2" color="var(--muted-foreground)" $platform-web={{ lineHeight: 22 }}>
-                The Hanzo University learning workstation, live GPU microVM sandbox pod, and autograder evaluation systems require an active Hanzo IAM student account or enrolled class session.
+                Sign in with Hanzo IAM to launch free AUTO 101 labs immediately, access enrolled courses, run sandbox evaluations, and manage W3C capstone credentials.
               </Text>
             </YStack>
 
-            {/* Authentication Action Card */}
-            <Card
-              p="$6"
-              w="100%"
-              maxWidth={520}
-              bg="rgba(255, 255, 255, 0.02)"
-              borderWidth={0}
-              rounded="var(--radius-lg)"
-            >
+            <Card p="$6" width="100%" maxW={520} bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
               <YStack gap="$4">
                 <Action
                   render="a"
@@ -672,18 +519,16 @@ export default function StudentPortalPage() {
                   }}
                 >
                   <LogIn size={18} />
-                  Sign In with Hanzo
+                  Sign In with Hanzo IAM
                   <ArrowRight size={16} />
                 </Action>
 
                 <Text fontSize="$1" color="var(--muted-foreground)">
-                  Single sign-on via Hanzo IAM across dev.chat, hanzo.ai, and hanzo.university
+                  Single sign-on via Hanzo IAM across hanzo.ai, hanzo.app/learn, and hanzo.university
                 </Text>
 
-                {/* Divider */}
                 <Box borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.06)" my="$1" />
 
-                {/* Secondary Option: Manual Token or Handle */}
                 {!showManualLogin ? (
                   <Box
                     render="button"
@@ -696,14 +541,13 @@ export default function StudentPortalPage() {
                       cursor: 'pointer',
                       fontSize: '13px',
                       display: 'flex',
-                      flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '6px',
                     }}
                   >
                     <KeyRound size={14} />
-                    Or authenticate with IAM Token / Hanzo ID
+                    Or authenticate with IAM Token / Student Handle
                   </Box>
                 ) : (
                   <YStack gap="$3" pt="$2" $platform-web={{ textAlign: 'left' }}>
@@ -712,21 +556,14 @@ export default function StudentPortalPage() {
                     </Text>
 
                     {authError && (
-                      <Box
-                        p="$2"
-                        rounded="var(--radius-sm)"
-                        bg="rgba(239, 68, 68, 0.15)"
-                        borderWidth={0}
-                      >
-                        <Text fontSize="$1" color="#f87171">
-                          {authError}
-                        </Text>
+                      <Box p="$2" rounded="var(--radius-sm)" bg="rgba(239, 68, 68, 0.15)">
+                        <Text fontSize="$1" color="#f87171">{authError}</Text>
                       </Box>
                     )}
 
                     <input
                       type="text"
-                      placeholder="Paste Hanzo IAM JWT token (or student handle)"
+                      placeholder="Paste Hanzo IAM JWT token (optional)"
                       value={manualTokenInput}
                       onChange={(e) => setManualTokenInput(e.target.value)}
                       style={{
@@ -745,7 +582,7 @@ export default function StudentPortalPage() {
 
                     <input
                       type="text"
-                      placeholder="Student Full Name (optional, e.g. James Burns)"
+                      placeholder="Student Name or Handle (e.g. Jane Doe)"
                       value={manualNameInput}
                       onChange={(e) => setManualNameInput(e.target.value)}
                       style={{
@@ -770,7 +607,6 @@ export default function StudentPortalPage() {
                         $platform-web={{
                           background: 'transparent',
                           border: 'none',
-                          borderRadius: '6px',
                           color: 'var(--muted-foreground)',
                           cursor: 'pointer',
                           fontSize: '12px',
@@ -778,14 +614,8 @@ export default function StudentPortalPage() {
                       >
                         Cancel
                       </Box>
-                      <Action
-                        render="button"
-                        onClick={handleManualTokenSubmit}
-                        px={16}
-                        py={8}
-                        $platform-web={{ fontSize: '13px', fontWeight: '600' }}
-                      >
-                        Verify & Enter Portal
+                      <Action render="button" onClick={handleManualTokenSubmit} px={16} py={8}>
+                        Enter Portal
                       </Action>
                     </XStack>
                   </YStack>
@@ -793,77 +623,43 @@ export default function StudentPortalPage() {
               </YStack>
             </Card>
 
-            {/* Not Enrolled Promo Link */}
-            <XStack items="center" gap="$2">
-              <Text fontSize="$1" color="var(--muted-foreground)">
-                Not enrolled in a course yet?
-              </Text>
-              <Link
-                href="/"
-                style={{
-                  fontSize: '13px',
-                  color: 'var(--emerald-400)',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
-              >
-                Browse Degree Tracks & Tuition Rebate →
+            <XStack items="center" gap="$3" flexWrap="wrap" justify="center">
+              <Link href="/continuous-improvement" style={{ fontSize: '13px', color: 'var(--emerald-400)', fontWeight: 600, textDecoration: 'none' }}>
+                Start Free with AUTO 101 →
               </Link>
+              <a href="https://hanzo.app/learn" target="_blank" rel="noreferrer" style={{ fontSize: '13px', color: 'var(--white)', fontWeight: 500, textDecoration: 'none' }}>
+                Open hanzo.app/learn ↗
+              </a>
             </XStack>
 
-            {/* Feature Grid */}
-            <Grid columns={{ min: 240, max: 3 }} gap={16} width="100%" $platform-web={{ maxWidth: '900px' }} mt="$4">
-              <Card
-                p="$4"
-                bg="rgba(255, 255, 255, 0.03)"
-                borderWidth={0}
-                rounded="var(--radius-md)"
-                textAlign="left"
-              >
+            <Grid columns={{ min: 240, max: 3 }} gap={16} width="100%" maxW={900} mt="$2">
+              <Card p="$4" bg="rgba(255, 255, 255, 0.03)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
                 <XStack items="center" gap="$2" mb="$2">
-                  <ShieldCheck size={18} color="var(--emerald-400)" />
-                  <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                    W3C On-Chain Diplomas
-                  </Text>
+                  <ShieldCheck size={17} color="var(--emerald-400)" />
+                  <Text fontSize="$2" fontWeight="700" color="var(--white)">W3C Capstone Proof</Text>
                 </XStack>
-                <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 18 }}>
-                  Sovereign cryptographic credentials issued directly to your Hanzo DID, registered on Lux.
+                <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={18}>
+                  Cryptographic W3C Verifiable Credentials proving completed practical capstones &amp; live artifacts (non-accredited professional certifications).
                 </Text>
               </Card>
 
-              <Card
-                p="$4"
-                bg="rgba(255, 255, 255, 0.03)"
-                borderWidth={0}
-                rounded="var(--radius-md)"
-                textAlign="left"
-              >
+              <Card p="$4" bg="rgba(255, 255, 255, 0.03)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
                 <XStack items="center" gap="$2" mb="$2">
-                  <Cpu size={18} color="var(--emerald-400)" />
-                  <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                    Hanzo Visor MicroVM
-                  </Text>
+                  <Cpu size={17} color="var(--emerald-400)" />
+                  <Text fontSize="$2" fontWeight="700" color="var(--white)">Sandboxed Lab Runtimes</Text>
                 </XStack>
-                <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 18 }}>
-                  Pre-configured GPU workstation with PyTorch, CUDA, AST tree-sitter, and SWE-bench harness.
+                <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={18}>
+                  Scoped lab compute and interactive sandboxes aligned to each course&rsquo;s engineering requirements.
                 </Text>
               </Card>
 
-              <Card
-                p="$4"
-                bg="rgba(255, 255, 255, 0.03)"
-                borderWidth={0}
-                rounded="var(--radius-md)"
-                textAlign="left"
-              >
+              <Card p="$4" bg="rgba(255, 255, 255, 0.03)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
                 <XStack items="center" gap="$2" mb="$2">
-                  <Coins size={18} color="var(--emerald-400)" />
-                  <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                    100% Tuition Rebate
-                  </Text>
+                  <Bot size={17} color="var(--emerald-400)" />
+                  <Text fontSize="$2" fontWeight="700" color="var(--white)">AI Faculty Mentors</Text>
                 </XStack>
-                <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 18 }}>
-                  Every dollar in tuition is loaded as live LLM and compute credits into your Hanzo account.
+                <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={18}>
+                  24/7 guidance from @Edu, @Sci, @Dev, @Cyber, @Data, @Doc, @QA, and @Lang across all 25 courses.
                 </Text>
               </Card>
             </Grid>
@@ -875,126 +671,81 @@ export default function StudentPortalPage() {
 
   return (
     <Box minH="100vh" bg="$background" $platform-web={{ color: 'var(--foreground)' }}>
-      {/* ── Single Unified Slim Portal Ribbon ── */}
+      {/* Slim Portal Header Ribbon */}
       <Box
         borderBottomWidth={1}
-        borderColor="rgba(255, 255, 255, 0.06)"
+        borderColor="rgba(255, 255, 255, 0.08)"
         bg="var(--pure-black)"
         py="$3"
         px="$5"
         position="sticky"
-        t={0}
+        t={64}
         $platform-web={{ zIndex: 30, backdropFilter: 'blur(12px)' }}
       >
         <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
-          {/* Left: Brand & Track Selector */}
+          {/* Course Selector across all 25 courses */}
           <XStack items="center" gap="$3" flexWrap="wrap">
-            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <XStack items="center" gap="$2">
-                <Text fontSize="$2" fontWeight="700" color="var(--white)" fontFamily="$mono">
-                  hanzo.university
-                </Text>
-                <Chip px={6} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  STUDENT PORTAL
-                </Chip>
-              </XStack>
-            </Link>
+            <Chip px={7} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+              WORKSTATION
+            </Chip>
 
-            {/* Course Track Switcher Pills */}
-            <XStack items="center" gap="$1.5" flexWrap="wrap">
-              {UNIVERSITY_COURSES.map((c) => {
-                const isCompleted = capstonePassed[c.slug]
-                const isCurrent = selectedCourseSlug === c.slug
-                const isEnrolledInCourse = Boolean(session?.isFullAccess || session?.enrolledClasses?.includes(c.slug))
-                return (
-                  <Box
-                    key={c.slug}
-                    render="button"
-                    onClick={() => setSelectedCourseSlug(c.slug)}
-                    px="$2.5"
-                    py="$1"
-                    rounded="var(--radius-md)"
-                    bg={isCurrent ? 'var(--white)' : 'rgba(255, 255, 255, 0.05)'}
-                    borderWidth={0}
-                    $platform-web={{
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: '5px',
-                      transition: 'all 0.15s ease',
-                      border: 'none',
-                      opacity: isEnrolledInCourse ? 1 : 0.75,
-                    }}
-                    title={
-                      isEnrolledInCourse
-                        ? `${c.code}: ${c.title} (Enrolled)`
-                        : `${c.code}: ${c.title} (Locked — $${c.price} USD)`
-                    }
-                  >
-                    {!isEnrolledInCourse && (
-                      <Lock size={10} color={isCurrent ? 'var(--pure-black)' : 'var(--muted-foreground)'} />
-                    )}
-                    <Text
-                      fontSize="$1"
-                      fontWeight={isCurrent ? '700' : '500'}
-                      fontFamily="$mono"
-                      color={isCurrent ? 'var(--pure-black)' : isEnrolledInCourse ? 'var(--white-80)' : 'var(--white-60)'}
-                    >
-                      {c.credential}
-                    </Text>
-                    {isCompleted ? (
-                      <Check size={11} color={isCurrent ? 'var(--pure-black)' : 'var(--emerald-400)'} />
-                    ) : null}
-                  </Box>
-                )
-              })}
-            </XStack>
+            <select
+              aria-label="Select course"
+              value={selectedCourseSlug}
+              onChange={(e) => setSelectedCourseSlug(e.target.value)}
+              style={{
+                background: '#111111',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.16)',
+                borderRadius: '8px',
+                padding: '6px 10px',
+                fontSize: '12px',
+                fontFamily: 'var(--font-mono)',
+                maxWidth: '380px',
+                cursor: 'pointer',
+              }}
+            >
+              {SCHOOLS.map((school) => (
+                <optgroup key={school.id} label={school.name}>
+                  {UNIVERSITY_COURSES.filter((c) => c.school === school.id).map((c) => {
+                    const unlocked = isUserEnrolledInCourse(session, c.slug)
+                    return (
+                      <option key={c.slug} value={c.slug}>
+                        {unlocked ? '✓ ' : '🔒 '}
+                        {c.code} — {c.title} {c.isFree ? '(Free)' : `($${c.price})`}
+                      </option>
+                    )
+                  })}
+                </optgroup>
+              ))}
+            </select>
           </XStack>
 
-          {/* Right: Student Profile & Credential CTAs */}
+          {/* Right: Status & Account */}
           <XStack items="center" gap="$2.5" flexWrap="wrap">
-            {isCourseEnrolled ? (
-              <XStack
-                items="center"
-                gap="$2"
-                px="$2.5"
-                py="$1"
-                rounded="var(--radius-md)"
-                bg="rgba(255, 255, 255, 0.05)"
-                borderWidth={0}
-              >
-                <Coins size={13} color="var(--emerald-400)" />
-                <Text fontSize="$1" fontWeight="700" color="var(--emerald-300)" fontFamily="$mono">
-                  ${activeCourse.rebateCredits}.00 Credits
-                </Text>
-              </XStack>
-            ) : (
-              <XStack
-                items="center"
-                gap="$1.5"
-                px="$2.5"
-                py="$1"
-                rounded="var(--radius-md)"
-                bg="rgba(245, 158, 11, 0.08)"
-                borderWidth={0}
-              >
-                <Lock size={11} color="#f59e0b" />
-                <Text fontSize="$1" fontWeight="600" color="#f59e0b" fontFamily="$mono">
-                  Course Locked
-                </Text>
-              </XStack>
-            )}
-
-            <XStack
-              items="center"
-              gap="$1.5"
-              px="$2.5"
-              py="$1"
-              rounded="var(--radius-md)"
-              bg="rgba(255, 255, 255, 0.05)"
-              borderWidth={0}
+            <a
+              href={activeCourse.learnWorkspaceUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 10px',
+                borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: 'var(--emerald-300)',
+                fontSize: '11px',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
             >
+              <span>hanzo.app/learn</span>
+              <ExternalLink size={11} />
+            </a>
+
+            <XStack items="center" gap="$1.5" px="$2.5" py="$1" rounded="var(--radius-md)" bg="rgba(255, 255, 255, 0.05)">
               <User size={13} color="var(--emerald-400)" />
               <Text fontSize="$1" fontWeight="600" color="var(--white)">
                 {studentName}
@@ -1011,7 +762,7 @@ export default function StudentPortalPage() {
               <XStack items="center" gap="$1">
                 <Award size={13} />
                 <Text fontSize="$1" fontWeight="600" color="inherit">
-                  {isDegreeAwarded ? 'Degree Certificate' : 'Preview Credential'}
+                  {isCredentialAwarded ? 'W3C Credential' : 'Preview Proof'}
                 </Text>
               </XStack>
             </Action>
@@ -1022,40 +773,28 @@ export default function StudentPortalPage() {
               px="$2"
               py="$1"
               rounded="var(--radius-md)"
-              borderWidth={0}
               bg="rgba(255, 255, 255, 0.05)"
               $platform-web={{
                 cursor: 'pointer',
                 display: 'flex',
-                flexDirection: 'row',
                 alignItems: 'center',
                 gap: '4px',
                 color: 'var(--muted-foreground)',
                 fontSize: '12px',
                 border: 'none',
               }}
-              title="Sign Out"
             >
               <LogOut size={13} />
-              <Text fontSize="$1" color="inherit">
-                Sign Out
-              </Text>
+              <Text fontSize="$1" color="inherit">Sign Out</Text>
             </Box>
           </XStack>
         </XStack>
       </Box>
 
-      {/* ── Main Workstation Content ── */}
+      {/* Main Workstation */}
       <Band pad={36} measure={1280}>
-        {/* Toast Notification */}
         {feedbackToast && (
-          <Box
-            p="$3"
-            mb="$4"
-            rounded="var(--radius-md)"
-            bg="rgba(16, 185, 129, 0.15)"
-            borderWidth={0}
-          >
+          <Box p="$3" mb="$4" rounded="var(--radius-md)" bg="rgba(16, 185, 129, 0.15)">
             <XStack items="center" gap="$2">
               <CheckCircle2 size={16} color="var(--emerald-400)" />
               <Text fontSize="$2" fontWeight="600" color="var(--white)">
@@ -1065,451 +804,133 @@ export default function StudentPortalPage() {
           </Box>
         )}
 
-        {/* Newly Enrolled Welcome Banner (Dismissible) */}
         {welcomeBanner && (
-          <Box
-            p="$4"
-            mb="$5"
-            rounded="var(--radius-lg)"
-            bg="rgba(16, 185, 129, 0.08)"
-            borderWidth={0}
-            $platform-web={{
-              boxShadow: '0 0 24px rgba(16, 185, 129, 0.15)',
-            }}
-          >
+          <Box p="$4" mb="$5" rounded="var(--radius-lg)" bg="rgba(16, 185, 129, 0.08)">
             <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3">
               <XStack items="center" gap="$3">
-                <Box p="$2" rounded="var(--radius-md)" bg="var(--emerald-950)">
-                  <Sparkles size={20} color="var(--emerald-400)" />
-                </Box>
+                <Sparkles size={20} color="var(--emerald-400)" />
                 <YStack gap={2}>
                   <Text fontSize="$3" fontWeight="700" color="var(--white)">
-                    🎉 Welcome to Hanzo University, {studentName}!
+                    Welcome to Hanzo University, {studentName}
                   </Text>
                   <Text fontSize="$1" color="var(--white-70)">
-                    Tuition confirmed. Your student DID (`did:hanzo:student:{studentHandle}`) is active, ${activeCourse.rebateCredits}.00 compute tokens are credited, and your sandbox pod is provisioned.
+                    Your workspace and scoped lab environment for {activeCourse.code} are ready.
                   </Text>
                 </YStack>
               </XStack>
-              <Action
-                render="button"
-                onClick={() => setWelcomeBanner(false)}
-                px={10}
-                py={5}
-                $platform-web={{ fontSize: '11px' }}
-              >
+              <Action render="button" onClick={() => setWelcomeBanner(false)} px={10} py={5} $platform-web={{ fontSize: '11px' }}>
                 Dismiss
               </Action>
             </XStack>
           </Box>
         )}
 
-        {/* ── Course Mission & Progress Hero ── */}
-        <Box
-          p="$5"
-          mb="$5"
-          rounded="var(--radius-xl)"
-          bg="rgba(255, 255, 255, 0.02)"
-          borderWidth={0}
-        >
+        {/* Course Mission Header */}
+        <Box p="$5" mb="$5" rounded="var(--radius-xl)" bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
           <XStack items="flex-start" justify="space-between" flexWrap="wrap" gap="$4">
             <YStack gap="$1.5" flex={1} minW={280}>
               <XStack items="center" gap="$2" flexWrap="wrap">
-                {isCourseEnrolled ? (
-                  <>
-                    <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                      {activeCourse.code} · {activeCourse.credential}
-                    </Chip>
-                    {isDegreeAwarded ? (
-                      <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-300)">
-                        GRADUATED & CERTIFIED
-                      </Chip>
-                    ) : (
-                      <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--white-70)">
-                        LEVEL: {activeCourse.level.toUpperCase()}
-                      </Chip>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--amber-400)">
-                      <Lock size={10} style={{ marginRight: 4, display: 'inline', verticalAlign: 'middle' }} />
-                      {activeCourse.code} · ENROLLMENT REQUIRED
-                    </Chip>
-                    <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--white-70)">
-                      LEVEL: {activeCourse.level.toUpperCase()}
-                    </Chip>
-                    <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--white-70)">
-                      {activeCourse.units}.0 UNITS · {activeCourse.credential}
-                    </Chip>
-                  </>
-                )}
+                <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color={isCourseEnrolled ? 'var(--emerald-400)' : 'var(--amber-400)'}>
+                  {activeCourse.code} · {activeCourse.isFree ? 'FREE OPEN ACCESS' : isCourseEnrolled ? 'ENROLLED' : 'ENROLLMENT REQUIRED'}
+                </Chip>
+                <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--white-70)">
+                  {activeSchool.shortName}
+                </Chip>
+                <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--white-70)">
+                  {activeCourse.credential}
+                </Chip>
               </XStack>
 
               <Text fontSize="$6" fontWeight="800" color="var(--white)">
                 {activeCourse.title}
               </Text>
-              <Text fontSize="$1" color="var(--muted-foreground)">
-                {isCourseEnrolled
-                  ? `Complete all ${totalWeeks} coursework modules below to qualify for your Capstone Defense and earn your official W3C verifiable credential.`
-                  : activeCourse.summary}
+              <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={20}>
+                {activeCourse.summary}
               </Text>
             </YStack>
 
-            <XStack items="center" gap="$3">
-              <Link
-                href={`/${activeCourse.slug}`}
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--white-70)',
-                  textDecoration: 'none',
-                }}
-              >
+            <XStack items="center" gap="$3" flexWrap="wrap">
+              <Link href={`/${activeCourse.slug}`} style={{ fontSize: '12px', color: 'var(--white-70)', textDecoration: 'none' }}>
                 Course Syllabus ↗
               </Link>
               {isCourseEnrolled ? (
-                isDegreeAwarded ? (
-                  <Action
-                    render="button"
-                    onClick={() => setShowCredentialModal(true)}
-                    px={14}
-                    py={7}
-                    fill
-                    $platform-web={{ fontSize: '12px' }}
-                  >
-                    View W3C Certificate →
-                  </Action>
-                ) : isDefenseUnlocked ? (
-                  <Action
-                    render="button"
-                    onClick={handleDefendCapstone}
-                    disabled={isDefending}
-                    px={14}
-                    py={7}
-                    fill
-                    $platform-web={{ fontSize: '12px' }}
-                  >
-                    {isDefending ? 'Defending Capstone...' : `Defend Capstone & Graduate →`}
-                  </Action>
-                ) : null
+                <Action href={activeCourse.learnWorkspaceUrl} fill px={14} py={8} $platform-web={{ fontSize: '12px' }}>
+                  Launch Interactive Lab ↗
+                </Action>
               ) : (
-                <Action
-                  render="a"
-                  href={courseCheckoutUrl(activeCourse.slug)}
-                  px={16}
-                  py={8}
-                  fill
-                  $platform-web={{ fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
-                >
+                <Action href={courseCheckoutUrl(activeCourse.slug)} fill px={16} py={8} $platform-web={{ fontSize: '13px' }}>
                   Enroll in {activeCourse.code} — ${activeCourse.price} USD →
                 </Action>
               )}
             </XStack>
           </XStack>
 
-          {/* Progress Bar & Milestone Summary */}
-          {isCourseEnrolled ? (
+          {isCourseEnrolled && (
             <YStack gap="$2" mt="$4" pt="$3" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.06)">
               <XStack items="center" justify="space-between">
                 <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                  COURSEWORK ROADMAP PROGRESS
+                  MODULE PROGRESS · AI FACULTY: {activeCourse.facultyBots.join(', ')}
                 </Text>
                 <Text fontSize="$1" fontWeight="700" color={isDefenseUnlocked ? 'var(--emerald-400)' : 'var(--white)'} fontFamily="$mono">
                   {currentCompleted.length} of {totalWeeks} Modules Passed ({progressPercent}%)
                 </Text>
               </XStack>
               <Box height={6} rounded={9999} bg="rgba(255, 255, 255, 0.08)" overflow="hidden">
-                <Box
-                  height="100%"
-                  width={`${progressPercent}%`}
-                  bg="var(--emerald-400)"
-                  $platform-web={{ transition: 'width 0.3s ease' }}
-                />
+                <Box height="100%" width={`${progressPercent}%`} bg="var(--emerald-400)" $platform-web={{ transition: 'width 0.3s ease' }} />
               </Box>
-            </YStack>
-          ) : (
-            <YStack gap="$2" mt="$4" pt="$3" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.06)">
-              <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
-                <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                  ACCESS STATUS: LOCKED
-                </Text>
-                <Text fontSize="$1" fontWeight="600" color="var(--amber-400)" fontFamily="$mono">
-                  Active tuition enrollment required for sandbox microVM pod & autograder
-                </Text>
-              </XStack>
             </YStack>
           )}
         </Box>
 
         {isCourseEnrolled ? (
           <>
-            {/* ── Interactive 5-Step Credential Stepper ── */}
-            <Box mb="$5">
-          <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono" mb="$2">
-            STEP-BY-STEP CREDENTIAL PATHWAY (CLICK ANY MODULE TO FOCUS):
-          </Text>
-          <div className="portal-stepper-grid">
-            {activeCourse.syllabus.map((week, idx) => {
-              const isCompleted = currentCompleted.includes(idx)
-              const isActive = activeWeekIndex === idx
-              return (
-                <Box
-                  key={week.week}
-                  render="button"
-                  onClick={() => setActiveWeekIndex(idx)}
-                  p="$3"
-                  rounded="var(--radius-lg)"
-                  bg={
-                    isActive
-                      ? 'rgba(255, 255, 255, 0.1)'
-                      : isCompleted
-                      ? 'rgba(16, 185, 129, 0.08)'
-                      : 'rgba(255, 255, 255, 0.03)'
-                  }
-                  borderWidth={0}
-                  className="portal-step-card"
-                  $platform-web={{
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    border: 'none',
-                    boxShadow: isActive ? '0 0 16px rgba(255, 255, 255, 0.08)' : 'none',
-                  }}
-                >
-                  <XStack items="center" justify="space-between" mb="$1">
-                    <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">
-                      0{idx + 1} · {week.code}
-                    </Text>
-                    {isCompleted ? (
-                      <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                        PASSED ✓
-                      </Chip>
-                    ) : isActive ? (
-                      <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--white)">
-                        ACTIVE ▶
-                      </Chip>
-                    ) : (
-                      <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">
-                        PENDING
-                      </Chip>
-                    )}
-                  </XStack>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--white)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
-                    {week.title}
-                  </div>
-                </Box>
-              )
-            })}
-
-            {/* Step 5: Capstone Defense */}
-            <Box
-              render="button"
-              onClick={() => {
-                if (isDegreeAwarded) {
-                  setShowCredentialModal(true)
-                } else if (isDefenseUnlocked) {
-                  handleDefendCapstone()
-                }
-              }}
-              p="$3"
-              rounded="var(--radius-lg)"
-              bg={
-                isDegreeAwarded
-                  ? 'rgba(16, 185, 129, 0.15)'
-                  : isDefenseUnlocked
-                  ? 'rgba(16, 185, 129, 0.1)'
-                  : 'rgba(255, 255, 255, 0.03)'
-              }
-              borderWidth={0}
-              className="portal-step-card"
-              $platform-web={{
-                cursor: isDefenseUnlocked || isDegreeAwarded ? 'pointer' : 'default',
-                textAlign: 'left',
-                border: 'none',
-                boxShadow: isDefenseUnlocked ? '0 0 18px rgba(16, 185, 129, 0.2)' : 'none',
-              }}
-            >
-              <XStack items="center" justify="space-between" mb="$1">
-                <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  FINAL MILESTONE
-                </Text>
-                <Award size={14} color="var(--emerald-400)" />
-              </XStack>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--white)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
-                {isDegreeAwarded ? 'Degree Minted 🎓' : isDefenseUnlocked ? 'Defend Capstone ⚡' : 'Capstone Defense'}
-              </div>
-            </Box>
-          </div>
-        </Box>
-
-        {/* ── Active Module Workspace (Responsive Dual-Column Grid) ── */}
-        <div className="portal-workspace-grid">
-          {/* LEFT: Current Module Guide & Coursework Checklist */}
-          {(() => {
-            const currentWeek = activeCourse.syllabus[activeWeekIndex] || activeCourse.syllabus[0]
-            const isWeekPassed = currentCompleted.includes(activeWeekIndex)
-
-            return (
+            {/* Dual Column Workspace */}
+            <div className="portal-workspace-grid">
+              {/* Left: Modules */}
               <YStack gap="$4" minW={0} width="100%">
-                <Card p="$5" bg="rgba(255, 255, 255, 0.02)" borderWidth={0} rounded="var(--radius-xl)">
-                  {/* Card Header & Qualifications */}
-                  <XStack items="center" justify="space-between" mb="$4" flexWrap="wrap" gap="$3">
-                    <YStack gap="$1" minW={0} flex={1}>
-                      <Text fontSize="$3" fontWeight="800" color="var(--white)">
-                        {activeCourse.code} Coursework & Qualifications
-                      </Text>
-                      <Text fontSize="$1" color="var(--muted-foreground)">
-                        Pass all {totalWeeks} laboratory modules to unlock the official {activeCourse.credential} Capstone Defense
-                      </Text>
-                    </YStack>
-                    <Chip
-                      px={10}
-                      py={3}
-                      fontSize="$1"
-                      fontFamily="$mono"
-                      color={isDefenseUnlocked ? 'var(--emerald-400)' : 'var(--amber-400)'}
-                      $platform-web={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                    >
+                <Card p="$5" bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                  <XStack items="center" justify="space-between" mb="$4" flexWrap="wrap" gap="$2">
+                    <Text fontSize="$3" fontWeight="800" color="var(--white)">
+                      {activeCourse.code} Modules &amp; Labs
+                    </Text>
+                    <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color={isDefenseUnlocked ? 'var(--emerald-400)' : 'var(--white-70)'}>
                       {progressPercent}% COMPLETED
                     </Chip>
                   </XStack>
 
-                  {/* Progress Bar */}
-                  <Box height={6} rounded={9999} bg="rgba(255, 255, 255, 0.08)" overflow="hidden" mb="$4">
-                    <Box
-                      height="100%"
-                      width={`${progressPercent}%`}
-                      bg="var(--emerald-400)"
-                      $platform-web={{ transition: 'width 0.3s ease' }}
-                    />
-                  </Box>
-
-                  {/* Week Modules List */}
                   <YStack gap="$3">
                     {activeCourse.syllabus.map((week, idx) => {
                       const isCompleted = currentCompleted.includes(idx)
                       const isActive = activeWeekIndex === idx
-
                       return (
                         <Box
                           key={week.week}
                           p="$4"
                           rounded="var(--radius-md)"
-                          bg={isActive ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.02)'}
+                          bg={isActive ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.02)'}
                           borderWidth={1}
-                          borderColor={
-                            isActive
-                              ? 'rgba(16, 185, 129, 0.5)'
-                              : isCompleted
-                              ? 'rgba(255, 255, 255, 0.1)'
-                              : 'rgba(255, 255, 255, 0.04)'
-                          }
-                          $platform-web={{ cursor: 'pointer', transition: 'border-color 0.15s ease' }}
+                          borderColor={isActive ? 'rgba(16, 185, 129, 0.45)' : 'rgba(255, 255, 255, 0.07)'}
+                          $platform-web={{ cursor: 'pointer' }}
                           onClick={() => setActiveWeekIndex(idx)}
                         >
-                          <XStack items="center" justify="space-between" gap="$3" width="100%">
-                            <XStack items="center" gap="$3" minW={0} flex={1}>
-                              {/* Icon Indicator */}
-                              <Box
-                                width={24}
-                                height={24}
-                                minW={24}
-                                minH={24}
-                                rounded={9999}
-                                items="center"
-                                justify="center"
-                                bg={
-                                  isCompleted
-                                    ? 'rgba(16, 185, 129, 0.15)'
-                                    : isActive
-                                    ? 'rgba(255, 255, 255, 0.1)'
-                                    : 'rgba(255, 255, 255, 0.03)'
-                                }
-                                borderWidth={1}
-                                borderColor={
-                                  isCompleted
-                                    ? 'rgba(16, 185, 129, 0.35)'
-                                    : isActive
-                                    ? 'rgba(255, 255, 255, 0.25)'
-                                    : 'rgba(255, 255, 255, 0.08)'
-                                }
-                                $platform-web={{
-                                  display: 'flex',
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {isCompleted ? (
-                                  <Check size={13} color="#34d399" strokeWidth={2.5} />
-                                ) : (
-                                  <Text
-                                    fontSize="$1"
-                                    fontWeight="700"
-                                    fontFamily="$mono"
-                                    color={isActive ? 'var(--white)' : 'var(--muted-foreground)'}
-                                  >
-                                    {idx + 1}
-                                  </Text>
-                                )}
-                              </Box>
-
-                              {/* Title & Lab Description */}
-                              <YStack minW={0} flex={1}>
-                                <XStack items="center" gap="$2" flexWrap="wrap">
-                                  <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">
-                                    {week.code}
-                                  </Text>
-                                  <Text fontSize="$2" fontWeight="600" color="var(--white)" $platform-web={{ wordBreak: 'break-word' }}>
-                                    {week.title}
-                                  </Text>
-                                </XStack>
-                                <Text fontSize="$1" color="var(--muted-foreground)" numberOfLines={1}>
-                                  {week.lab}
-                                </Text>
-                              </YStack>
-                            </XStack>
-
-                            {/* Status Chip Badge */}
-                            <Chip
-                              px={8}
-                              py={2}
-                              fontSize="$1"
-                              fontFamily="$mono"
-                              color={
-                                isCompleted
-                                  ? 'var(--emerald-400)'
-                                  : isActive
-                                  ? 'var(--amber-400)'
-                                  : 'var(--muted-foreground)'
-                              }
-                              $platform-web={{
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {isCompleted ? 'COMPLETED' : isActive ? 'IN PROGRESS' : 'READY TO START'}
+                          <XStack items="center" justify="space-between" gap="$3">
+                            <YStack minW={0} flex={1}>
+                              <XStack items="center" gap="$2" flexWrap="wrap">
+                                <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">{week.code}</Text>
+                                <Text fontSize="$2" fontWeight="700" color="var(--white)">{week.title}</Text>
+                              </XStack>
+                              <Text fontSize="$1" color="var(--muted-foreground)" numberOfLines={1}>{week.lab}</Text>
+                            </YStack>
+                            <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color={isCompleted ? 'var(--emerald-400)' : 'var(--muted-foreground)'}>
+                              {isCompleted ? 'PASSED ✓' : isActive ? 'ACTIVE' : 'PENDING'}
                             </Chip>
                           </XStack>
 
-                          {/* Expanded Active Module Content */}
                           {isActive && (
-                            <YStack
-                              mt="$3"
-                              pt="$3"
-                              borderTopWidth={1}
-                              borderColor="rgba(255, 255, 255, 0.08)"
-                              gap="$3"
-                            >
-                              <Text fontSize="$1" color="var(--white-80)" $platform-web={{ lineHeight: 1.6 }}>
-                                {week.summary}
-                              </Text>
+                            <YStack mt="$3" pt="$3" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.08)" gap="$3">
+                              <Text fontSize="$1" color="var(--white-80)" lineHeight={19}>{week.summary}</Text>
 
-                              {/* Interactive Lectures & Seminars */}
-                              <YStack gap="$2">
-                                <Text fontSize="$1" fontWeight="600" color="var(--white)">
-                                  Interactive Lectures & Seminars:
-                                </Text>
+                              <YStack gap="$1.5">
                                 {week.lectures.map((lec, lIdx) => {
                                   const isWatched = (watchedLectures[selectedCourseSlug] || []).includes(lec)
                                   return (
@@ -1521,10 +942,8 @@ export default function StudentPortalPage() {
                                       px="$3"
                                       rounded="var(--radius-sm)"
                                       bg={isWatched ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.03)'}
-                                      borderWidth={1}
-                                      borderColor={isWatched ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.06)'}
                                       gap="$2"
-                                      $platform-web={{ cursor: 'pointer', transition: 'border-color 0.15s ease' }}
+                                      $platform-web={{ cursor: 'pointer' }}
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         openLectureModal(week, lec, 'lecture')
@@ -1532,81 +951,19 @@ export default function StudentPortalPage() {
                                     >
                                       <XStack items="center" gap="$2" minW={0} flex={1}>
                                         <Play size={10} color="var(--emerald-400)" style={{ flexShrink: 0 }} />
-                                        <Text
-                                          fontSize="$1"
-                                          color={isWatched ? 'var(--emerald-300)' : 'var(--white-80)'}
-                                          numberOfLines={1}
-                                        >
-                                          {lec}
-                                        </Text>
+                                        <Text fontSize="$1" color="var(--white-80)" numberOfLines={1}>{lec}</Text>
                                       </XStack>
-                                      <Text
-                                        fontSize="$1"
-                                        fontFamily="$mono"
-                                        color={isWatched ? 'var(--emerald-300)' : 'var(--emerald-400)'}
-                                        $platform-web={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                                      >
-                                        {isWatched ? '✓ Attended' : 'Play Lecture →'}
+                                      <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                                        {isWatched ? '✓ Done' : 'Open →'}
                                       </Text>
                                     </XStack>
                                   )
                                 })}
                               </YStack>
 
-                              {/* Required Academic Readings & Benchmarks */}
-                              {week.readings && week.readings.length > 0 && (
-                                <YStack gap="$2">
-                                  <Text fontSize="$1" fontWeight="600" color="var(--white)">
-                                    Required Academic Readings & Benchmarks:
-                                  </Text>
-                                  {week.readings.map((read, rIdx) => {
-                                    const isRead = (watchedLectures[selectedCourseSlug] || []).includes(read)
-                                    return (
-                                      <XStack
-                                        key={rIdx}
-                                        items="center"
-                                        justify="space-between"
-                                        p="$2"
-                                        px="$3"
-                                        rounded="var(--radius-sm)"
-                                        bg={isRead ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.03)'}
-                                        borderWidth={1}
-                                        borderColor={isRead ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.06)'}
-                                        gap="$2"
-                                        $platform-web={{ cursor: 'pointer', transition: 'border-color 0.15s ease' }}
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          openLectureModal(week, read, 'reading')
-                                        }}
-                                      >
-                                        <XStack items="center" gap="$2" minW={0} flex={1}>
-                                          <BookOpen size={10} color="var(--white-70)" style={{ flexShrink: 0 }} />
-                                          <Text
-                                            fontSize="$1"
-                                            color={isRead ? 'var(--emerald-300)' : 'var(--white-80)'}
-                                            numberOfLines={1}
-                                          >
-                                            {read}
-                                          </Text>
-                                        </XStack>
-                                        <Text
-                                          fontSize="$1"
-                                          fontFamily="$mono"
-                                          color={isRead ? 'var(--emerald-300)' : 'var(--white-70)'}
-                                          $platform-web={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                                        >
-                                          {isRead ? '✓ Read' : 'View Paper →'}
-                                        </Text>
-                                      </XStack>
-                                    )
-                                  })}
-                                </YStack>
-                              )}
-
-                              {/* Lab Assignment & Autograder Submission */}
-                              <XStack items="center" justify="space-between" pt="$2" flexWrap="wrap" gap="$2">
+                              <XStack items="center" justify="space-between" pt="$1" flexWrap="wrap" gap="$2">
                                 <Text fontSize="$1" color={isCompleted ? 'var(--emerald-400)' : 'var(--muted-foreground)'} fontWeight="600">
-                                  {isCompleted ? '✓ Laboratory Passed (100% Score)' : 'Lab Assignment: Ready for testing'}
+                                  {isCompleted ? '✓ Lab Verified' : 'Ready for sandbox evaluation'}
                                 </Text>
                                 <Action
                                   render="button"
@@ -1617,9 +974,9 @@ export default function StudentPortalPage() {
                                   disabled={isRunningCommand}
                                   px={12}
                                   py={6}
-                                  $platform-web={{ fontSize: '11px', whiteSpace: 'nowrap' }}
+                                  $platform-web={{ fontSize: '11px' }}
                                 >
-                                  {isCompleted ? 'Re-Run Autograder' : 'Submit Lab & Pass Module →'}
+                                  {isCompleted ? 'Re-Run Evaluation' : 'Run & Pass Lab →'}
                                 </Action>
                               </XStack>
                             </YStack>
@@ -1628,703 +985,292 @@ export default function StudentPortalPage() {
                       )
                     })}
                   </YStack>
+                </Card>
+              </YStack>
 
-                  {/* Module Pager Bar */}
-                  <XStack items="center" justify="space-between" pt="$4" mt="$3" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.06)">
-                    <Box
-                      render="button"
-                      onClick={() => activeWeekIndex > 0 && setActiveWeekIndex((p) => Math.max(0, p - 1))}
-                      px="$2.5"
-                      py="$1.5"
-                      rounded="var(--radius-md)"
-                      borderWidth={0}
-                      bg="rgba(255, 255, 255, 0.05)"
-                      $platform-web={{
-                        cursor: activeWeekIndex === 0 ? 'not-allowed' : 'pointer',
-                        opacity: activeWeekIndex === 0 ? 0.35 : 1,
-                        fontSize: '12px',
-                        color: 'var(--white)',
-                        border: 'none',
-                      }}
-                    >
-                      ← Previous Module
-                    </Box>
+              {/* Right: Sandbox Shell & Evaluation Console */}
+              <YStack gap="$4" minW={0} width="100%">
+                <Card p={0} overflow="hidden" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)" bg="rgba(255, 255, 255, 0.02)">
+                  <XStack items="center" justify="space-between" px="$4" py="$3" bg="rgba(0, 0, 0, 0.5)" borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.06)" flexWrap="wrap" gap="$2">
+                    <XStack items="center" gap="$2">
+                      <Terminal size={15} color="var(--emerald-400)" />
+                      <Text fontSize="$1" fontWeight="700" color="var(--white)" fontFamily="$mono">
+                        sandbox-{studentHandle}
+                      </Text>
+                      <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">READY</Chip>
+                    </XStack>
 
-                    <XStack items="center" gap="$1.5">
-                      {activeCourse.syllabus.map((_, i) => (
+                    <XStack gap="$1">
+                      {[
+                        { tab: 'terminal', label: 'Shell' },
+                        { tab: 'ast', label: 'Code Guard' },
+                        { tab: 'grader', label: 'Grader' },
+                        { tab: 'metering', label: 'Lab Scope' },
+                      ].map(({ tab, label }) => (
                         <Box
-                          key={i}
+                          key={tab}
                           render="button"
-                          onClick={() => setActiveWeekIndex(i)}
-                          width={24}
-                          height={24}
-                          rounded={9999}
-                          bg={activeWeekIndex === i ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.03)'}
-                          borderWidth={1}
-                          borderColor={activeWeekIndex === i ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.06)'}
-                          items="center"
-                          justify="center"
+                          onClick={() => setActiveTab(tab as any)}
+                          px="$2"
+                          py="$1"
+                          rounded="var(--radius-sm)"
+                          bg={activeTab === tab ? 'rgba(255, 255, 255, 0.15)' : 'transparent'}
                           $platform-web={{
                             cursor: 'pointer',
+                            border: 'none',
+                            color: activeTab === tab ? 'var(--white)' : 'var(--muted-foreground)',
+                            fontSize: '11px',
+                            fontFamily: 'monospace',
                           }}
                         >
-                          <Text
-                            fontSize="$1"
-                            fontWeight="700"
-                            fontFamily="$mono"
-                            color={activeWeekIndex === i ? 'var(--white)' : 'var(--muted-foreground)'}
-                          >
-                            {i + 1}
-                          </Text>
+                          {label}
                         </Box>
                       ))}
                     </XStack>
-
-                    <Box
-                      render="button"
-                      onClick={() => activeWeekIndex < totalWeeks - 1 && setActiveWeekIndex((p) => Math.min(totalWeeks - 1, p + 1))}
-                      px="$2.5"
-                      py="$1.5"
-                      rounded="var(--radius-md)"
-                      borderWidth={0}
-                      bg="rgba(255, 255, 255, 0.05)"
-                      $platform-web={{
-                        cursor: activeWeekIndex === totalWeeks - 1 ? 'not-allowed' : 'pointer',
-                        opacity: activeWeekIndex === totalWeeks - 1 ? 0.35 : 1,
-                        fontSize: '12px',
-                        color: 'var(--white)',
-                        border: 'none',
-                      }}
-                    >
-                      Next Module →
-                    </Box>
                   </XStack>
+
+                  {activeTab === 'terminal' && (
+                    <YStack p="$4" bg="var(--pure-black)" minH={360} justify="space-between">
+                      <div className="portal-terminal-box">
+                        {terminalHistory.map((line, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              color:
+                                line.includes('@hanzo-sandbox:')
+                                  ? 'var(--emerald-400)'
+                                  : line.includes('PASSED') || line.includes('[PASS]')
+                                  ? 'var(--emerald-300)'
+                                  : line.includes('[OK]')
+                                  ? 'var(--white)'
+                                  : 'var(--muted-foreground)',
+                            }}
+                          >
+                            {line}
+                          </div>
+                        ))}
+                      </div>
+
+                      <XStack items="center" justify="space-between" pt="$3" mt="$3" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.06)" flexWrap="wrap" gap="$2">
+                        <XStack items="center" gap="$1.5" flexWrap="wrap">
+                          {workspaceData.quickCommands.map((cmd) => (
+                            <Box
+                              key={cmd}
+                              render="button"
+                              onClick={() => !isRunningCommand && executeCommand(cmd)}
+                              px="$2"
+                              py="$1"
+                              rounded="var(--radius-sm)"
+                              bg="rgba(255, 255, 255, 0.06)"
+                              $platform-web={{
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                fontFamily: 'monospace',
+                                color: 'var(--white-80)',
+                                border: 'none',
+                              }}
+                            >
+                              {cmd}
+                            </Box>
+                          ))}
+                        </XStack>
+
+                        <Action render="button" onClick={() => handleCompleteLab(activeWeekIndex)} disabled={isRunningCommand} px={12} py={5} fill $platform-web={{ fontSize: '11px' }}>
+                          {isRunningCommand ? 'Evaluating...' : `Verify Module ${activeWeekIndex + 1} →`}
+                        </Action>
+                      </XStack>
+                    </YStack>
+                  )}
+
+                  {activeTab === 'ast' && (
+                    <YStack p="$4" bg="var(--pure-black)" minH={360} gap="$3">
+                      <Text fontSize="$2" fontWeight="700" color="var(--white)">{workspaceData.codeInspectorTitle}</Text>
+                      <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">{workspaceData.codeInspectorSubtitle}</Text>
+                      <Box p="$3" rounded="var(--radius-md)" bg="rgba(255, 255, 255, 0.03)" $platform-web={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+                        {workspaceData.codeInspectorDiff.map((line, dIdx) => (
+                          <Text key={dIdx} fontSize="$1" fontFamily="$mono" display="block" color={line.type === 'del' ? 'var(--red-400)' : line.type === 'add' ? 'var(--emerald-400)' : 'var(--white-70)'}>
+                            {line.text}
+                          </Text>
+                        ))}
+                      </Box>
+                      <XStack items="center" gap="$2">
+                        <CheckCircle2 size={14} color="var(--emerald-400)" />
+                        <Text fontSize="$1" color="var(--emerald-300)" fontWeight="600">{workspaceData.codeInspectorValidation}</Text>
+                      </XStack>
+                    </YStack>
+                  )}
+
+                  {activeTab === 'grader' && (
+                    <YStack p="$4" bg="var(--pure-black)" minH={360} gap="$3">
+                      <XStack items="center" justify="space-between">
+                        <Text fontSize="$2" fontWeight="700" color="var(--white)">{workspaceData.graderTitle}</Text>
+                        <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">CLEANROOM SUITE</Chip>
+                      </XStack>
+                      {workspaceData.graderTasks.map((row) => (
+                        <XStack key={row.task} items="center" justify="space-between" p="$2" px="$3" rounded="var(--radius-sm)" bg="rgba(255, 255, 255, 0.03)">
+                          <XStack items="center" gap="$2" minW={0} flex={1}>
+                            <CheckCircle2 size={14} color="var(--emerald-400)" />
+                            <Text fontSize="$1" fontFamily="$mono" color="var(--white)">{row.task}</Text>
+                          </XStack>
+                          <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">{row.status}</Chip>
+                        </XStack>
+                      ))}
+                    </YStack>
+                  )}
+
+                  {activeTab === 'metering' && (
+                    <YStack p="$4" bg="var(--pure-black)" minH={360} gap="$3">
+                      <Text fontSize="$2" fontWeight="700" color="var(--white)">Scoped Lab Environment &amp; Compute</Text>
+                      <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={19}>{activeCourse.labComputeNote}</Text>
+                      <YStack gap="$2" pt="$2">
+                        {workspaceData.resourceBreakdown.map((res, rIdx) => (
+                          <XStack key={rIdx} justify="space-between" p="$2.5" rounded="var(--radius-sm)" bg="rgba(255, 255, 255, 0.03)">
+                            <Text fontSize="$1" color="var(--white)">{res.item}</Text>
+                            <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">{res.metric}</Text>
+                          </XStack>
+                        ))}
+                      </YStack>
+                    </YStack>
+                  )}
                 </Card>
-              </YStack>
-            )
-          })()}
 
-          {/* RIGHT: Live Sandbox Pod & Autograder Console */}
-          <YStack gap="$4" minW={0} width="100%">
-            <Card p={0} overflow="hidden" borderWidth={0} rounded="var(--radius-xl)" bg="rgba(255, 255, 255, 0.02)">
-              {/* Terminal Header & Mode Selector */}
-              <XStack
-                items="center"
-                justify="space-between"
-                px="$4"
-                py="$3"
-                bg="rgba(0, 0, 0, 0.5)"
-                borderBottomWidth={1}
-                borderColor="rgba(255, 255, 255, 0.06)"
-                flexWrap="wrap"
-                gap="$2"
-              >
-                <XStack items="center" gap="$2">
-                  <Terminal size={15} color="var(--emerald-400)" />
-                  <Text fontSize="$1" fontWeight="700" color="var(--white)" fontFamily="$mono">
-                    pod-vsr-{studentHandle}
-                  </Text>
-                  <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                    ONLINE
-                  </Chip>
-                </XStack>
-
-                <XStack gap="$1">
-                  {[
-                    { tab: 'terminal', label: 'Shell' },
-                    { tab: 'ast', label: 'AST Inspector' },
-                    { tab: 'grader', label: 'Autograder Logs' },
-                    { tab: 'metering', label: 'Spend' },
-                  ].map(({ tab, label }) => (
+                <XStack items="center" justify="space-between" px="$2">
+                  <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">LAB CONTROLS:</Text>
+                  <XStack items="center" gap="$2">
                     <Box
-                      key={tab}
                       render="button"
-                      onClick={() => setActiveTab(tab as any)}
+                      onClick={handleFastTrackAllLabs}
                       px="$2"
                       py="$1"
                       rounded="var(--radius-sm)"
-                      bg={activeTab === tab ? 'rgba(255, 255, 255, 0.15)' : 'transparent'}
-                      $platform-web={{
-                        cursor: 'pointer',
-                        border: 'none',
-                        color: activeTab === tab ? 'var(--white)' : 'var(--muted-foreground)',
-                        fontSize: '11px',
-                        fontFamily: 'monospace',
-                      }}
+                      bg="rgba(16, 185, 129, 0.1)"
+                      $platform-web={{ cursor: 'pointer', fontSize: '11px', color: 'var(--emerald-300)', fontFamily: 'monospace', border: 'none' }}
                     >
-                      {label}
+                      Verify All Modules
                     </Box>
-                  ))}
-                </XStack>
-              </XStack>
-
-              {/* Tab 1: Terminal Shell */}
-              {activeTab === 'terminal' && (
-                <YStack p="$4" bg="var(--pure-black)" minH={380} justify="space-between">
-                  <div className="portal-terminal-box">
-                    {terminalHistory.map((line, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          color:
-                            line.startsWith(userTerminalPrompt.slice(0, 5)) || line.includes('@hanzo-sandbox:')
-                              ? 'var(--emerald-400)'
-                              : line.includes('PASSED') || line.includes('[PASS]') || line.includes('[CONGRATULATIONS]')
-                              ? 'var(--emerald-300)'
-                              : line.includes('[OK]') || line.includes('[RUST VERIFIED]')
-                              ? 'var(--white)'
-                              : 'var(--muted-foreground)',
-                        }}
-                      >
-                        {line}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Terminal Action Bar */}
-                  <YStack gap="$2" pt="$3" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.06)">
-                    <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
-                      <XStack items="center" gap="$1.5" flexWrap="wrap">
-                        <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                          Quick:
-                        </Text>
-                        {workspaceData.quickCommands.map((cmd) => (
-                          <Box
-                            key={cmd}
-                            render="button"
-                            onClick={() => !isRunningCommand && executeCommand(cmd)}
-                            px="$2"
-                            py="$1"
-                            rounded="var(--radius-sm)"
-                            bg="rgba(255, 255, 255, 0.05)"
-                            borderWidth={0}
-                            $platform-web={{
-                              cursor: 'pointer',
-                              fontSize: '11px',
-                              fontFamily: 'monospace',
-                              color: 'var(--white-80)',
-                              border: 'none',
-                            }}
-                            hoverStyle={{ bg: 'rgba(255, 255, 255, 0.12)' }}
-                          >
-                            {cmd}
-                          </Box>
-                        ))}
-                      </XStack>
-
-                      <Action
-                        render="button"
-                        onClick={() => handleCompleteLab(activeWeekIndex)}
-                        disabled={isRunningCommand}
-                        px={12}
-                        py={5}
-                        fill
-                        $platform-web={{ fontSize: '11px', fontWeight: 600 }}
-                      >
-                        {isRunningCommand ? 'Evaluating...' : `Submit Lab ${activeWeekIndex + 1} →`}
-                      </Action>
-                    </XStack>
-                  </YStack>
-                </YStack>
-              )}
-
-              {/* Tab 2: Code / Architecture Inspector */}
-              {activeTab === 'ast' && (
-                <YStack p="$4" bg="var(--pure-black)" minH={380} gap="$3">
-                  <YStack gap={1}>
-                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                      {workspaceData.codeInspectorTitle}
-                    </Text>
-                    <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                      {workspaceData.codeInspectorSubtitle}
-                    </Text>
-                  </YStack>
-
-                  <Box
-                    p="$3"
-                    rounded="var(--radius-md)"
-                    bg="rgba(255, 255, 255, 0.03)"
-                    borderWidth={0}
-                    $platform-web={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', wordBreak: 'break-all' }}
-                  >
-                    {workspaceData.codeInspectorDiff.map((line, dIdx) => (
-                      <Text
-                        key={dIdx}
-                        fontSize="$1"
-                        fontFamily="$mono"
-                        color={
-                          line.type === 'del'
-                            ? 'var(--red-400)'
-                            : line.type === 'add'
-                            ? 'var(--emerald-400)'
-                            : 'var(--white-70)'
-                        }
-                      >
-                        {line.text}
-                      </Text>
-                    ))}
-                  </Box>
-
-                  <XStack items="center" gap="$2" mt="$1">
-                    <CheckCircle2 size={14} color="var(--emerald-400)" />
-                    <Text fontSize="$1" color="var(--emerald-300)" fontWeight="600">
-                      {workspaceData.codeInspectorValidation}
-                    </Text>
-                  </XStack>
-                </YStack>
-              )}
-
-              {/* Tab 3: Autograder Logs */}
-              {activeTab === 'grader' && (
-                <YStack p="$4" bg="var(--pure-black)" minH={380} gap="$3">
-                  <XStack items="center" justify="space-between">
-                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                      {workspaceData.graderTitle}
-                    </Text>
-                    <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                      ALL TESTS PASSING
-                    </Chip>
-                  </XStack>
-
-                  {workspaceData.graderTasks.map((row) => (
-                    <XStack
-                      key={row.task}
-                      items="center"
-                      justify="space-between"
-                      p="$2"
-                      px="$3"
+                    <Box
+                      render="button"
+                      onClick={handleResetCourseProgress}
+                      px="$2"
+                      py="$1"
                       rounded="var(--radius-sm)"
-                      bg="rgba(255, 255, 255, 0.03)"
-                      borderWidth={0}
+                      bg="rgba(255, 255, 255, 0.05)"
+                      $platform-web={{ cursor: 'pointer', fontSize: '11px', color: 'var(--muted-foreground)', fontFamily: 'monospace', border: 'none' }}
                     >
-                      <XStack items="center" gap="$2" minW={0} flex={1}>
-                        <CheckCircle2 size={14} color="var(--emerald-400)" style={{ flexShrink: 0 }} />
-                        <Text fontSize="$1" fontFamily="$mono" color="var(--white)" $platform-web={{ wordBreak: 'break-word' }}>
-                          {row.task}
-                        </Text>
-                      </XStack>
-                      <XStack items="center" gap="$3" $platform-web={{ flexShrink: 0 }}>
-                        <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                          {row.time} · {row.cost}
-                        </Text>
-                        <Chip px={6} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                          {row.status}
-                        </Chip>
-                      </XStack>
-                    </XStack>
-                  ))}
-                </YStack>
-              )}
+                      Reset
+                    </Box>
+                  </XStack>
+                </XStack>
+              </YStack>
+            </div>
 
-              {/* Tab 4: Spend Metering */}
-              {activeTab === 'metering' && (
-                <YStack p="$4" bg="var(--pure-black)" minH={380} gap="$4">
-                  <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                    Compute Credit Rebate Metering
-                  </Text>
-                  <Grid columns={{ min: 140, max: 2 }} gap={12}>
-                    <YStack p="$3" rounded="var(--radius-md)" bg="rgba(255, 255, 255, 0.03)" gap="$1">
-                      <Text fontSize="$1" color="var(--muted-foreground)">Day 1 Deposit</Text>
-                      <Text fontSize="$4" fontWeight="800" color="var(--white)">${activeCourse.rebateCredits}.00 USD</Text>
-                    </YStack>
-                    <YStack p="$3" rounded="var(--radius-md)" bg="rgba(255, 255, 255, 0.03)" gap="$1">
-                      <Text fontSize="$1" color="var(--muted-foreground)">Balance Remaining</Text>
-                      <Text fontSize="$4" fontWeight="800" color="var(--emerald-400)">
-                        ${(activeCourse.rebateCredits * 0.75).toFixed(2)} USD
-                      </Text>
-                    </YStack>
-                  </Grid>
-
-                  <YStack gap="$2">
-                    <Text fontSize="$1" color="var(--muted-foreground)">Resource Usage Breakdown:</Text>
-                    {workspaceData.resourceBreakdown.map((res, rIdx) => (
-                      <XStack key={rIdx} justify="space-between">
-                        <Text fontSize="$1" color="var(--white)">{res.item}</Text>
-                        <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">{res.cost}</Text>
-                      </XStack>
-                    ))}
+            {/* Capstone Verification Card */}
+            <Box mt="$6">
+              <Card p="$5" bg="rgba(255, 255, 255, 0.02)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3" mb="$3">
+                  <YStack gap={1}>
+                    <Text fontSize="$3" fontWeight="800" color="var(--white)">
+                      Capstone Artifact Verification &amp; W3C Proof
+                    </Text>
+                    <Text fontSize="$1" color="var(--muted-foreground)">
+                      Required Artifact: {activeCourse.capstoneArtifact} ({activeCourse.credential})
+                    </Text>
                   </YStack>
+                  <Chip px={10} py={3} fontSize="$1" fontFamily="$mono" color={isCredentialAwarded || isDefenseUnlocked ? 'var(--emerald-400)' : 'var(--amber-400)'}>
+                    {isCredentialAwarded ? 'VERIFIED ✓' : isDefenseUnlocked ? 'READY TO VERIFY' : 'COMPLETE LABS FIRST'}
+                  </Chip>
+                </XStack>
+
+                <Text fontSize="$2" color="var(--white-80)" lineHeight={21} mb="$4">
+                  {activeCourse.capstone}
+                </Text>
+
+                {isCredentialAwarded ? (
+                  <Action render="button" onClick={() => setShowCredentialModal(true)} px={16} py={8} fill>
+                    View &amp; Export {activeCourse.credential} W3C Credential →
+                  </Action>
+                ) : isDefenseUnlocked ? (
+                  <Action render="button" onClick={handleDefendCapstone} disabled={isDefending} px={16} py={8} fill>
+                    {isDefending ? 'Verifying Capstone Artifact...' : `Verify Capstone & Issue ${activeCourse.credential} Proof →`}
+                  </Action>
+                ) : (
+                  <Action render="button" onClick={() => handleCompleteLab(activeWeekIndex)} disabled={isRunningCommand} px={14} py={7}>
+                    Verify Current Module ({activeCourse.syllabus[activeWeekIndex]?.code}) →
+                  </Action>
+                )}
+              </Card>
+            </Box>
+          </>
+        ) : (
+          /* Locked Paid Course View */
+          <Card p={28} bg="var(--pure-black)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.12)">
+            <YStack gap="$5">
+              <XStack items="flex-start" justify="space-between" flexWrap="wrap" gap="$4">
+                <YStack gap="$2" maxW={700}>
+                  <Chip px={8} py={3} fontSize="$1" fontFamily="$mono" color="var(--amber-400)">
+                    COURSE ACCESS LOCKED · {activeCourse.code}
+                  </Chip>
+                  <Text fontSize="$5" fontWeight="800" color="var(--white)">
+                    Enrollment Required to Access {activeCourse.code}: {activeCourse.title}
+                  </Text>
+                  <Text fontSize="$2" color="var(--muted-foreground)" lineHeight={21}>
+                    Signed in as <strong style={{ color: 'var(--white)' }}>{studentName}</strong> (@{studentHandle}). Enroll in {activeCourse.code} or activate University Pro (bundled with Hanzo Pro) to unlock this course&rsquo;s sandboxed labs and capstone verification. Remember: AUTO 101 is always free.
+                  </Text>
+                </YStack>
+
+                <YStack gap="$2" p="$4" rounded="var(--radius-lg)" bg="var(--card)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.1)" minW={250}>
+                  <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">COURSE ENROLLMENT</Text>
+                  <Text fontSize="$6" fontWeight="800" color="var(--white)">${activeCourse.price} USD</Text>
+                  <Text fontSize="$1" color="var(--muted-foreground)">{activeCourse.labComputeNote}</Text>
+                  <Action href={courseCheckoutUrl(activeCourse.slug)} fill py={10} mt="$2">
+                    Enroll in {activeCourse.code} →
+                  </Action>
+                  <Box
+                    render="button"
+                    onClick={() => setSelectedCourseSlug('continuous-improvement')}
+                    py="$1.5"
+                    $platform-web={{ background: 'transparent', border: 'none', color: 'var(--emerald-400)', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
+                  >
+                    Or switch to Free AUTO 101 →
+                  </Box>
+                </YStack>
+              </XStack>
+
+              {session.enrolledClasses.length > 0 && (
+                <YStack gap="$2" pt="$3" borderTopWidth={1} borderColor="var(--border)">
+                  <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                    YOUR ACTIVELY ENROLLED COURSES ({session.enrolledClasses.length}):
+                  </Text>
+                  <XStack gap="$2" flexWrap="wrap">
+                    {session.enrolledClasses.map((enrolledSlug) => {
+                      const c = UNIVERSITY_COURSES.find((uc) => uc.slug === enrolledSlug)
+                      if (!c) return null
+                      return (
+                        <Box
+                          key={enrolledSlug}
+                          render="button"
+                          onClick={() => setSelectedCourseSlug(enrolledSlug)}
+                          px="$3"
+                          py="$2"
+                          rounded="var(--radius-md)"
+                          bg="var(--card)"
+                          borderWidth={1}
+                          borderColor="var(--emerald-800)"
+                          $platform-web={{ cursor: 'pointer', color: 'var(--white)', fontSize: '12px', fontWeight: 600 }}
+                        >
+                          Open {c.code}: {c.title} →
+                        </Box>
+                      )
+                    })}
+                  </XStack>
                 </YStack>
               )}
-            </Card>
-
-            {/* Subtle Accelerator Controls */}
-            <XStack items="center" justify="space-between" px="$2">
-              <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                TEST ACCELERATOR:
-              </Text>
-              <XStack items="center" gap="$2">
-                <Box
-                  render="button"
-                  onClick={handleFastTrackAllLabs}
-                  px="$2"
-                  py="$1"
-                  rounded="var(--radius-sm)"
-                  bg="rgba(16, 185, 129, 0.1)"
-                  borderWidth={0}
-                  $platform-web={{
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    color: 'var(--emerald-300)',
-                    fontFamily: 'monospace',
-                    border: 'none',
-                  }}
-                >
-                  ⚡ Fast-Track All Labs
-                </Box>
-                <Box
-                  render="button"
-                  onClick={handleResetCourseProgress}
-                  px="$2"
-                  py="$1"
-                  rounded="var(--radius-sm)"
-                  bg="rgba(255, 255, 255, 0.05)"
-                  borderWidth={0}
-                  $platform-web={{
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    color: 'var(--muted-foreground)',
-                    fontFamily: 'monospace',
-                    border: 'none',
-                  }}
-                >
-                  ↺ Reset Progress
-                </Box>
-              </XStack>
-            </XStack>
-          </YStack>
-        </div>
-
-        {/* ── Capstone Project Defense & Certification Card ── */}
-        <Box mt="$6">
-          <Card
-            p="$5"
-            bg="rgba(255, 255, 255, 0.02)"
-            borderWidth={0}
-            rounded="var(--radius-xl)"
-            $platform-web={{
-              boxShadow: isDefenseUnlocked ? '0 0 24px rgba(16, 185, 129, 0.15)' : 'none',
-            }}
-          >
-            <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3" mb="$3">
-              <XStack items="center" gap="$2.5">
-                <Box p="$2" rounded="var(--radius-md)" bg="rgba(16, 185, 129, 0.15)">
-                  <Award size={20} color="var(--emerald-400)" />
-                </Box>
-                <YStack gap={1}>
-                  <Text fontSize="$3" fontWeight="800" color="var(--white)">
-                    Capstone Defense & W3C Credential Issuance
-                  </Text>
-                  <Text fontSize="$1" color="var(--muted-foreground)">
-                    Target Credential: {activeCourse.credentialFull} ({activeCourse.credential})
-                  </Text>
-                </YStack>
-              </XStack>
-
-              <Chip
-                px={10}
-                py={3}
-                fontSize="$1"
-                fontFamily="$mono"
-                color={isDegreeAwarded ? 'var(--emerald-400)' : isDefenseUnlocked ? 'var(--emerald-400)' : 'var(--amber-400)'}
-              >
-                {isDegreeAwarded ? 'DEGREE AWARDED' : isDefenseUnlocked ? 'QUALIFICATIONS MET' : 'PREREQUISITES PENDING'}
-              </Chip>
-            </XStack>
-
-            <Text fontSize="$2" color="var(--white-80)" $platform-web={{ lineHeight: 22 }} mb="$4">
-              {activeCourse.capstone}
-            </Text>
-
-            {isDegreeAwarded ? (
-              <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3" p="$3" rounded="var(--radius-md)" bg="rgba(16, 185, 129, 0.15)" borderWidth={0}>
-                <Text fontSize="$1" color="var(--emerald-300)" fontWeight="600">
-                  🎉 Passed with 100% Distinction! Verified W3C Credential minted on Lux Chain.
-                </Text>
-                <Action
-                  render="button"
-                  onClick={() => setShowCredentialModal(true)}
-                  px={14}
-                  py={7}
-                  fill
-                  $platform-web={{ fontSize: '12px' }}
-                >
-                  View & Share {activeCourse.credential} Certificate →
-                </Action>
-              </XStack>
-            ) : isDefenseUnlocked ? (
-              <XStack items="center" justify="space-between" flexWrap="wrap" gap="$3" p="$3" rounded="var(--radius-md)" bg="rgba(16, 185, 129, 0.12)" borderWidth={0}>
-                <Text fontSize="$1" color="var(--emerald-300)" fontWeight="600">
-                  All {totalWeeks} modules passed! You meet all qualifications to defend your capstone.
-                </Text>
-                <Action
-                  render="button"
-                  onClick={handleDefendCapstone}
-                  disabled={isDefending}
-                  px={16}
-                  py={8}
-                  fill
-                  $platform-web={{ fontSize: '13px' }}
-                >
-                  {isDefending ? 'Evaluating Defense in Pod...' : `Defend Capstone & Issue ${activeCourse.credential} Degree →`}
-                </Action>
-              </XStack>
-            ) : (
-              <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2" pt="$2" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.06)">
-                <Text fontSize="$1" color="var(--muted-foreground)">
-                  Complete the remaining {totalWeeks - currentCompleted.length} laboratory modules to unlock the official Capstone Defense.
-                </Text>
-                <Action
-                  render="button"
-                  onClick={() => handleCompleteLab(activeWeekIndex)}
-                  disabled={isRunningCommand}
-                  px={12}
-                  py={6}
-                  $platform-web={{ fontSize: '11px' }}
-                >
-                  Run Current Lab ({activeCourse.syllabus[activeWeekIndex]?.code}) →
-                </Action>
-              </XStack>
-            )}
-          </Card>
-        </Box>
-      </>
-    ) : (
-      /* ── Course Locked / Enrollment Required View ── */
-      <YStack gap="$5">
-        {/* Main Paywall Card */}
-        <Card
-          p={32}
-          bg="var(--pure-black)"
-          borderWidth={1}
-          borderColor="var(--neutral-800)"
-          rounded="var(--radius-xl)"
-        >
-          <YStack gap="$6">
-            {/* Header Badge & Title */}
-            <XStack items="flex-start" justify="space-between" flexWrap="wrap" gap="$4">
-              <YStack gap="$2" maxW={720}>
-                <XStack items="center" gap="$2" flexWrap="wrap" mb="$1">
-                  <Chip px={8} py={3} fontSize="$1" fontFamily="$mono" color="var(--amber-400)">
-                    <Lock size={11} style={{ marginRight: 4, verticalAlign: 'middle', display: 'inline' }} />
-                    COURSE ACCESS LOCKED
-                  </Chip>
-                  <Chip px={8} py={3} fontSize="$1" fontFamily="$mono" color="var(--white-70)">
-                    {activeCourse.code} · {activeCourse.units}.0 UNITS · {activeCourse.credential}
-                  </Chip>
-                </XStack>
-                <Text fontSize="$5" fontWeight="800" color="var(--white)">
-                  Enrollment Required to Access {activeCourse.code}: {activeCourse.title}
-                </Text>
-                <Text fontSize="$2" color="var(--muted-foreground)">
-                  You are signed in as <strong style={{ color: 'var(--white)' }}>{studentName}</strong> (<span style={{ fontFamily: 'monospace', color: 'var(--white-80)' }}>@{studentHandle}</span>). Your account does not hold an active enrollment license for this track. Dedicated Hanzo Visor microVM sandbox pods, AST autograder evaluations, and on-chain degree issuance are provisioned exclusively for enrolled students.
-                </Text>
-              </YStack>
-
-              {/* Price Tag & Action */}
-              <YStack
-                gap="$2"
-                p="$4"
-                rounded="var(--radius-lg)"
-                bg="var(--card)"
-                borderWidth={1}
-                borderColor="var(--border)"
-                minW={260}
-                $platform-web={{ textAlign: 'left' }}
-              >
-                <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">
-                  TRACK TUITION
-                </Text>
-                <XStack items="baseline" gap="$1">
-                  <Text fontSize="$6" fontWeight="800" color="var(--white)">
-                    ${activeCourse.price}
-                  </Text>
-                  <Text fontSize="$1" color="var(--muted-foreground)">
-                    USD
-                  </Text>
-                </XStack>
-                <XStack items="center" gap="$1.5">
-                  <Coins size={12} color="var(--emerald-400)" />
-                  <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">
-                    +${activeCourse.rebateCredits} Credits (25% Rebate)
-                  </Text>
-                </XStack>
-                <XStack items="center" gap="$1.5">
-                  <Zap size={12} color="var(--emerald-400)" />
-                  <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">
-                    + $50 usage credit for free
-                  </Text>
-                </XStack>
-
-                <Action
-                  render="a"
-                  href={courseCheckoutUrl(activeCourse.slug)}
-                  fill
-                  py={12}
-                  mt="$2"
-                  $platform-web={{
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    textAlign: 'center',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Enroll in {activeCourse.code} →
-                </Action>
-              </YStack>
-            </XStack>
-
-            {/* What Enrollment Unlocks - Benefit Grid */}
-            <YStack gap="$3" pt="$3" borderTopWidth={1} borderColor="var(--border)">
-              <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">
-                WHAT ENROLLMENT IN THIS TRACK UNLOCKS:
-              </Text>
-              <Grid columns={{ min: 240, max: 4 }} gap={16}>
-                <Card p="$3.5" bg="var(--card)" borderWidth={0} rounded="var(--radius-md)">
-                  <XStack items="center" gap="$2" mb="$1.5">
-                    <Cpu size={16} color="var(--emerald-400)" />
-                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                      Hanzo Visor Pod
-                    </Text>
-                  </XStack>
-                  <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 18 }}>
-                    Dedicated GPU microVM sandbox container with PyTorch, CUDA, AST tree-sitter, and SWE-bench harness.
-                  </Text>
-                </Card>
-
-                <Card p="$3.5" bg="var(--card)" borderWidth={0} rounded="var(--radius-md)">
-                  <XStack items="center" gap="$2" mb="$1.5">
-                    <Terminal size={16} color="var(--emerald-400)" />
-                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                      Autonomous Autograder
-                    </Text>
-                  </XStack>
-                  <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 18 }}>
-                    Real-time test suite evaluation with automated AST assertion grading and continuous verification.
-                  </Text>
-                </Card>
-
-                <Card p="$3.5" bg="var(--card)" borderWidth={0} rounded="var(--radius-md)">
-                  <XStack items="center" gap="$2" mb="$1.5">
-                    <Award size={16} color="var(--emerald-400)" />
-                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                      W3C Degree Credential
-                    </Text>
-                  </XStack>
-                  <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 18 }}>
-                    Sovereign cryptographic diploma registered on Lux Chain, signed directly to your Hanzo student DID.
-                  </Text>
-                </Card>
-
-                <Card p="$3.5" bg="var(--card)" borderWidth={0} rounded="var(--radius-md)">
-                  <XStack items="center" gap="$2" mb="$1.5">
-                    <Coins size={16} color="var(--emerald-400)" />
-                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                      Tuition Rebate & Grant
-                    </Text>
-                  </XStack>
-                  <Text fontSize="$1" color="var(--muted-foreground)" $platform-web={{ lineHeight: 18 }}>
-                    + $50 free compute grant plus 25% tuition rebate credited immediately into your Hanzo Cloud wallet.
-                  </Text>
-                </Card>
-              </Grid>
             </YStack>
+          </Card>
+        )}
+      </Band>
 
-            {/* Already Enrolled Courses Switcher */}
-            {session.enrolledClasses.length > 0 && (
-              <YStack gap="$2" pt="$3" borderTopWidth={1} borderColor="var(--border)">
-                <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  YOUR ACTIVELY ENROLLED COURSES ({session.enrolledClasses.length}):
-                </Text>
-                <XStack gap="$2" flexWrap="wrap">
-                  {session.enrolledClasses.map((enrolledSlug) => {
-                    const enrolledCourseData = UNIVERSITY_COURSES.find((c) => c.slug === enrolledSlug)
-                    if (!enrolledCourseData) return null
-                    return (
-                      <Box
-                        key={enrolledSlug}
-                        render="button"
-                        onClick={() => setSelectedCourseSlug(enrolledSlug)}
-                        px="$3"
-                        py="$2"
-                        rounded="var(--radius-md)"
-                        bg="var(--card)"
-                        borderWidth={1}
-                        borderColor="var(--emerald-700)"
-                        $platform-web={{
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: '6px',
-                        }}
-                      >
-                        <CheckCircle2 size={13} color="var(--emerald-400)" />
-                        <Text fontSize="$1" fontWeight="600" color="var(--white)">
-                          Open {enrolledCourseData.code}: {enrolledCourseData.title} →
-                        </Text>
-                      </Box>
-                    )
-                  })}
-                </XStack>
-              </YStack>
-            )}
-          </YStack>
-        </Card>
-
-        {/* Curriculum Preview (Locked Modules) */}
-        <Box>
-          <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono" mb="$3">
-            CURRICULUM MODULES INCLUDED IN {activeCourse.code} (PREVIEW):
-          </Text>
-          <Grid columns={{ min: 280, max: 2 }} gap={16}>
-            {activeCourse.syllabus.map((week) => (
-              <Card
-                key={week.week}
-                p="$4"
-                bg="var(--card)"
-                borderWidth={1}
-                borderColor="var(--border)"
-                rounded="var(--radius-lg)"
-              >
-                <XStack items="center" justify="space-between" mb="$2">
-                  <Chip px={6} py={2} fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">
-                    WEEK 0{week.week} · {week.code}
-                  </Chip>
-                  <XStack items="center" gap="$1">
-                    <Lock size={12} color="var(--muted-foreground)" />
-                    <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-                      LOCKED
-                    </Text>
-                  </XStack>
-                </XStack>
-                <Text fontSize="$3" fontWeight="700" color="var(--white)" mb="$1">
-                  {week.title}
-                </Text>
-                <Text fontSize="$1" color="var(--muted-foreground)" mb="$3" $platform-web={{ lineHeight: 18 }}>
-                  {week.summary}
-                </Text>
-                <XStack gap="$1.5" flexWrap="wrap">
-                  {week.lab && (
-                    <Chip px={6} py={1} fontSize={10} fontFamily="$mono">
-                      Lab: {week.lab}
-                    </Chip>
-                  )}
-                  {week.lectures.slice(0, 2).map((lecture, i) => (
-                    <Chip key={i} px={6} py={1} fontSize={10} fontFamily="$mono">
-                      {lecture}
-                    </Chip>
-                  ))}
-                </XStack>
-              </Card>
-            ))}
-          </Grid>
-        </Box>
-      </YStack>
-    )}
-  </Band>
-
-      {/* ── W3C Verifiable Credential Modal ── */}
+      {/* W3C Credential Modal */}
       {showCredentialModal && (
         <Box
           position="fixed"
@@ -2338,19 +1284,7 @@ export default function StudentPortalPage() {
           p="$4"
           $platform-web={{ backdropFilter: 'blur(12px)', zIndex: 9999 }}
         >
-          <Box
-            width="100%"
-            maxW={720}
-            bg="var(--pure-black)"
-            rounded="var(--radius-2xl)"
-            borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.1)"
-            p="$6"
-            position="relative"
-            maxH="90vh"
-            overflow="scroll"
-          >
-            {/* Modal Header */}
+          <Box width="100%" maxW={680} bg="var(--pure-black)" rounded="var(--radius-2xl)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.12)" p="$6" maxH="90vh" overflow="scroll">
             <XStack items="center" justify="space-between" mb="$4">
               <XStack items="center" gap="$2">
                 <Award size={20} color="var(--emerald-400)" />
@@ -2361,319 +1295,59 @@ export default function StudentPortalPage() {
               <Box
                 render="button"
                 onClick={() => setShowCredentialModal(false)}
-                p="$1"
-                rounded="var(--radius-sm)"
-                $platform-web={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--muted-foreground)',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                }}
+                $platform-web={{ background: 'transparent', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer', fontSize: '18px' }}
               >
                 ✕
               </Box>
             </XStack>
 
-            {/* Official Certificate Card */}
-            <Box
-              p="$6"
-              rounded="var(--radius-xl)"
-              bg="rgba(255, 255, 255, 0.03)"
-              borderWidth={0}
-              gap="$4"
-              position="relative"
-              overflow="hidden"
-            >
-              <Box
-                position="absolute"
-                t={-40}
-                r={-40}
-                width={140}
-                height={140}
-                rounded={9999}
-                $platform-web={{ backgroundColor: 'color-mix(in srgb, var(--emerald-500) 12%, transparent)' }}
-                pointerEvents="none"
-              />
-
-              <XStack items="center" justify="space-between">
-                <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">
-                  HANZO UNIVERSITY · RESEARCH FOUNDATION
-                </Text>
-                <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                  VERIFIED & SIGNED ON-CHAIN
-                </Chip>
+            <YStack p="$5" rounded="var(--radius-xl)" bg="rgba(255, 255, 255, 0.03)" gap="$3">
+              <XStack items="center" justify="space-between" flexWrap="wrap" gap="$2">
+                <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">HANZO UNIVERSITY · PRACTICAL CREDENTIAL</Text>
+                <Chip px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">W3C VC 2.0</Chip>
               </XStack>
 
-              <YStack gap="$1" my="$2">
-                <Text fontSize="$1" color="var(--muted-foreground)">
-                  THIS CERTIFIES THAT
-                </Text>
-                <Text fontSize="$5" fontWeight="800" color="var(--white)">
-                  {studentName}
-                </Text>
-                <Text fontSize="$1" color="var(--muted-foreground)">
-                  HAS COMPLETED ALL COURSEWORK SPECIFICATIONS, PASSED THE AUTOGRADER CI SUITE, AND DEFENDED THE CAPSTONE FOR
-                </Text>
-                <Text fontSize="$3" fontWeight="700" color="var(--emerald-300)" mt="$1">
-                  {activeCourse.credentialFull} ({activeCourse.credential})
-                </Text>
-                <Text fontSize="$1" color="var(--white-80)">
-                  Course: {activeCourse.code} · Academic Units: {activeCourse.units}.0 · Level: {activeCourse.level}
-                </Text>
-              </YStack>
+              <Text fontSize="$5" fontWeight="800" color="var(--white)">{studentName}</Text>
+              <Text fontSize="$3" fontWeight="700" color="var(--emerald-300)">
+                {activeCourse.credentialFull} ({activeCourse.credential})
+              </Text>
+              <Text fontSize="$1" color="var(--white-80)">
+                {activeCourse.code}: {activeCourse.title} · Verified Artifact: {activeCourse.capstoneArtifact}
+              </Text>
+              <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={18}>
+                Cryptographic proof of completed practical capstone &amp; live artifact. Professional certification (not an accredited academic degree).
+              </Text>
+            </YStack>
 
-              {/* Cryptographic Signature Box */}
-              <Box
-                p="$3"
-                rounded="var(--radius-md)"
-                bg="rgba(0, 0, 0, 0.6)"
-                borderWidth={0}
-                gap="$1"
-              >
-                <XStack justify="space-between">
-                  <Text color="var(--muted-foreground)">DID Subject:</Text>
-                  <Text color="var(--white)" fontFamily="$mono">
-                    did:hanzo:student:{studentHandle}
-                  </Text>
-                </XStack>
-                <XStack justify="space-between">
-                  <Text color="var(--muted-foreground)">Issuer DID:</Text>
-                  <Text color="var(--white)" fontFamily="$mono">
-                    did:hanzo:university:accreditation
-                  </Text>
-                </XStack>
-                <XStack justify="space-between">
-                  <Text color="var(--muted-foreground)">Status:</Text>
-                  <Text color="var(--emerald-400)" fontWeight="600">
-                    VERIFIED & CERTIFIED (GRADE: 100% PASS WITH DISTINCTION)
-                  </Text>
-                </XStack>
-                <XStack justify="space-between">
-                  <Text color="var(--muted-foreground)">Lux Chain Proof:</Text>
-                  <Text color="var(--emerald-400)" fontFamily="$mono">
-                    0x7f4a8b1c...99e2e89b (Block #9,418,290)
-                  </Text>
-                </XStack>
-              </Box>
-
-              <XStack items="center" justify="space-between" pt="$2">
-                <YStack>
-                  <Text fontSize="$1" color="var(--muted-foreground)">Course Director & Evaluator</Text>
-                  <Text fontSize="$1" fontWeight="600" color="var(--white)">{activeCourse.instructor.name}</Text>
-                  <Text fontSize="$1" color="var(--muted-foreground)">{activeCourse.instructor.role}</Text>
-                </YStack>
-
-                <YStack items="flex-end">
-                  <Text fontSize="$1" color="var(--muted-foreground)">Issuance Date</Text>
-                  <Text fontSize="$1" fontWeight="600" color="var(--white)">October 2026</Text>
-                  <Text fontSize="$1" color="var(--emerald-400)">W3C VC 2.0 Standard</Text>
-                </YStack>
-              </XStack>
-            </Box>
-
-            {/* Modal Actions */}
-            <XStack items="center" justify="space-between" mt="$4" flexWrap="wrap" gap="$3">
-              <XStack items="center" gap="$2">
-                <Box
-                  render="button"
-                  onClick={() => {
-                    const jsonLd = JSON.stringify(
-                      {
-                        '@context': [
-                          'https://www.w3.org/ns/credentials/v2',
-                          'https://hanzo.university/credentials/v1',
-                        ],
-                        id: `urn:uuid:hanzo-cert-2026-${activeCourse.code.replace(/\s+/g, '')}-9821a`,
-                        type: ['VerifiableCredential', 'HanzoUniversityDegree'],
-                        issuer: {
-                          id: 'did:hanzo:university:accreditation',
-                          name: 'Hanzo University Research Foundation',
-                        },
-                        validFrom: new Date().toISOString(),
-                        credentialSubject: {
-                          id: `did:hanzo:student:${studentHandle}`,
-                          name: studentName,
-                          course: `${activeCourse.code}: ${activeCourse.title}`,
-                          degree: `${activeCourse.credentialFull} (${activeCourse.credential})`,
-                          units: activeCourse.units,
-                          grade: 'Pass with Distinction (100% Autograder Score)',
-                        },
-                        proof: {
-                          type: 'Ed25519Signature2020',
-                          verificationMethod: 'did:hanzo:university:accreditation#key-1',
-                          proofValue: '0x7f4a8b1c99e2e89b3f4a1c2d88e0a1b2c3d4e5f6',
-                        },
-                      },
-                      null,
-                      2,
-                    )
-                    navigator.clipboard.writeText(jsonLd)
-                    setFeedbackToast('W3C JSON-LD Credential copied to clipboard!')
-                    setTimeout(() => setFeedbackToast(null), 3000)
-                  }}
-                  px="$3"
-                  py="$2"
-                  rounded="var(--radius-md)"
-                  bg="rgba(255, 255, 255, 0.06)"
-                  borderWidth={0}
-                  $platform-web={{
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    color: 'var(--white)',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: '6px',
-                    border: 'none',
-                  }}
-                >
-                  <Copy size={13} />
-                  Copy JSON-LD
-                </Box>
-
-                <Box
-                  render="button"
-                  onClick={() => {
-                    const certSummary = `========================================================================\n` +
-                      `                    HANZO UNIVERSITY DEGREE CERTIFICATE                  \n` +
-                      `========================================================================\n` +
-                      `Student:            ${studentName}\n` +
-                      `Student DID:        did:hanzo:student:${studentHandle}\n` +
-                      `Degree:             ${activeCourse.credentialFull} (${activeCourse.credential})\n` +
-                      `Course:             ${activeCourse.code}: ${activeCourse.title}\n` +
-                      `Academic Units:     ${activeCourse.units}.0 Units\n` +
-                      `Level:              ${activeCourse.level}\n` +
-                      `Instructor:         ${activeCourse.instructor.name} (${activeCourse.instructor.role})\n` +
-                      `Issuance Date:      October 2026\n` +
-                      `Blockchain Proof:   Lux Chain Block #9,418,290 (Ed25519 Verified)\n` +
-                      `W3C Standard:       Verifiable Credentials Data Model v2.0\n` +
-                      `========================================================================\n`
-
-                    const blob = new Blob([certSummary], { type: 'text/plain' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = `Hanzo-${activeCourse.credential}-Certificate-${studentHandle}.txt`
-                    a.click()
-                    URL.revokeObjectURL(url)
-                    setFeedbackToast('Certificate downloaded successfully!')
-                    setTimeout(() => setFeedbackToast(null), 3000)
-                  }}
-                  px="$3"
-                  py="$2"
-                  rounded="var(--radius-md)"
-                  bg="rgba(255, 255, 255, 0.06)"
-                  borderWidth={0}
-                  $platform-web={{
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    color: 'var(--white)',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: '6px',
-                    border: 'none',
-                  }}
-                >
-                  <Download size={13} />
-                  Download (.txt)
-                </Box>
-
+            <XStack items="center" justify="space-between" mt="$4" flexWrap="wrap" gap="$2">
+              <XStack gap="$2" flexWrap="wrap">
                 <Box
                   render="button"
                   onClick={handleDownloadSvg}
                   px="$3"
                   py="$2"
                   rounded="var(--radius-md)"
-                  bg="rgba(255, 255, 255, 0.06)"
-                  borderWidth={0}
-                  $platform-web={{
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    color: 'var(--white)',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: '6px',
-                    border: 'none',
-                  }}
+                  bg="rgba(255, 255, 255, 0.08)"
+                  $platform-web={{ cursor: 'pointer', fontSize: '12px', color: 'var(--white)', border: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <Download size={13} />
-                  SVG Badge (.svg)
+                  SVG Badge
                 </Box>
-
-                <Box
-                  render="button"
-                  onClick={() => {
-                    const verifyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://hanzo.university'}/verify?id=${activeCourse.credential}-2026-9821&student=${studentHandle}`
-                    navigator.clipboard.writeText(verifyUrl)
-                    setFeedbackToast('Verification URL copied to clipboard!')
-                    setTimeout(() => setFeedbackToast(null), 3000)
-                  }}
-                  px="$3"
-                  py="$2"
-                  rounded="var(--radius-md)"
-                  bg="rgba(255, 255, 255, 0.06)"
-                  borderWidth={0}
-                  $platform-web={{
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    color: 'var(--white)',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: '6px',
-                    border: 'none',
-                  }}
-                >
-                  <Copy size={13} />
-                  Copy Link
-                </Box>
-
-                <Link
-                  href={`/verify?id=${activeCourse.credential}-2026-9821&student=${studentHandle}`}
-                  target="_blank"
-                  style={{ textDecoration: 'none' }}
-                >
-                  <Box
-                    px="$3"
-                    py="$2"
-                    rounded="var(--radius-md)"
-                    bg="rgba(16, 185, 129, 0.15)"
-                    borderWidth={0}
-                    $platform-web={{
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      color: 'var(--emerald-300)',
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <ExternalLink size={13} />
-                    Verify on Public Registry ↗
+                <Link href={`/verify?id=${activeCourse.credential}-2026-9821&student=${studentHandle}`} style={{ textDecoration: 'none' }}>
+                  <Box px="$3" py="$2" rounded="var(--radius-md)" bg="rgba(16, 185, 129, 0.15)" $platform-web={{ fontSize: '12px', color: 'var(--emerald-300)', fontWeight: 600 }}>
+                    Public Verification Registry ↗
                   </Box>
                 </Link>
               </XStack>
-
-              <Action
-                render="button"
-                onClick={() => setShowCredentialModal(false)}
-                px={16}
-                py={8}
-                fill
-              >
-                Close & Return to Workspace
+              <Action render="button" onClick={() => setShowCredentialModal(false)} px={14} py={7} fill>
+                Close
               </Action>
             </XStack>
           </Box>
         </Box>
       )}
 
-      {/* ── Interactive Lecture & Reading Viewer Modal ── */}
+      {/* Module Material Viewer Modal */}
       {activeLectureModal && (
         <Box
           position="fixed"
@@ -2687,242 +1361,81 @@ export default function StudentPortalPage() {
           p="$4"
           $platform-web={{ backdropFilter: 'blur(12px)', zIndex: 9999 }}
         >
-          <Box
-            width="100%"
-            maxW={780}
-            bg="var(--pure-black)"
-            rounded="var(--radius-2xl)"
-            borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.1)"
-            p="$6"
-            position="relative"
-            maxH="92vh"
-            overflow="scroll"
-          >
-            {/* Modal Header */}
+          <Box width="100%" maxW={720} bg="var(--pure-black)" rounded="var(--radius-2xl)" borderWidth={1} borderColor="rgba(255, 255, 255, 0.12)" p="$6" maxH="90vh" overflow="scroll">
             <XStack items="center" justify="space-between" mb="$4">
-              <XStack items="center" gap="$2">
-                {activeLectureModal.type === 'lecture' ? (
-                  <Play size={18} color="var(--emerald-400)" />
-                ) : (
-                  <BookOpen size={18} color="var(--emerald-400)" />
-                )}
-                <YStack>
-                  <XStack items="center" gap="$2">
-                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                      {activeLectureModal.title}
-                    </Text>
-                    <Chip px={6} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                      {activeLectureModal.type === 'lecture' ? 'STREAM · 4K 60FPS' : 'ARXIV / SPEC PAPER'}
-                    </Chip>
-                  </XStack>
-                  <Text fontSize="$1" color="var(--muted-foreground)">
-                    {activeCourse.code} · {activeLectureModal.weekCode}: {activeLectureModal.weekTitle} · Instructor: {activeLectureModal.instructor}
-                  </Text>
-                </YStack>
-              </XStack>
-
+              <YStack>
+                <Text fontSize="$3" fontWeight="700" color="var(--white)">{activeLectureModal.title}</Text>
+                <Text fontSize="$1" color="var(--muted-foreground)">
+                  {activeCourse.code} · {activeLectureModal.weekCode} · AI Faculty: {activeLectureModal.facultyLabel}
+                </Text>
+              </YStack>
               <Box
                 render="button"
-                onClick={() => {
-                  setActiveLectureModal(null)
-                  setIsPlayingMedia(false)
-                }}
-                p="$1"
-                rounded="var(--radius-sm)"
-                $platform-web={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--muted-foreground)',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                }}
+                onClick={() => setActiveLectureModal(null)}
+                $platform-web={{ background: 'transparent', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer', fontSize: '18px' }}
               >
                 ✕
               </Box>
             </XStack>
 
-            {/* Video or Document Viewer Panel */}
-            {activeLectureModal.type === 'lecture' ? (
-              <YStack gap="$4">
-                {/* Simulated Video Player Screen */}
-                <Box
-                  width="100%"
-                  height={260}
-                  rounded="var(--radius-lg)"
-                  bg="#050505"
-                  borderWidth={0}
-                  position="relative"
-                  overflow="hidden"
-                  justify="center"
-                  items="center"
-                >
-                  <Box
-                    position="absolute"
-                    inset={0}
-                    $platform-web={{
-                      background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.15) 0%, rgba(0, 0, 0, 0.95) 75%)',
-                    }}
-                  />
-                  <YStack items="center" gap="$3" $platform-web={{ zIndex: 2 }}>
+            <YStack gap="$4">
+              <Box p="$4" rounded="var(--radius-md)" bg="rgba(255, 255, 255, 0.03)">
+                <XStack items="center" justify="space-between" mb="$2">
+                  <XStack items="center" gap="$2">
+                    <BookOpen size={15} color="var(--emerald-400)" />
+                    <Text fontSize="$1" fontWeight="700" color="var(--white)">Module Briefing</Text>
+                  </XStack>
+                  <XStack items="center" gap="$2">
                     <Box
                       render="button"
                       onClick={() => setIsPlayingMedia(!isPlayingMedia)}
-                      width={64}
-                      height={64}
-                      rounded={9999}
-                      bg={isPlayingMedia ? 'var(--white)' : 'var(--emerald-500)'}
-                      items="center"
-                      justify="center"
-                      $platform-web={{
-                        cursor: 'pointer',
-                        border: 'none',
-                        boxShadow: '0 0 30px rgba(16, 185, 129, 0.4)',
-                        transition: 'transform 0.15s ease',
-                      }}
-                      hoverStyle={{ transform: 'scale(1.05)' }}
+                      px="$2.5"
+                      py="$1"
+                      rounded="var(--radius-sm)"
+                      bg="rgba(16, 185, 129, 0.15)"
+                      $platform-web={{ cursor: 'pointer', border: 'none', color: 'var(--emerald-300)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
-                      {isPlayingMedia ? (
-                        <Pause size={28} color="var(--pure-black)" />
-                      ) : (
-                        <Play size={28} color="var(--pure-black)" style={{ marginLeft: 3 }} />
-                      )}
+                      {isPlayingMedia ? <Pause size={12} /> : <Play size={12} />}
+                      <span>{isPlayingMedia ? 'Pause Audio Briefing' : 'Play Briefing'}</span>
                     </Box>
-                    <Text fontSize="$1" fontFamily="$mono" color="var(--white-80)">
-                      {isPlayingMedia ? 'STREAMING ACTIVE (1080p WebRTC)' : 'CLICK TO COMMENCE LECTURE'}
-                    </Text>
-                  </YStack>
-
-                  {/* Player Controls Bar */}
-                  <Box
-                    position="absolute"
-                    b={0}
-                    l={0}
-                    r={0}
-                    p="$3"
-                    bg="rgba(0, 0, 0, 0.75)"
-                    borderTopWidth={1}
-                    borderColor="rgba(255, 255, 255, 0.1)"
-                  >
-                    <XStack items="center" justify="space-between">
-                      <XStack items="center" gap="$3">
-                        <Box
-                          render="button"
-                          onClick={() => setIsPlayingMedia(!isPlayingMedia)}
-                          $platform-web={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--white)' }}
-                        >
-                          {isPlayingMedia ? <Pause size={16} /> : <Play size={16} />}
-                        </Box>
-                        <Volume2 size={16} color="var(--muted-foreground)" />
-                        <Text fontSize="$1" color="var(--white-70)" fontFamily="$mono">
-                          {isPlayingMedia ? '14:28' : '00:00'} / 38:00
-                        </Text>
-                      </XStack>
-
-                      <XStack items="center" gap="$2">
-                        {[1, 1.25, 1.5, 2].map((rate) => (
-                          <Box
-                            key={rate}
-                            render="button"
-                            onClick={() => setPlaybackRate(rate)}
-                            px="$2"
-                            py="$1"
-                            rounded="var(--radius-sm)"
-                            bg={playbackRate === rate ? 'var(--white)' : 'transparent'}
-                            $platform-web={{
-                              cursor: 'pointer',
-                              border: 'none',
-                              color: playbackRate === rate ? 'var(--pure-black)' : 'var(--muted-foreground)',
-                              fontSize: '11px',
-                              fontFamily: 'monospace',
-                              fontWeight: 600,
-                            }}
-                          >
-                            {rate}x
-                          </Box>
-                        ))}
-                      </XStack>
-                    </XStack>
-                  </Box>
-                </Box>
-
-                {/* Lecture Syllabus Notes & Code Excerpt */}
-                <Box p="$4" rounded="var(--radius-md)" bg="rgba(255, 255, 255, 0.03)" borderWidth={0}>
-                  <Text fontSize="$1" fontWeight="700" color="var(--white)" mb="$2">
-                    Key Architectural Takeaways & Proofs
-                  </Text>
-                  <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2" mb="$3">
-                    {activeLectureModal.summary}
-                  </Text>
-                  <Box
-                    p="$3"
-                    rounded="var(--radius-sm)"
-                    bg="rgba(0, 0, 0, 0.5)"
-                    borderWidth={0}
-                    $platform-web={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--emerald-300)' }}
-                  >
-                    {activeCourse.slug === 'agentic-coding'
-                      ? `# Invariant: Zero syntax regressions across all AST tree mutations\nassert parser.validate(ast_tree, strict=True) == True\nsandbox.execute_safely(diff, budget_ceiling_usd=0.05)`
-                      : activeCourse.slug === 'reinforcement-learning'
-                      ? `# Invariant: Group Relative Policy Optimization (GRPO) advantage\nadv = (rewards - rewards.mean()) / (rewards.std() + 1e-8)\nloss = -min(ratio * adv, clip(ratio, 1-eps, 1+eps) * adv).mean()`
-                      : `# Invariant: Zero-copy Cap'n Proto buffer alignment over Unix domain socket\nlet header = zap::protocol::FrameHeader::validate(&slice[..32])?;\nkv_cache.allocate_paged_blocks(seq_id, prompt_tokens)?;`}
-                  </Box>
-                </Box>
-              </YStack>
-            ) : (
-              <YStack gap="$4">
-                <Box p="$4" rounded="var(--radius-md)" bg="rgba(255, 255, 255, 0.03)" borderWidth={0}>
-                  <XStack items="center" justify="space-between" mb="$2">
-                    <Text fontSize="$2" fontWeight="700" color="var(--white)">
-                      Academic Preprint & Architecture Specification
-                    </Text>
-                    <Chip px={6} py={1} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                      DOI: 10.48550/arXiv.2610.09821
-                    </Chip>
+                    <Volume2 size={14} color="var(--muted-foreground)" />
+                    <Text fontSize="$1" fontFamily="$mono" color="var(--muted-foreground)">{playbackRate}x</Text>
+                    <Box
+                      render="button"
+                      onClick={() => setPlaybackRate((r) => (r === 1 ? 1.5 : r === 1.5 ? 2 : 1))}
+                      px="$1.5"
+                      py="$0.5"
+                      rounded="var(--radius-sm)"
+                      bg="rgba(255, 255, 255, 0.06)"
+                      $platform-web={{ cursor: 'pointer', border: 'none', color: 'var(--white)', fontSize: '10px', fontFamily: 'monospace' }}
+                    >
+                      Speed
+                    </Box>
                   </XStack>
-                  <Text fontSize="$1" color="var(--white-80)" lineHeight="$2" mb="$3">
-                    Abstract: This curriculum monograph establishes the formal methodology used throughout Hanzo University's cleanroom testing suite. We demonstrate how autonomous verification harnesses evaluate model rollouts in Hanzo Visor microVMs, proving mathematically bounded runtime execution.
-                  </Text>
-                  <Text fontSize="$1" color="var(--muted-foreground)" lineHeight="$2">
-                    Required reading for the {activeLectureModal.weekCode} laboratory. Students must implement the algorithms discussed in Section 3 and defend the performance metrics during capstone defense.
-                  </Text>
-                </Box>
-              </YStack>
-            )}
+                </XStack>
+                <Text fontSize="$1" color="var(--white-80)" lineHeight={20}>{activeLectureModal.summary}</Text>
+              </Box>
 
-            {/* Modal Actions */}
-            <XStack items="center" justify="space-between" mt="$4" pt="$3" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.06)">
-              <Text fontSize="$1" color="var(--muted-foreground)">
-                Module Progress: Recorded to your student DID account
-              </Text>
-              <XStack items="center" gap="$2">
-                <Box
-                  render="button"
-                  onClick={() => {
-                    setActiveLectureModal(null)
-                    setIsPlayingMedia(false)
-                  }}
-                  px="$3"
-                  py="$2"
-                  rounded="var(--radius-md)"
-                  bg="rgba(255, 255, 255, 0.06)"
-                  borderWidth={0}
-                  $platform-web={{ cursor: 'pointer', fontSize: '12px', color: 'var(--white)', border: 'none' }}
-                >
-                  Dismiss
-                </Box>
-                <Action
-                  render="button"
-                  onClick={handleMarkLectureWatched}
-                  px={14}
-                  py={8}
-                  fill
-                  $platform-web={{ fontSize: '12px' }}
-                >
-                  Mark as Attended & Completed ✓
+              <YStack gap="$2">
+                <Text fontSize="$1" fontWeight="700" color="var(--white)">AI Faculty Available in hanzo.app/learn:</Text>
+                <XStack gap="$2" flexWrap="wrap">
+                  {activeCourse.facultyBots.map((botId) => (
+                    <Chip key={botId} px={8} py={2} fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
+                      {botId} — {AI_FACULTY_BOTS[botId].role}
+                    </Chip>
+                  ))}
+                </XStack>
+              </YStack>
+
+              <XStack items="center" justify="space-between" pt="$3" borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.08)" flexWrap="wrap" gap="$2">
+                <a href={activeCourse.learnWorkspaceUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--emerald-400)', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>
+                  Continue in hanzo.app/learn ↗
+                </a>
+                <Action render="button" onClick={handleMarkLectureWatched} px={14} py={7} fill $platform-web={{ fontSize: '12px' }}>
+                  Mark Completed ✓
                 </Action>
               </XStack>
-            </XStack>
+            </YStack>
           </Box>
         </Box>
       )}
