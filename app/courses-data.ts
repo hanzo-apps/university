@@ -2097,7 +2097,7 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
         summary: 'Pass an adversarial penetration and offline-continuity audit of your sovereign AI architecture.',
         lectures: [
           'Red-teaming zero-trust boundaries: lateral movement, secret exfiltration, and covert channels',
-          'Compliance mapping (SOC 2, HIPAA, FedRAMP, ISO 27001) to technical controls',
+          'Mapping technical security controls to external enterprise audit frameworks',
           'Capstone architecture defense',
         ],
         readings: ['NIST SP 800-207: Zero Trust Architecture'],
@@ -2249,7 +2249,7 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
         lectures: [
           'Shared knowledge bases, decision records (ADRs), and conflict resolution',
           'Automated OKR tracking and bottleneck identification',
-          'Compliance, data-room readiness, and immutable decision audit trails',
+          'Data-room documentation, governance policies, and immutable decision audit trails',
         ],
         readings: ['Hanzo Docs: Memory & Dataroom CLI'],
         lab: 'Lab 3: Wire an institutional memory layer that updates department policies from verified incident retrospectives.',
@@ -2363,7 +2363,7 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
         lectures: [
           'Docs-first and product-led growth: interactive demos, templates, and referrals',
           'Setting up Autopilot acquisition and activation experiments',
-          'Enterprise sales readiness: security packet, SOC 2 controls, and pilot conversion',
+          'Enterprise pilot architecture: security documentation, audit-log exports, and procurement',
         ],
         readings: ['Hanzo Docs: Templates, Referrals & Campaigns'],
         lab: 'Lab 5: Launch your public landing page, interactive demo, docs quickstart, and analytics funnel.',
@@ -2595,7 +2595,7 @@ export const UNIVERSITY_COURSES: UniversityCourse[] = [
         lectures: [
           'Org/project hierarchy and ABAC authorization via Hanzo IAM',
           'Envelope encryption with tenant-owned KMS keys',
-          'Immutable audit logging and regulatory readiness',
+          'Immutable audit logging and verifiable control planes',
         ],
         readings: ['Hanzo Docs: Multi-Tenancy & IAM'],
         lab: 'Lab 4: Implement isolated multi-tenant IAM/KMS boundaries and verify zero cross-tenant access.',
