@@ -3,7 +3,7 @@
 import React, { Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Box, Text, XStack, YStack } from '@/components/ui'
+import { Box, Text, XStack, YStack } from '@hanzo/ui'
 import { Action, Chip, Lede, Title } from '@hanzo/ui/marketing'
 import { PRO_CHECKOUT, checkoutUrl } from '@/lib/pay'
 import { validateCoupon, type CheckoutItem } from '../../courses-data'
@@ -22,14 +22,14 @@ function CheckoutContent({ item }: { item: CheckoutItem }) {
         </Chip>
         <Title>{item.title}</Title>
         <Lede>
-          This course is free — no payment or card is required. Launch the interactive workspace on hanzo.app/learn or open the Student Portal directly.
+          This course is free — no payment or card is required. Launch the interactive learning workspace directly on hanzo.app/learn.
         </Lede>
         <XStack gap={12} flexWrap="wrap" justify="center">
           <Action href={item.learnWorkspaceUrl} fill>
             Start Learning Free on hanzo.app/learn ↗
           </Action>
-          <Action href={`/portal?course=${item.slug}`}>
-            Open Student Portal →
+          <Action href={`/${item.slug}`}>
+            View Course Syllabus →
           </Action>
         </XStack>
       </YStack>
@@ -41,7 +41,7 @@ function CheckoutContent({ item }: { item: CheckoutItem }) {
       ? PRO_CHECKOUT
       : checkoutUrl(
           item.planId,
-          `https://hanzo.university/portal?course=${item.courseSlugs?.[0] || item.slug}&welcome=1`,
+          `https://hanzo.app/learn/${item.courseSlugs?.[0] || item.slug}`,
           couponRes?.valid ? couponRes.code : undefined
         )
 
@@ -92,7 +92,7 @@ function CheckoutContent({ item }: { item: CheckoutItem }) {
           </Box>
 
           <Text fontSize={13} color="var(--muted-foreground)" lineHeight={20}>
-            Self-service enrollment is handled through Hanzo&rsquo;s secure checkout at hanzo.ai/pay. Sign in with Hanzo IAM to activate your course access, sandboxed labs on hanzo.app/learn, and Student Portal workstation.
+            Self-service enrollment is handled through Hanzo&rsquo;s secure checkout at hanzo.ai/pay. Sign in with Hanzo IAM to activate your course access and sandboxed labs on hanzo.app/learn.
           </Text>
 
           <YStack gap={10}>

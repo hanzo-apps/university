@@ -3,6 +3,7 @@
 **The School of Intelligence Engineering** — part of the [Hanzo AI](https://hanzo.ai) ecosystem.
 
 - **Production Domain**: `https://hanzo.university`
+- **Machine-Readable Catalog**: `https://hanzo.university/catalog.json`
 - **Interactive Learning Workspace**: `https://hanzo.app/learn`
 - **Documentation & Guides**: `https://docs.hanzo.ai/docs/guides`
 - **Source Repository**: `hanzo-apps/university`

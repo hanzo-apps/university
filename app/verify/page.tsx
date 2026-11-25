@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Band, Card, Head } from '@/components/band'
-import { Box, Text, XStack, YStack } from '@/components/ui'
+import { Box, Text, XStack, YStack } from '@hanzo/ui'
 import { Action, Chip } from '@hanzo/ui/marketing'
 import { Grid } from '@hanzo/ui/grid'
 import {
@@ -59,7 +59,7 @@ function VerifyContent() {
     ? `${matchedTrack.credentialCode} Track (${matchedTrack.courseCodes.join(', ')}) · ${matchedTrack.credentialType}`
     : `${matchedCourse.code}: ${matchedCourse.title} · Level: ${matchedCourse.level}`
   const artifactLabel = matchedTrack ? matchedTrack.capstoneRequirement : matchedCourse.capstoneArtifact
-  const portalSlug = matchedTrack ? matchedTrack.courseSlugs[0] : matchedCourse.slug
+  const workspaceSlug = matchedTrack ? matchedTrack.courseSlugs[0] : matchedCourse.slug
 
   const jsonLdPayload = {
     '@context': [
@@ -163,11 +163,11 @@ function VerifyContent() {
           </Link>
 
           <XStack items="center" gap="$3" style={{ flexShrink: 0 }}>
-            <Link href="/portal" style={{ textDecoration: 'none' }}>
+            <a href="https://hanzo.app/learn" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
               <Text fontSize="$1" $sm={{ fontSize: '$2' }} color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-                Student Portal →
+                Learning Workspace ↗
               </Text>
-            </Link>
+            </a>
           </XStack>
         </XStack>
       </Box>
@@ -338,8 +338,8 @@ function VerifyContent() {
               </Action>
             </XStack>
 
-            <Action href={`/portal?course=${portalSlug}`} fill px={16} py={8}>
-              Open Student Portal →
+            <Action href={`https://hanzo.app/learn/${workspaceSlug}`} fill px={16} py={8}>
+              Open in hanzo.app/learn ↗
             </Action>
           </XStack>
         </Card>
@@ -408,7 +408,7 @@ function VerifyContent() {
               borderColor="rgba(255, 255, 255, 0.08)"
             >
               <Text fontSize="$1" fontFamily="$mono" color="var(--emerald-400)">
-                [![{credentialCode} Verified Capstone](https://hanzo.university/badges/HACE.svg)](https://hanzo.university/verify?id={certId})
+                [✓ {credentialCode}: {credentialTitle} — Hanzo University W3C Credential](https://hanzo.university/verify?id={certId})
               </Text>
             </Box>
 
@@ -417,7 +417,7 @@ function VerifyContent() {
                 render="button"
                 onClick={() =>
                   handleCopy(
-                    `[![${credentialCode} Verified Capstone](https://hanzo.university/badges/HACE.svg)](https://hanzo.university/verify?id=${certId})`,
+                    `[✓ ${credentialCode}: ${credentialTitle} — Hanzo University W3C Credential](https://hanzo.university/verify?id=${certId})`,
                     'badge'
                   )
                 }

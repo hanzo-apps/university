@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/export-catalog.mjs",
     "dev": "next dev --webpack",
+    "export:catalog": "node scripts/export-catalog.mjs",
+    "prebuild": "node scripts/export-catalog.mjs",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",

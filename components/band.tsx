@@ -1,14 +1,10 @@
 'use client'
 
 import React, { type ReactNode } from 'react'
-import { Box, View, XStack, YStack, Text } from '@/components/ui'
+import { Box, View, XStack, Text } from '@hanzo/ui'
 import { Eyebrow, Title, Lede, Chip } from '@hanzo/ui/marketing'
 import { Grid } from '@hanzo/ui/grid'
 import Link from 'next/link'
-
-export const INK = 'var(--pure-black)'
-export const FADE = 'linear-gradient(to bottom, var(--background), color-mix(in oklab, var(--neutral-900) 20%, transparent))'
-export const FADE_UP = 'linear-gradient(to top, var(--background), color-mix(in oklab, var(--neutral-900) 20%, transparent))'
 
 export function Band({
   id,

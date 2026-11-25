@@ -3023,14 +3023,8 @@ export interface CheckoutItem {
   courseSlugs?: string[]
 }
 
-export const ALL_COURSES: UniversityCourse[] = UNIVERSITY_COURSES
-
 export function findCourse(slug: string): UniversityCourse | undefined {
   return UNIVERSITY_COURSES.find((c) => c.slug === slug)
-}
-
-export function findTrack(slug: string): CertificationTrack | undefined {
-  return CERTIFICATION_TRACKS.find((t) => t.slug === slug)
 }
 
 export function getAllCheckoutItems(): CheckoutItem[] {
