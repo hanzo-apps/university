@@ -2,15 +2,17 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Text, View, XStack, YStack } from '@hanzo/ui'
+import { Text, XStack, YStack } from '@hanzo/ui'
 import { HanzoWordmark } from '@hanzogui/shell'
-import { ShieldCheck, Award, GraduationCap } from 'lucide-react'
+import { ShieldCheck } from 'lucide-react'
+import { CERTIFICATION_TRACKS } from '../courses-data'
 
 export function Footer() {
   return (
     <YStack
       render="footer"
-      borderTopWidth={0}
+      borderTopWidth={1}
+      borderColor="var(--border)"
       bg="var(--pure-black)"
       py={64}
       px={16}
@@ -20,90 +22,102 @@ export function Footer() {
       maxW="100vw"
       overflow="hidden"
     >
-      <XStack
-        maxW={1280}
-        mx="auto"
-        width="100%"
-        justify="space-between"
-        flexWrap="wrap"
-        gap={40}
-      >
+      <XStack maxW={1280} mx="auto" width="100%" justify="space-between" flexWrap="wrap" gap={40}>
         {/* Brand Column */}
-        <YStack gap={16} maxW="100%" minW={0} width={340}>
+        <YStack gap={14} maxW="100%" minW={0} width={330}>
           <HanzoWordmark label="Hanzo University" size={24} />
           <Text fontSize="$2" color="var(--muted-foreground)" lineHeight={22}>
-            The systems engineering institute of the Hanzo AI ecosystem. Training engineers in frontier decision models, zero-regression AST code agents, and native reinforcement learning.
+            The School of Intelligence Engineering. Real models. Real compute. Real experiments. Real skills—across Intelligence Engineering, Autonomous Science, Cybersecurity, and AI Entrepreneurship.
           </Text>
-          <XStack items="center" gap={8} pt={8}>
-            <Award size={16} color="var(--white-70)" />
-            <Text fontSize="$1" color="var(--muted-foreground)" fontFamily="$mono">
-              W3C Verifiable Credentials Standard
+          <XStack items="flex-start" gap={8} pt={6}>
+            <ShieldCheck size={16} color="var(--white-70)" style={{ flexShrink: 0, marginTop: 2 }} />
+            <Text fontSize="$1" color="var(--muted-foreground)" lineHeight={18}>
+              W3C Verifiable Credentials provide cryptographic proof of completed practical capstones &amp; live artifacts. Hanzo University issues professional certifications and fellowships, not accredited academic degrees.
             </Text>
           </XStack>
         </YStack>
 
-        {/* Degree Programs */}
-        <YStack gap={12} minW={0} maxW="100%">
-          <Text fontSize="$2" fontWeight="700" color="var(--white)" fontFamily="$mono">
-            ACADEMIC PROGRAMS
+        {/* Schools & Entry Courses */}
+        <YStack gap={10} minW={0} maxW="100%">
+          <Text fontSize="$1" fontWeight="700" color="var(--white)" fontFamily="$mono" letterSpacing={0.6}>
+            SCHOOLS &amp; FOUNDATION
           </Text>
-          <Link href="/agentic-coding" style={{ textDecoration: 'none' }}>
-            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              ENG 100 · Agentic Coding Systems (HACE)
+          <Link href="/continuous-improvement" style={{ textDecoration: 'none' }}>
+            <Text fontSize="$2" color="var(--emerald-400)" hoverStyle={{ color: 'var(--white)' }}>
+              AUTO 101 · Continuous Improvement (Free)
             </Text>
           </Link>
-          <Link href="/reinforcement-learning" style={{ textDecoration: 'none' }}>
+          <Link href="/kai-decision-intelligence" style={{ textDecoration: 'none' }}>
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              RL 101 · Native Reinforcement Learning (HARLE)
+              School of Intelligence Engineering
             </Text>
           </Link>
-          <Link href="/agentic-marketing" style={{ textDecoration: 'none' }}>
+          <Link href="/science-discovery" style={{ textDecoration: 'none' }}>
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              MKT 102 · Agentic Marketing & Autonomous Campaigns (HAME)
+              School of Autonomous Science
             </Text>
           </Link>
-          <Link href="/systems-engineering" style={{ textDecoration: 'none' }}>
+          <Link href="/ai-security-fundamentals" style={{ textDecoration: 'none' }}>
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              SYS 103 · Systems Engineering Foundation (HCAISE)
+              School of Cybersecurity
             </Text>
           </Link>
-          <Link href="/ai-practitioner" style={{ textDecoration: 'none' }}>
+          <Link href="/build-your-ai-company" style={{ textDecoration: 'none' }}>
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              PRA 104 · AI Practitioner & Tools (HCAIP)
-            </Text>
-          </Link>
-          <Link href="/ai-architect" style={{ textDecoration: 'none' }}>
-            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              ARC 105 · AI Architect Masterclass (HCPAIA)
+              School of Autonomous Business &amp; Entrepreneurship
             </Text>
           </Link>
         </YStack>
 
-        {/* Student Resources */}
-        <YStack gap={12} minW={0} maxW="100%">
-          <Text fontSize="$2" fontWeight="700" color="var(--white)" fontFamily="$mono">
-            STUDENT SERVICES
+        {/* Flagship Certifications */}
+        <YStack gap={10} minW={0} maxW="100%">
+          <Text fontSize="$1" fontWeight="700" color="var(--white)" fontFamily="$mono" letterSpacing={0.6}>
+            CERTIFICATION TRACKS
           </Text>
-          <Link href="/portal" style={{ textDecoration: 'none' }}>
-            <Text fontSize="$2" color="var(--white)" hoverStyle={{ color: 'var(--white-70)' }}>
-              Student Learning Portal
-            </Text>
-          </Link>
-          <a href="https://hanzo.ai/docs" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              Hanzo Documentation ↗
-            </Text>
-          </a>
-          <a href="https://hanzo.blog" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              Research & Technical Blog ↗
-            </Text>
-          </a>
+          {CERTIFICATION_TRACKS.map((track) => (
+            <Link key={track.slug} href={`/checkout/${track.slug}`} style={{ textDecoration: 'none' }}>
+              <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
+                {track.name}
+              </Text>
+            </Link>
+          ))}
+        </YStack>
+
+        {/* 4 Interconnected Layers & Services */}
+        <YStack gap={10} minW={0} maxW="100%">
+          <Text fontSize="$1" fontWeight="700" color="var(--white)" fontFamily="$mono" letterSpacing={0.6}>
+            ECOSYSTEM LAYERS
+          </Text>
           <a href="https://hanzo.ai" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              Hanzo Cloud Fabric ↗
+              Discover · hanzo.ai ↗
             </Text>
           </a>
+          <a href="https://docs.hanzo.ai" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
+              Understand · docs.hanzo.ai ↗
+            </Text>
+          </a>
+          <a href="https://docs.hanzo.ai/docs/guides" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
+              Build · Practical Guides ↗
+            </Text>
+          </a>
+          <a href="https://hanzo.app/learn" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+            <Text fontSize="$2" color="var(--white)" hoverStyle={{ color: 'var(--white-70)' }}>
+              Master &amp; Ship · hanzo.app/learn ↗
+            </Text>
+          </a>
+          <Link href="/portal" style={{ textDecoration: 'none' }}>
+            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
+              Student Portal
+            </Text>
+          </Link>
+          <Link href="/verify" style={{ textDecoration: 'none' }}>
+            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
+              Verify W3C Credentials
+            </Text>
+          </Link>
         </YStack>
       </XStack>
 
@@ -120,7 +134,7 @@ export function Footer() {
         gap={16}
       >
         <Text fontSize="$1" color="var(--muted-foreground)">
-          © {new Date().getFullYear()} Hanzo Industries Inc. Hanzo University is an open engineering and research institution.
+          © {new Date().getFullYear()} Hanzo AI Inc. Hanzo University — The School of Intelligence Engineering.
         </Text>
         <XStack items="center" gap={16}>
           <a href="https://hanzo.ai/legal/terms" style={{ color: 'var(--muted-foreground)', fontSize: '12px', textDecoration: 'none' }}>

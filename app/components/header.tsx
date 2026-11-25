@@ -11,21 +11,26 @@ import {
   Menu as MenuIcon,
   X,
   BookOpen,
-  Sparkles,
   ExternalLink,
   ShieldCheck,
-  Coins,
   ArrowRight,
   Home,
-  FileText,
-  Headphones,
-  Zap,
-  ChevronRight,
-  Download,
+  Compass,
+  Award,
+  Terminal,
+  Sparkles,
 } from 'lucide-react'
-import { UNIVERSITY_COURSES } from '../courses-data'
+import { SCHOOLS, UNIVERSITY_COURSES } from '../courses-data'
 
-export function HanzoStackLogo({ size = 24, color = "currentColor", strokeWidth = 1.9 }: { size?: number; color?: string; strokeWidth?: number }) {
+export function HanzoStackLogo({
+  size = 24,
+  color = 'currentColor',
+  strokeWidth = 1.9,
+}: {
+  size?: number
+  color?: string
+  strokeWidth?: number
+}) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
       <path
@@ -54,13 +59,28 @@ export function HanzoStackLogo({ size = 24, color = "currentColor", strokeWidth 
   )
 }
 
-export function GitHubIcon({ size = 18, color = "currentColor" }: { size?: number; color?: string }) {
+export function GitHubIcon({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink: 0 }}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+      />
     </svg>
   )
 }
+
+const FEATURED_DROPDOWN_SLUGS = [
+  'continuous-improvement',
+  'kai-decision-intelligence',
+  'kai-training-decision-models',
+  'enso-adaptive-intelligence',
+  'zen-model-engineering',
+  'science-discovery',
+  'agentic-cybersecurity',
+  'build-your-ai-company',
+]
 
 export function Header() {
   const [grounded, setGrounded] = useState(false)
@@ -70,18 +90,6 @@ export function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinnedRef = useRef(false)
-  const hoverOpenedAtRef = useRef<number>(0)
-
-  // Automatically close dropdown on navigation
-  useEffect(() => {
-    closeMenu()
-  }, [pathname])
-
-  useEffect(() => {
-    const handleScroll = () => setGrounded(window.scrollY > 10)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   const closeMenu = () => {
     if (closeTimerRef.current) {
@@ -93,6 +101,16 @@ export function Header() {
   }
 
   useEffect(() => {
+    closeMenu()
+  }, [pathname])
+
+  useEffect(() => {
+    const handleScroll = () => setGrounded(window.scrollY > 10)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         closeMenu()
@@ -102,6 +120,7 @@ export function Header() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         closeMenu()
+        setMobileOpen(false)
       }
     }
 
@@ -124,21 +143,16 @@ export function Header() {
       clearTimeout(closeTimerRef.current)
       closeTimerRef.current = null
     }
-    if (!programsOpen) {
-      setProgramsOpen(true)
-      hoverOpenedAtRef.current = Date.now()
-    }
+    if (!programsOpen) setProgramsOpen(true)
   }
 
   const handleMouseLeave = () => {
     if (isPinnedRef.current) return
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current)
-    }
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     closeTimerRef.current = setTimeout(() => {
       setProgramsOpen(false)
       isPinnedRef.current = false
-    }, 400)
+    }, 350)
   }
 
   const handleToggleClick = (e: React.MouseEvent) => {
@@ -150,17 +164,18 @@ export function Header() {
     }
 
     if (!programsOpen) {
-      // Closed -> open and pin it
       setProgramsOpen(true)
       isPinnedRef.current = true
     } else if (!isPinnedRef.current) {
-      // Open via hover -> pin it open so it stays open
       isPinnedRef.current = true
     } else {
-      // Already pinned open by user click -> toggle it closed
       closeMenu()
     }
   }
+
+  const featuredCourses = FEATURED_DROPDOWN_SLUGS.map((s) => UNIVERSITY_COURSES.find((c) => c.slug === s)).filter(
+    (c): c is NonNullable<typeof c> => Boolean(c)
+  )
 
   return (
     <>
@@ -175,7 +190,6 @@ export function Header() {
         height={64}
         width="100%"
         maxW="100vw"
-        overflow="hidden"
         px={14}
         $sm={{ px: 20 }}
         $md={{ px: 24 }}
@@ -185,7 +199,6 @@ export function Header() {
         borderColor="var(--border)"
         transition="quickest"
       >
-        {/* Brand Link */}
         <Link href="/" style={{ textDecoration: 'none', color: 'inherit', flexShrink: 1, minWidth: 0, overflow: 'hidden' }}>
           <XStack items="center" gap={8} minW={0}>
             <HanzoWordmark label="Hanzo University" size={20} />
@@ -193,8 +206,7 @@ export function Header() {
         </Link>
 
         {/* Desktop Nav Links */}
-        <XStack items="center" gap={16} $lg={{ gap: 24 }} display="none" $md={{ display: 'flex' }}>
-          {/* Programs Dropdown Trigger */}
+        <XStack items="center" gap={16} $lg={{ gap: 22 }} display="none" $md={{ display: 'flex' }}>
           <div
             ref={dropdownRef}
             style={{ position: 'relative' }}
@@ -221,19 +233,14 @@ export function Header() {
                 outline: 'none',
               }}
             >
-              <XStack
-                items="center"
-                gap={4}
-                py={12}
-                $platform-web={{ cursor: 'pointer' }}
-              >
+              <XStack items="center" gap={4} py={12} $platform-web={{ cursor: 'pointer' }}>
                 <Text
                   fontSize="$2"
                   color={programsOpen ? 'var(--white)' : 'var(--muted-foreground)'}
                   fontWeight={programsOpen ? '600' : '400'}
                   hoverStyle={{ color: 'var(--white)' }}
                 >
-                  Programs & Degrees
+                  Schools &amp; Courses
                 </Text>
                 <ChevronDown
                   size={14}
@@ -246,14 +253,13 @@ export function Header() {
               </XStack>
             </button>
 
-            {/* Programs Floating Dropdown Menu */}
             {programsOpen && (
               <div
                 className="programs-dropdown-menu"
                 style={{
                   position: 'absolute',
                   top: 'calc(100% - 2px)',
-                  left: -140,
+                  left: -180,
                   paddingTop: 8,
                   zIndex: 1001,
                 }}
@@ -261,120 +267,148 @@ export function Header() {
                 onMouseLeave={handleMouseLeave}
               >
                 <YStack
-                  width={560}
-                  p={16}
+                  width={680}
+                  p={18}
                   rounded="var(--radius-xl)"
                   bg="rgba(10, 10, 10, 0.98)"
                   backdropFilter="blur(24px)"
                   borderWidth={1}
-                  borderColor="rgba(255, 255, 255, 0.08)"
-                  gap={12}
+                  borderColor="rgba(255, 255, 255, 0.1)"
+                  gap={14}
                   $platform-web={{
                     boxShadow: '0 24px 48px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.15)',
                   }}
                 >
-                  <XStack items="center" justify="space-between" px={8} pb={8} borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
-                    <Text fontSize="$1" fontWeight="700" color="rgba(255, 255, 255, 0.5)" fontFamily="$mono">
-                      3 CERTIFICATION TRACKS
+                  <XStack items="center" justify="space-between" px={6} pb={8} borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+                    <Text fontSize="$1" fontWeight="700" color="rgba(255, 255, 255, 0.6)" fontFamily="$mono">
+                      4 SCHOOLS · 25 COURSES · FREE FOUNDATION
                     </Text>
-                    <Text fontSize="$1" color="var(--emerald-400)" fontFamily="$mono">
-                      +25% COMPUTE REBATE
-                    </Text>
+                    <Link
+                      href="/#schools"
+                      onClick={() => setTimeout(closeMenu, 60)}
+                      style={{ textDecoration: 'none', color: 'var(--white)', fontSize: '12px', fontFamily: 'monospace' }}
+                    >
+                      View all 25 →
+                    </Link>
                   </XStack>
 
-                  <YStack gap={6}>
-                    {UNIVERSITY_COURSES.map((c) => (
-                      <Link
-                        key={c.slug}
-                        href={`/${c.slug}`}
-                        onClick={() => setTimeout(closeMenu, 80)}
-                        style={{ textDecoration: 'none', color: 'inherit', display: 'block', cursor: 'pointer' }}
-                      >
-                        <XStack
-                          items="center"
-                          justify="space-between"
-                          p={10}
-                          rounded="var(--radius-md)"
-                          bg="transparent"
-                          hoverStyle={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                          }}
+                  {/* 4 Schools Quick Row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    {SCHOOLS.filter((s) => s.id !== 'foundation').map((school) => {
+                      const count = UNIVERSITY_COURSES.filter((c) => c.school === school.id).length
+                      return (
+                        <Link
+                          key={school.id}
+                          href={`/#schools`}
+                          onClick={() => setTimeout(closeMenu, 60)}
+                          style={{ textDecoration: 'none', color: 'inherit' }}
                         >
-                          <XStack items="center" gap={10}>
-                            <View
-                              px={6}
-                              py={2}
-                              rounded="var(--radius-sm)"
-                              bg="var(--pure-black)"
-                              borderWidth={1}
-                              borderColor="rgba(255, 255, 255, 0.12)"
-                            >
-                              <Text fontSize="$1" fontWeight="700" fontFamily="$mono" color="var(--white)">
-                                {c.code}
+                          <YStack
+                            p={10}
+                            rounded="var(--radius-md)"
+                            bg="rgba(255, 255, 255, 0.03)"
+                            borderWidth={1}
+                            borderColor="rgba(255, 255, 255, 0.07)"
+                            hoverStyle={{ background: 'rgba(255, 255, 255, 0.07)' }}
+                            gap={2}
+                          >
+                            <XStack items="center" justify="space-between">
+                              <Text fontSize={12} fontWeight="700" color="var(--white)">
+                                {school.name}
                               </Text>
-                            </View>
-                            <YStack gap={2}>
-                              <Text fontSize="$2" fontWeight="600" color="var(--white)">
+                              <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.55)">
+                                {count} courses
+                              </Text>
+                            </XStack>
+                            <Text fontSize={11} color="var(--muted-foreground)" numberOfLines={1}>
+                              {school.discipline}
+                            </Text>
+                          </YStack>
+                        </Link>
+                      )
+                    })}
+                  </div>
+
+                  {/* Highlighted Entry Courses */}
+                  <YStack gap={4}>
+                    <Text fontSize={11} fontFamily="$mono" color="rgba(255, 255, 255, 0.5)" px={6}>
+                      POPULAR STARTING COURSES
+                    </Text>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+                      {featuredCourses.map((c) => (
+                        <Link
+                          key={c.slug}
+                          href={`/${c.slug}`}
+                          onClick={() => setTimeout(closeMenu, 60)}
+                          style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+                        >
+                          <XStack
+                            items="center"
+                            justify="space-between"
+                            p={8}
+                            rounded="var(--radius-md)"
+                            hoverStyle={{ background: 'rgba(255, 255, 255, 0.06)' }}
+                            gap={8}
+                          >
+                            <XStack items="center" gap={8} minW={0} flex={1}>
+                              <View
+                                px={6}
+                                py={2}
+                                rounded="var(--radius-sm)"
+                                bg="var(--pure-black)"
+                                borderWidth={1}
+                                borderColor="rgba(255, 255, 255, 0.14)"
+                              >
+                                <Text fontSize={10} fontWeight="700" fontFamily="$mono" color="var(--white)">
+                                  {c.code}
+                                </Text>
+                              </View>
+                              <Text fontSize={12} fontWeight="600" color="var(--white)" numberOfLines={1}>
                                 {c.title}
                               </Text>
-                              <Text fontSize="$1" color="var(--muted-foreground)">
-                                {c.credential} · {c.duration} · {c.level}
-                              </Text>
-                            </YStack>
-                          </XStack>
-
-                          <XStack items="center" gap={6}>
-                            <Text fontSize="$1" color="rgba(255, 255, 255, 0.6)" fontFamily="$mono">
-                              ${c.price}
+                            </XStack>
+                            <Text
+                              fontSize={11}
+                              fontFamily="$mono"
+                              color={c.isFree ? 'var(--emerald-400)' : 'rgba(255, 255, 255, 0.6)'}
+                            >
+                              {c.isFree ? 'FREE' : `$${c.price}`}
                             </Text>
-                            <ArrowRight size={13} color="rgba(255, 255, 255, 0.4)" />
                           </XStack>
-                        </XStack>
-                      </Link>
-                    ))}
+                        </Link>
+                      ))}
+                    </div>
                   </YStack>
 
                   <XStack
                     items="center"
                     justify="space-between"
                     pt={10}
-                    px={8}
+                    px={6}
                     borderTopWidth={1}
                     borderColor="rgba(255, 255, 255, 0.08)"
+                    flexWrap="wrap"
+                    gap={10}
                   >
-                    <Link
-                      href="/portal"
-                      onClick={() => setTimeout(closeMenu, 80)}
-                      style={{ textDecoration: 'none', cursor: 'pointer' }}
-                    >
-                      <XStack items="center" gap={4}>
-                        <Text fontSize="$1" color="var(--emerald-400)" fontWeight="600">
-                          Student Portal →
-                        </Text>
-                      </XStack>
+                    <Link href="/portal" onClick={() => setTimeout(closeMenu, 60)} style={{ textDecoration: 'none' }}>
+                      <Text fontSize="$1" color="var(--white)" fontWeight="600">
+                        Student Portal →
+                      </Text>
                     </Link>
-
                     <a
-                      href="https://hanzo.ai/blog/kai-decision-models"
+                      href="https://hanzo.app/learn"
                       target="_blank"
                       rel="noreferrer"
-                      onClick={() => setTimeout(closeMenu, 80)}
-                      style={{ textDecoration: 'none', cursor: 'pointer' }}
+                      onClick={() => setTimeout(closeMenu, 60)}
+                      style={{ textDecoration: 'none' }}
                     >
-                      <XStack items="center" gap={4}>
-                        <Text fontSize="$1" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-                          Kai Decision Models ↗
-                        </Text>
-                      </XStack>
+                      <Text fontSize="$1" color="var(--emerald-400)" fontWeight="600">
+                        Open Learning Workspace ↗
+                      </Text>
                     </a>
-
-                    <Link
-                      href="/#credentials"
-                      onClick={() => setTimeout(closeMenu, 80)}
-                      style={{ textDecoration: 'none', cursor: 'pointer' }}
-                    >
+                    <Link href="/verify" onClick={() => setTimeout(closeMenu, 60)} style={{ textDecoration: 'none' }}>
                       <Text fontSize="$1" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-                        W3C Standards
+                        Verify Credentials
                       </Text>
                     </Link>
                   </XStack>
@@ -383,9 +417,15 @@ export function Header() {
             )}
           </div>
 
-          <Link href="/#comparison" style={{ textDecoration: 'none' }}>
+          <Link href="/#adventure" style={{ textDecoration: 'none' }}>
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              Comparison
+              Choose Your Path
+            </Text>
+          </Link>
+
+          <Link href="/#certifications" style={{ textDecoration: 'none' }}>
+            <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
+              Certifications
             </Text>
           </Link>
 
@@ -396,48 +436,47 @@ export function Header() {
           </Link>
 
           <a
-            href="https://hanzo.ai/blog/kai-decision-models"
+            href="https://docs.hanzo.ai/docs/guides"
             target="_blank"
             rel="noreferrer"
             className="hide-on-tablet"
             style={{ textDecoration: 'none' }}
           >
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              Research & Blog ↗
+              Docs &amp; Guides ↗
             </Text>
           </a>
 
           <a
-            href="https://hanzo.ai"
+            href="https://hanzo.app/learn"
             target="_blank"
             rel="noreferrer"
             className="hide-on-tablet"
             style={{ textDecoration: 'none' }}
           >
             <Text fontSize="$2" color="var(--muted-foreground)" hoverStyle={{ color: 'var(--white)' }}>
-              Hanzo Cloud ↗
+              Workspace ↗
             </Text>
           </a>
         </XStack>
 
         {/* Action Buttons */}
         <XStack items="center" gap={8} $sm={{ gap: 12 }} style={{ flexShrink: 0 }}>
-          {/* Desktop Only Buttons */}
           <Link
             href="/portal"
             className="hide-on-mobile"
             style={{
-              padding: '7px 14px',
+              padding: '7px 12px',
               fontSize: '13px',
               fontWeight: 500,
               color: 'var(--white-70)',
               textDecoration: 'none',
             }}
           >
-            Student Log In
+            Sign In
           </Link>
           <Link
-            href="/#curriculum"
+            href="/continuous-improvement"
             className="hide-on-mobile"
             style={{
               display: 'flex',
@@ -452,10 +491,9 @@ export function Header() {
               textDecoration: 'none',
             }}
           >
-            Enroll in Track →
+            Start Free →
           </Link>
 
-          {/* Mobile Only: Student Portal Pill Button */}
           <Link
             href="/portal"
             className="show-on-mobile-only"
@@ -478,7 +516,6 @@ export function Header() {
             <span style={{ fontSize: '12px' }}>→</span>
           </Link>
 
-          {/* Mobile Menu Toggle (Matching mobile.png left screen hamburger icon) */}
           <View
             render="button"
             display="flex"
@@ -495,7 +532,7 @@ export function Header() {
         </XStack>
       </XStack>
 
-      {/* ── Mobile Navigation Drawer (Faithfully matching mobile.png right screen) ── */}
+      {/* Mobile Navigation Drawer */}
       {mobileOpen && (
         <YStack
           position="fixed"
@@ -504,15 +541,15 @@ export function Header() {
           r={0}
           b={0}
           z={100}
+          $platform-web={{ zIndex: 1100 }}
           bg="rgba(5, 7, 10, 0.98)"
           backdropFilter="blur(24px)"
           p={20}
-          gap={18}
+          gap={16}
           overflowY="auto"
           className="drawer-enter"
           $md={{ display: 'none' }}
         >
-          {/* 1. Header: Hanzo Isometric Stack Logo + Hanzo University + Close X */}
           <XStack items="center" justify="space-between" pb={12} pt={4} borderBottomWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
             <XStack items="center" gap={10}>
               <HanzoStackLogo size={24} color="#ffffff" strokeWidth={2} />
@@ -533,337 +570,98 @@ export function Header() {
             </View>
           </XStack>
 
-          {/* 2. Main Navigation Links */}
           <YStack gap={6}>
-            {/* Home (Active Highlighted Pill) */}
-            <Link
-              href="/"
-              onClick={() => setMobileOpen(false)}
-              style={{
-                textDecoration: 'none',
-                width: '100%',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderRadius: '14px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: 'var(--white)',
-                fontSize: '14px',
-                fontWeight: 600,
-                boxSizing: 'border-box',
-              }}
-            >
-              <Home size={18} color="var(--white)" />
-              <span>Home</span>
-            </Link>
-
-            {/* My Records */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileOpen(false)
-                window.dispatchEvent(new CustomEvent('open-records-modal'))
-              }}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: '1px solid transparent',
-                borderRadius: '14px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: 'rgba(255, 255, 255, 0.75)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontSize: '14px',
-                fontWeight: 500,
-              }}
-            >
-              <FileText size={18} color="rgba(255, 255, 255, 0.75)" />
-              <span>My Records</span>
-            </button>
-
-            {/* Verify Credentials */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileOpen(false)
-                window.dispatchEvent(new CustomEvent('open-verify-modal'))
-              }}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: '1px solid transparent',
-                borderRadius: '14px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: 'rgba(255, 255, 255, 0.75)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontSize: '14px',
-                fontWeight: 500,
-              }}
-            >
-              <ShieldCheck size={18} color="rgba(255, 255, 255, 0.75)" />
-              <span>Verify Credentials</span>
-            </button>
-
-            {/* Resources */}
-            <a
-              href="/#curriculum"
-              onClick={() => setMobileOpen(false)}
-              style={{
-                textDecoration: 'none',
-                width: '100%',
-                background: 'transparent',
-                border: '1px solid transparent',
-                borderRadius: '14px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: 'rgba(255, 255, 255, 0.75)',
-                fontSize: '14px',
-                fontWeight: 500,
-                boxSizing: 'border-box',
-              }}
-            >
-              <BookOpen size={18} color="rgba(255, 255, 255, 0.75)" />
-              <span>Resources</span>
-            </a>
-
-            {/* Support */}
-            <a
-              href="/#faqs"
-              onClick={() => setMobileOpen(false)}
-              style={{
-                textDecoration: 'none',
-                width: '100%',
-                background: 'transparent',
-                border: '1px solid transparent',
-                borderRadius: '14px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: 'rgba(255, 255, 255, 0.75)',
-                fontSize: '14px',
-                fontWeight: 500,
-                boxSizing: 'border-box',
-              }}
-            >
-              <Headphones size={18} color="rgba(255, 255, 255, 0.75)" />
-              <span>Support</span>
-            </a>
-          </YStack>
-
-          {/* 3. Quick Actions Section */}
-          <YStack gap={10} pt={4}>
-            <XStack items="center" gap={8} pb={2}>
-              <Zap size={16} color="var(--white)" />
-              <Text fontSize={15} fontWeight="700" color="var(--white)">
-                Quick Actions
-              </Text>
-            </XStack>
-
-            {/* Verify a Record */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileOpen(false)
-                window.dispatchEvent(new CustomEvent('open-verify-modal'))
-              }}
-              className="hanzo-mobile-card"
-              style={{
-                width: '100%',
-                background: '#090c12',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '16px',
-                padding: '14px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                color: 'var(--white)',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <ShieldCheck size={18} color="var(--white)" />
-                <span style={{ fontWeight: 500, fontSize: '13px' }}>Verify a Record</span>
-              </div>
-              <ChevronRight size={16} color="rgba(255, 255, 255, 0.45)" />
-            </button>
-
-            {/* Access Student Portal */}
-            <Link
-              href="/portal"
-              onClick={() => setMobileOpen(false)}
-              className="hanzo-mobile-card"
-              style={{
-                textDecoration: 'none',
-                width: '100%',
-                background: '#090c12',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '16px',
-                padding: '14px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                color: 'var(--white)',
-                boxSizing: 'border-box',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <ArrowRight size={18} color="var(--white)" />
-                <span style={{ fontWeight: 500, fontSize: '13px' }}>Access Student Portal</span>
-              </div>
-              <ChevronRight size={16} color="rgba(255, 255, 255, 0.45)" />
-            </Link>
-
-            {/* Download JSON */}
-            <button
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('download-credential-json'))
-              }}
-              className="hanzo-mobile-card"
-              style={{
-                width: '100%',
-                background: '#090c12',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '16px',
-                padding: '14px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                color: 'var(--white)',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Download size={18} color="var(--white)" />
-                <span style={{ fontWeight: 500, fontSize: '13px' }}>Download JSON</span>
-              </div>
-              <ChevronRight size={16} color="rgba(255, 255, 255, 0.45)" />
-            </button>
-
-            {/* Download GitHub Badge */}
-            <button
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('download-credential-badge'))
-              }}
-              className="hanzo-mobile-card"
-              style={{
-                width: '100%',
-                background: '#090c12',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '16px',
-                padding: '14px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                color: 'var(--white)',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <GitHubIcon size={18} color="var(--white)" />
-                <span style={{ fontWeight: 500, fontSize: '13px' }}>Download GitHub Badge</span>
-              </div>
-              <ChevronRight size={16} color="rgba(255, 255, 255, 0.45)" />
-            </button>
-          </YStack>
-
-          {/* 4. Active Student Subcard */}
-          <Box
-            className="hanzo-mobile-card"
-            borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.08)"
-            bg="#07090e"
-            p={16}
-            style={{
-              borderRadius: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-            }}
-          >
-            <XStack items="center" justify="space-between">
-              <XStack items="center" gap={8}>
-                <View
-                  width={7}
-                  height={7}
-                  rounded={999}
-                  bg="#10b981"
+            {[
+              { href: '/', label: 'Home', icon: Home },
+              { href: '/continuous-improvement', label: 'Start Free — AUTO 101', icon: Sparkles },
+              { href: '/#adventure', label: 'Choose Your Path', icon: Compass },
+              { href: '/#schools', label: 'All 25 Courses (4 Schools)', icon: BookOpen },
+              { href: '/#certifications', label: '6 Certification Tracks', icon: Award },
+              { href: '/portal', label: 'Student Portal', icon: Terminal },
+              { href: '/verify', label: 'Verify Credentials', icon: ShieldCheck },
+            ].map((item) => {
+              const IconComp = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
                   style={{
-                    boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
+                    textDecoration: 'none',
+                    width: '100%',
+                    background: item.href === '/continuous-improvement' ? 'rgba(255, 255, 255, 0.09)' : 'transparent',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    color: 'var(--white)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    boxSizing: 'border-box',
                   }}
-                />
-                <Text fontFamily="$mono" fontSize={11} color="rgba(255, 255, 255, 0.75)" fontWeight="500">
-                  Active Student
-                </Text>
-              </XStack>
-              <ChevronRight size={14} color="rgba(255, 255, 255, 0.45)" />
-            </XStack>
-            <Text fontFamily="$mono" fontSize={14} fontWeight="700" color="var(--white)" letterSpacing={0.5}>
-              HACE-2026-9821
-            </Text>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileOpen(false)
-                window.dispatchEvent(new CustomEvent('open-records-modal'))
-              }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <IconComp size={17} color="var(--white)" />
+                    <span>{item.label}</span>
+                  </span>
+                  <ArrowRight size={14} color="rgba(255, 255, 255, 0.45)" />
+                </Link>
+              )
+            })}
+          </YStack>
+
+          <YStack gap={8} pt={8} borderTopWidth={1} borderColor="rgba(255, 255, 255, 0.08)">
+            <a
+              href="https://hanzo.app/learn"
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setMobileOpen(false)}
               style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                marginTop: '4px',
+                textDecoration: 'none',
+                width: '100%',
+                background: 'var(--white)',
+                color: 'var(--pure-black)',
+                borderRadius: '999px',
+                padding: '12px 16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
-                color: 'rgba(255, 255, 255, 0.75)',
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                fontWeight: 700,
+                boxSizing: 'border-box',
               }}
             >
-              <span>View Details</span>
-              <span>→</span>
-            </button>
-          </Box>
-
-          {/* 5. Brand Footer Card */}
-          <Box
-            borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.08)"
-            bg="#090c12"
-            p={18}
-            style={{
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: '14px',
-              marginTop: '4px',
-            }}
-          >
-            <HanzoStackLogo size={28} color="#ffffff" strokeWidth={2} />
-            <YStack gap={2}>
-              <Text fontSize={14} fontWeight="700" color="var(--white)">
-                Hanzo University
-              </Text>
-              <Text fontSize={12} color="rgba(255, 255, 255, 0.45)">
-                Build what&rsquo;s next.
-              </Text>
-            </YStack>
-          </Box>
+              <span>Open Learning Workspace</span>
+              <ExternalLink size={15} />
+            </a>
+            <a
+              href="https://docs.hanzo.ai/docs/guides"
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setMobileOpen(false)}
+              style={{
+                textDecoration: 'none',
+                width: '100%',
+                background: 'rgba(255, 255, 255, 0.06)',
+                color: 'var(--white)',
+                borderRadius: '999px',
+                padding: '11px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                fontWeight: 500,
+                boxSizing: 'border-box',
+              }}
+            >
+              <span>Docs &amp; Guides (docs.hanzo.ai)</span>
+              <ExternalLink size={14} />
+            </a>
+          </YStack>
         </YStack>
       )}
     </>

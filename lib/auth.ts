@@ -1,11 +1,11 @@
 /**
  * Hanzo University Student Authentication & Backend Class Resolution
- * 
- * Manages authentic OIDC / IAM user sessions, JWT extraction of student legal names
- * and handles, token verification, and backend course enrollment mapping.
+ *
+ * Manages authentic OIDC / IAM user sessions, JWT extraction of student display names
+ * and handles, token verification, and backend course enrollment mapping across all 25 courses.
  */
 
-import { UNIVERSITY_COURSES } from '../app/courses-data'
+import { CERTIFICATION_TRACKS, UNIVERSITY_COURSES } from '../app/courses-data'
 
 export interface StudentSession {
   isAuthenticated: boolean
@@ -21,30 +21,52 @@ export interface StudentSession {
   source: 'iam_token' | 'checkout' | 'manual'
 }
 
-/** Mapping of Hanzo billing plan IDs to University course slugs */
-export const PLAN_TO_COURSE_SLUG: Record<string, string> = {
-  'course-eng-100': 'agentic-coding',
-  'course-ag-101': 'agentic-coding',
-  'course-rl-101': 'reinforcement-learning',
-  'course-rl-102': 'reinforcement-learning',
-  'course-sys-103': 'systems-engineering',
-  'course-mkt-102': 'agentic-marketing',
-  'course-mkt-104': 'agentic-marketing',
-  'course-pra-104': 'ai-practitioner',
-  'course-arc-105': 'ai-architect',
-  // Course slugs directly
-  'agentic-coding': 'agentic-coding',
-  'reinforcement-learning': 'reinforcement-learning',
-  'systems-engineering': 'systems-engineering',
-  'agentic-marketing': 'agentic-marketing',
-  'ai-practitioner': 'ai-practitioner',
-  'ai-architect': 'ai-architect',
-  // Membership tiers with full curriculum access
-  'max-20x': 'agentic-coding',
-  'max-5x': 'agentic-coding',
-  'pro': 'agentic-coding',
-  'membership': 'agentic-coding',
+/** Mapping of Hanzo billing plan IDs to University course slugs (or arrays of slugs for tracks) */
+export const PLAN_TO_COURSE_SLUGS: Record<string, string[]> = {
+  // Free foundation
+  'course-auto-101': ['continuous-improvement'],
+  // Intelligence Engineering
+  'course-kai-201': ['kai-decision-intelligence'],
+  'course-kai-301': ['kai-training-decision-models'],
+  'course-ens-201': ['enso-adaptive-intelligence'],
+  'course-ens-301': ['enso-training-orchestrators'],
+  'course-zen-201': ['zen-model-engineering'],
+  'course-zen-301': ['zen-native-training'],
+  'course-ml-401': ['ml-systems'],
+  'course-eng-100': ['agentic-coding'],
+  'course-ag-101': ['agentic-coding'],
+  'course-rl-101': ['reinforcement-learning'],
+  'course-rl-102': ['reinforcement-learning'],
+  'course-sys-103': ['systems-engineering'],
+  // Autonomous Science
+  'course-sci-101': ['science-discovery'],
+  'course-sci-201': ['autonomous-research'],
+  'course-sci-301': ['research-autopilot'],
+  'course-sci-401': ['recursive-improvement'],
+  // Cybersecurity
+  'course-cyb-101': ['ai-security-fundamentals'],
+  'course-cyb-201': ['agentic-cybersecurity'],
+  'course-cyb-301': ['autonomous-secops'],
+  'course-cyb-401': ['sovereign-zero-trust-ai'],
+  // Business & Entrepreneurship
+  'course-auto-201': ['business-autopilot'],
+  'course-auto-301': ['autonomous-organizations'],
+  'course-ent-401': ['build-your-ai-company'],
+  'course-mkt-102': ['agentic-marketing'],
+  'course-mkt-104': ['agentic-marketing'],
+  'course-pra-104': ['ai-practitioner'],
+  'course-arc-105': ['ai-architect'],
+  // Direct slugs
+  ...Object.fromEntries(UNIVERSITY_COURSES.map((c) => [c.slug, [c.slug]])),
+  // Certification Tracks
+  ...Object.fromEntries(CERTIFICATION_TRACKS.map((t) => [t.planId, t.courseSlugs])),
+  ...Object.fromEntries(CERTIFICATION_TRACKS.map((t) => [t.slug, t.courseSlugs])),
 }
+
+/** Legacy single-slug map preserved for backward compatibility */
+export const PLAN_TO_COURSE_SLUG: Record<string, string> = Object.fromEntries(
+  Object.entries(PLAN_TO_COURSE_SLUGS).map(([k, v]) => [k, v[0]])
+)
 
 /** Parse and validate JWT token claims without external dependencies */
 export function parseJwt(token: string): Record<string, any> | null {
@@ -68,12 +90,9 @@ export function parseJwt(token: string): Record<string, any> | null {
 /** Format raw name or email username into human-readable Display Name */
 export function formatHumanName(raw: string): string {
   if (!raw) return 'Student'
-  // If it's an email, strip domain
   const clean = raw.includes('@') ? raw.split('@')[0] : raw
-  // Replace dots, underscores, hyphens with spaces
   const spaced = clean.replace(/[._-]+/g, ' ').trim()
   if (!spaced) return 'Student'
-  // Capitalize words
   return spaced
     .split(' ')
     .filter(Boolean)
@@ -94,11 +113,11 @@ export function getStoredEnrolledCourses(): string[] {
       if (Array.isArray(parsed)) {
         return parsed.filter(
           (slug): slug is string =>
-            typeof slug === 'string' && UNIVERSITY_COURSES.some((c) => c.slug === slug)
+            typeof slug === 'string' &&
+            (slug === 'membership' || slug === 'pro' || UNIVERSITY_COURSES.some((c) => c.slug === slug))
         )
       }
     }
-    // Backward compatibility for existing checkout sessions where single course was set
     const handle = localStorage.getItem('hanzo_portal_student_handle')
     const legacy = localStorage.getItem('hanzo_portal_selected_course')
     if (handle && legacy && UNIVERSITY_COURSES.some((c) => c.slug === legacy)) {
@@ -108,9 +127,7 @@ export function getStoredEnrolledCourses(): string[] {
   return []
 }
 
-/**
- * Record a newly paid / enrolled course in persistent student storage.
- */
+/** Record a newly paid / enrolled course in persistent student storage. */
 export function addEnrolledCourse(slug: string): string[] {
   if (typeof window === 'undefined') return [slug]
   try {
@@ -127,9 +144,7 @@ export function addEnrolledCourse(slug: string): string[] {
   }
 }
 
-/**
- * Remove an enrolled course from persistent student storage.
- */
+/** Remove an enrolled course from persistent student storage. */
 export function removeEnrolledCourse(slug: string): string[] {
   if (typeof window === 'undefined') return []
   try {
@@ -143,10 +158,13 @@ export function removeEnrolledCourse(slug: string): string[] {
 }
 
 /**
- * Check if the student session has active paid enrollment for a specific course slug.
+ * Check if the student session has access to a specific course slug.
+ * Free courses (e.g. AUTO 101 `continuous-improvement`) are unlocked for all authenticated students.
  */
 export function isUserEnrolledInCourse(session: StudentSession | null | undefined, slug: string): boolean {
+  const course = UNIVERSITY_COURSES.find((c) => c.slug === slug)
   if (!session || !session.isAuthenticated) return false
+  if (course?.isFree) return true
   if (session.isFullAccess) return true
   return Array.isArray(session.enrolledClasses) && session.enrolledClasses.includes(slug)
 }
@@ -166,7 +184,6 @@ export function resolveStudentSession(): StudentSession | null {
 
   let token: string | null = null
 
-  // 1. Check URL parameters for token (e.g. redirected from IAM / OAuth callback)
   const url = new URL(window.location.href)
   const queryToken =
     url.searchParams.get('access_token') ||
@@ -174,7 +191,6 @@ export function resolveStudentSession(): StudentSession | null {
     url.searchParams.get('id_token') ||
     url.searchParams.get('jwt')
 
-  // 2. Check URL Hash (OIDC implicit / hybrid flow)
   if (!queryToken && window.location.hash) {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
     const hashToken = hashParams.get('access_token') || hashParams.get('id_token') || hashParams.get('token')
@@ -182,7 +198,6 @@ export function resolveStudentSession(): StudentSession | null {
       token = hashToken
       try {
         localStorage.setItem('hanzo_iam_access_token', token)
-        // Clean hash from URL bar
         window.history.replaceState(null, '', window.location.pathname + window.location.search)
       } catch (_) {}
     }
@@ -192,7 +207,6 @@ export function resolveStudentSession(): StudentSession | null {
     token = queryToken
     try {
       localStorage.setItem('hanzo_iam_access_token', token)
-      // Clean query token from URL bar
       url.searchParams.delete('access_token')
       url.searchParams.delete('token')
       url.searchParams.delete('id_token')
@@ -201,7 +215,6 @@ export function resolveStudentSession(): StudentSession | null {
     } catch (_) {}
   }
 
-  // 3. Check persistent localStorage keys
   if (!token) {
     token =
       localStorage.getItem('hanzo_iam_access_token') ||
@@ -211,17 +224,13 @@ export function resolveStudentSession(): StudentSession | null {
       localStorage.getItem('auth_token')
   }
 
-  // If a JWT token exists, parse authentic claims
   if (token) {
     const claims = parseJwt(token)
     if (claims) {
-      // Check expiry if timestamp provided
       if (claims.exp && typeof claims.exp === 'number') {
         const nowSec = Math.floor(Date.now() / 1000)
         if (nowSec > claims.exp) {
-          // Token expired
           console.warn('[Hanzo University] IAM token expired at', new Date(claims.exp * 1000).toISOString())
-          // Don't immediately nuke if there's a stored checkout session, but token is stale
         }
       }
 
@@ -234,43 +243,32 @@ export function resolveStudentSession(): StudentSession | null {
           .replace(/[^a-z0-9_-]/g, '')
       const did = claims.did || (claims.sub ? `did:lux:${claims.sub}` : `did:hanzo:student:${handle}`)
       const plan = (claims.billing_plan || claims.plan || claims.tier || '').toLowerCase()
-      const isFull = ['max-20x', 'max-5x', 'pro', 'membership'].includes(plan)
+      const isFull = ['max-20x', 'max-5x', 'pro', 'membership', 'university-pro'].includes(plan)
 
-      // Resolve enrolled classes from claims or storage
       const enrolled: string[] = []
-      if (isFull) {
-        enrolled.push(...UNIVERSITY_COURSES.map((c) => c.slug))
-      } else {
-        // 1. Check explicit courses in JWT claims
-        if (claims.courses && Array.isArray(claims.courses)) {
-          for (const c of claims.courses) {
-            const slug = PLAN_TO_COURSE_SLUG[c] || c
-            if (UNIVERSITY_COURSES.some((uc) => uc.slug === slug) && !enrolled.includes(slug)) {
-              enrolled.push(slug)
-            }
-          }
-        }
-        // 2. Check explicit entitlements in JWT claims
-        if (claims.entitlements && Array.isArray(claims.entitlements)) {
-          for (const ent of claims.entitlements) {
-            const slug = PLAN_TO_COURSE_SLUG[ent] || ent
-            if (UNIVERSITY_COURSES.some((uc) => uc.slug === slug) && !enrolled.includes(slug)) {
-              enrolled.push(slug)
-            }
-          }
-        }
-        // 3. Check single plan mapping
-        if (plan && PLAN_TO_COURSE_SLUG[plan]) {
-          const slug = PLAN_TO_COURSE_SLUG[plan]
+      const pushSlugs = (key: string) => {
+        const mapped = PLAN_TO_COURSE_SLUGS[key] || [key]
+        for (const slug of mapped) {
           if (UNIVERSITY_COURSES.some((uc) => uc.slug === slug) && !enrolled.includes(slug)) {
             enrolled.push(slug)
           }
         }
+      }
 
-        // 4. Merge locally purchased courses
-        const stored = getStoredEnrolledCourses()
-        for (const s of stored) {
-          if (!enrolled.includes(s)) {
+      if (isFull) {
+        enrolled.push(...UNIVERSITY_COURSES.map((c) => c.slug))
+      } else {
+        if (claims.courses && Array.isArray(claims.courses)) {
+          for (const c of claims.courses) pushSlugs(String(c))
+        }
+        if (claims.entitlements && Array.isArray(claims.entitlements)) {
+          for (const ent of claims.entitlements) pushSlugs(String(ent))
+        }
+        if (plan && PLAN_TO_COURSE_SLUGS[plan]) {
+          pushSlugs(plan)
+        }
+        for (const s of getStoredEnrolledCourses()) {
+          if (s !== 'membership' && s !== 'pro' && !enrolled.includes(s)) {
             enrolled.push(s)
           }
         }
@@ -285,19 +283,19 @@ export function resolveStudentSession(): StudentSession | null {
         email,
         did,
         enrolledClasses: enrolled,
-        backendPlan: plan || (isFull ? 'Max Membership' : enrolled.length > 0 ? 'Course License' : 'Registered Student'),
+        backendPlan: plan || (isFull ? 'University Pro' : enrolled.length > 0 ? 'Course License' : 'Free Student'),
         isFullAccess: isFull,
         source: 'iam_token',
       }
     }
   }
 
-  // 4. Check if student signed up / completed tuition checkout directly on hanzo.university
   try {
     const studentHandle = localStorage.getItem('hanzo_portal_student_handle')
     const studentName = localStorage.getItem('hanzo_portal_student_name')
     const studentEmail = localStorage.getItem('hanzo_portal_student_email') || ''
     const stored = getStoredEnrolledCourses()
+    const isFull = stored.includes('membership') || stored.includes('pro')
 
     if (studentHandle && studentName) {
       return {
@@ -306,9 +304,11 @@ export function resolveStudentSession(): StudentSession | null {
         handle: studentHandle.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
         email: studentEmail,
         did: `did:hanzo:student:${studentHandle}`,
-        enrolledClasses: stored,
-        backendPlan: stored.includes('membership') ? 'University Pro All-Access' : stored.length > 0 ? 'Class Enrollment' : 'Registered Student',
-        isFullAccess: stored.includes('membership') || stored.includes('pro'),
+        enrolledClasses: isFull
+          ? UNIVERSITY_COURSES.map((c) => c.slug)
+          : stored.filter((s) => s !== 'membership' && s !== 'pro'),
+        backendPlan: isFull ? 'University Pro All-Access' : stored.length > 0 ? 'Course Enrollment' : 'Free Student',
+        isFullAccess: isFull,
         source: 'checkout',
       }
     }
@@ -349,7 +349,6 @@ export async function syncBackendClassEnrollment(session: StudentSession): Promi
   }
 
   try {
-    // Probe backend plan usage / limits endpoint
     const res = await fetch('https://api.hanzo.ai/v1/ai/limits', {
       headers: {
         Authorization: `Bearer ${session.token}`,
@@ -364,11 +363,11 @@ export async function syncBackendClassEnrollment(session: StudentSession): Promi
     if (res.ok) {
       const data = await res.json()
       const plan = (data.plan || '').toLowerCase()
-      const isFull = ['max-20x', 'max-5x', 'pro'].includes(plan)
+      const isFull = ['max-20x', 'max-5x', 'pro', 'university-pro'].includes(plan)
       const slugs = isFull
         ? UNIVERSITY_COURSES.map((c) => c.slug)
-        : PLAN_TO_COURSE_SLUG[plan]
-        ? [PLAN_TO_COURSE_SLUG[plan]]
+        : PLAN_TO_COURSE_SLUGS[plan]
+        ? PLAN_TO_COURSE_SLUGS[plan]
         : session.enrolledClasses
 
       return {
